@@ -28,11 +28,11 @@ int main(int argc, char** argv)
         int ex = static_cast<int>(cap.get(CV_CAP_PROP_FOURCC));
     }
 
-    namedWindow("Test");
+    namedWindow("Test", WINDOW_AUTOSIZE);
     moveWindow("Test",0,0);
-    namedWindow("Test2");
+    namedWindow("Test2", WINDOW_AUTOSIZE);
     moveWindow("Test2",640,0);
-    namedWindow("Test3");
+    namedWindow("Test3", WINDOW_AUTOSIZE);
     moveWindow("Test3",0,480);
 
     //imshow("Test", image);
@@ -46,9 +46,12 @@ int main(int argc, char** argv)
     {
         cap >> frame;
         //resize(frame,frame,Size(640,480));
-        imshow("Test",frame);
-        imshow("Test2",frame);
-        imshow("Test3",frame);
+        if(i%10==0)
+        {
+            imshow("Test",frame);
+            imshow("Test2",frame);
+            imshow("Test3",frame);
+        }
         //printf("i: %d\n", i);
         if(write){
             outputVideo << frame;
