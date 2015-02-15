@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 
     for(size_t i=0;i<args.size();i++)
     {
-        if(args.at(i).compare("--output") == 0)
+        if(args.at(i).compare("--video") == 0)
         {
             show_video = true;
             continue;
@@ -31,6 +31,7 @@ int main(int argc, char** argv)
     }
 
     cuda = cv::gpu::getCudaEnabledDeviceCount()>0;
+    if(cuda){cv::gpu::setDevice(0);}
     if(show_debug){cout << "Cuda? " << cuda << "\n";}
 
     if(show_debug)
@@ -115,7 +116,11 @@ int main(int argc, char** argv)
 
         t = (double)getTickCount();
         if(cuda){
-            cv::gpu::resize(gpu_frame,gpu_frame, s);
+            cv::gpu::GpuMat gpu_frame2(s,gpu_frame.type());
+            cv::gpu::resize(gpu_frame,gpu_frame2, s);
+            gpu_frame = gpu_frame2;
+            gpu_frame2.download(frame);
+            player::show_frame(frame);
         }
         else
         {
@@ -198,7 +203,7 @@ cv::gpu::HoughLinesBuf hbuf;
 
 void hough(Mat &frame)
 {
-    int subframe_y = 240-40;
+    int subframe_y = frame.rows-40;
 
     player::show_frame(frame);
 
@@ -208,7 +213,7 @@ void hough(Mat &frame)
     blur(frame, frame, Size(4,4));
     player::show_frame(frame);
 
-    Mat subframe(frame,Rect(0,240-40,320,40));
+    Mat subframe(frame,Rect(0,frame.rows-40,frame.cols,40));
     Canny(subframe, subframe, 50,100, 3);
     player::show_frame(frame);
 
@@ -226,29 +231,40 @@ void hough(Mat &frame)
 
 void hough_gpu(cv::gpu::GpuMat &gpu_frame, Mat &frame)
 {
-    int subframe_y = 240-40;
+    int subframe_y = frame.rows-40;
 
-    player::show_frame(gpu_frame);
-
-    cv::gpu::cvtColor(gpu_frame,gpu_frame,CV_BGR2GRAY);
-    player::show_frame(gpu_frame);
-
-    cv::gpu::blur(gpu_frame, gpu_frame, Size(4,4));
+    cout << "type: " << gpu_frame.type() << "\n";
+    
+    cv::gpu::GpuMat gpu_frame2(gpu_frame.rows, gpu_frame.cols, gpu_frame.type());
+    cv::gpu::cvtColor(gpu_frame,gpu_frame2,CV_BGR2GRAY);
+    gpu_frame2.download(frame);
+    player::show_frame(frame);
+    
+    cv::gpu::blur(gpu_frame2, gpu_frame, Size(4,4));
+    gpu_frame.download(frame);
     player::show_frame(frame);
 
-    cv::gpu::GpuMat subframe(gpu_frame,Rect(0,240-40,320,40));
-    cv::gpu::Canny(subframe, subframe, 50,100, 3);
-    player::show_frame(gpu_frame);
+    cv::gpu::GpuMat subframe(gpu_frame,Rect(0,frame.rows-40,frame.cols,40));
+    cv::gpu::GpuMat subframe2(subframe.rows, subframe.cols, subframe.type());
+    cv::gpu::Canny(subframe, subframe2, 50,100, 3);
+    subframe2.download(frame);
+    player::show_frame(frame);
 
-    cv::gpu::HoughLinesP(subframe, gpu_lines,hbuf, 1, CV_PI/720, 10,10,10);
+    cv::gpu::HoughLinesP(subframe2, gpu_lines,hbuf, 1.0f, (float)(CV_PI/720.0f), 10,10,10);
     if(show_video){
+        lines.resize(gpu_lines.cols);
+        Mat h_lines(1, gpu_lines.cols, CV_32SC4, &lines[0]);
+        gpu_lines.download(h_lines);
+
         gpu_lines.download(mat_lines);
+        gpu_frame.download(frame);
         cvtColor(frame, frame, CV_GRAY2BGR);
         MatIterator_<Vec4i> it, end;
-        for(it = mat_lines.begin<Vec4i>(), end = mat_lines.end<Vec4i>(); it != end; ++it)
+        //for(it = mat_lines.begin<Vec4i>(), end = mat_lines.end<Vec4i>(); it != end; ++it)
+        for(size_t j = 0;j<lines.size();j++)
         {
-            //line(frame, Point(mat_lines[j][0], subframe_y + mat_lines[j][1]), Point(mat_lines[j][2], subframe_y + mat_lines[j][3]), Scalar(0,0,255), 3, 8);
-            line(frame, Point((*it)[0], subframe_y + (*it)[1]), Point((*it)[2], subframe_y + (*it)[3]), Scalar(0,0,255), 3, 8);
+            line(frame, Point(lines[j][0], subframe_y + lines[j][1]), Point(lines[j][2], subframe_y + lines[j][3]), Scalar(0,0,255), 3, CV_AA);
+            //line(frame, Point((*it)[0], subframe_y + (*it)[1]), Point((*it)[2], subframe_y + (*it)[3]), Scalar(0,0,255), 3, 8);
         }
         player::show_frame(frame);
     }
