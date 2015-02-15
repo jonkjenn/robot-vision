@@ -79,7 +79,7 @@ int main(int argc, char** argv)
         outputVideo.open("../out.mp4",CV_FOURCC('m','4','s','2'),30,s,true);
     }
 
-    bool play = false;
+    bool play = (show_debug?false:true);
 
     for(int i=0;i<frame_count;i++)
     {
