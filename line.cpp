@@ -1,16 +1,21 @@
 #include <stdio.h>
 #include <player.h>
 #include <line.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/gpu/gpu.hpp>
 
 using namespace cv;
 using namespace std;
 
 bool show_video = false;
 bool show_debug = false;
-bool use_cuda = false;
+bool cuda = false;
 
 int main(int argc, char** argv)
 {
+#ifdef __CUDACC__
+    gpu::VideoReader_GPU gpu_cap;
+#endif
 
     vector<string> args(argv, argv+argc);
 
@@ -28,6 +33,9 @@ int main(int argc, char** argv)
             continue;
         }
     }
+
+    cuda = gpu::getCudaEnabledDeviceCount()>0;
+    if(show_debug){cout << "Cuda? " << cuda << "\n";}
 
     if(show_debug)
     {
