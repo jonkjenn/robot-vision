@@ -13,10 +13,6 @@ bool cuda = false;
 
 int main(int argc, char** argv)
 {
-#ifdef __CUDACC__
-    gpu::VideoReader_GPU gpu_cap;
-#endif
-
     vector<string> args(argv, argv+argc);
 
     for(size_t i=0;i<args.size();i++)
@@ -66,6 +62,13 @@ int main(int argc, char** argv)
     if(show_debug)
     {
         printf("FPS: %f\n", cap.get(CV_CAP_PROP_FPS));
+    }
+
+    gpu::GpuMat gpu_frame;
+
+
+    if(cuda)
+    {
     }
 
     double fps = cap.get(CV_CAP_PROP_FPS);
