@@ -240,17 +240,20 @@ void hough_gpu(cv::gpu::GpuMat &gpu_frame, Mat &frame)
     gpu_frame2.download(frame);
     player::show_frame(frame);
     
-    cv::gpu::blur(gpu_frame2, gpu_frame, Size(4,4));
+    cv::gpu::blur(gpu_frame2, gpu_frame, Size(3,3));
     gpu_frame.download(frame);
     player::show_frame(frame);
 
-    cv::gpu::GpuMat subframe(gpu_frame,Rect(0,frame.rows-40,frame.cols,40));
-    cv::gpu::GpuMat subframe2(subframe.rows, subframe.cols, subframe.type());
-    cv::gpu::Canny(subframe, subframe2, 50,100, 3);
-    subframe2.download(frame);
-    player::show_frame(frame);
+    //cv::gpu::GpuMat subframe(gpu_frame,Rect(0,frame.rows-40,frame.cols,40));
+    //cv::gpu::GpuMat subframe2(subframe.rows, subframe.cols, subframe.type());
+    //cv::gpu::Canny(subframe, subframe2, 50,100, 3);
 
-    cv::gpu::HoughLinesP(subframe2, gpu_lines,hbuf, 1.0f, (float)(CV_PI/720.0f), 10,10,10);
+    cv::gpu::Canny(gpu_frame, gpu_frame2, 50,100, 3);
+    gpu_frame2.download(frame);
+    player::show_frame(frame);
+    return;
+
+    cv::gpu::HoughLinesP(gpu_frame2, gpu_lines,hbuf, 1.0f, (float)(CV_PI/720.0f), 10,10,10);
     if(show_video){
         lines.resize(gpu_lines.cols);
         Mat h_lines(1, gpu_lines.cols, CV_32SC4, &lines[0]);
