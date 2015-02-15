@@ -5,7 +5,9 @@
 using namespace cv;
 using namespace std;
 
-bool show_output = false;
+bool show_video = false;
+bool show_debug = false;
+bool use_cuda = false;
 
 int main(int argc, char** argv)
 {
@@ -16,17 +18,35 @@ int main(int argc, char** argv)
     {
         if(args.at(i).compare("--output") == 0)
         {
-            show_output = true;
+            show_video = true;
+            continue;
+        }
+
+        if(args.at(i).compare("--debug") == 0)
+        {
+            show_debug = true;
+            continue;
         }
     }
 
-    cout << "Show output? " << show_output << "\n";
+    if(show_debug)
+    {
+        cout << "Show video? " << show_video << "\n";
+    }
 
     VideoWriter outputVideo;
     Size s = Size(320,240);
 
     bool write = false;
+
+    double t = (double)getTickCount();
     VideoCapture cap("../out.mp4");
+    t = ((double)getTickCount() - t)/getTickFrequency();
+
+    if(show_debug)
+    {
+        cout << "Loaded video : " << t << "s\n";
+    }
 
     if(!cap.isOpened())
     {
@@ -34,7 +54,10 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    printf("FPS: %f\n", cap.get(CV_CAP_PROP_FPS));
+    if(show_debug)
+    {
+        printf("FPS: %f\n", cap.get(CV_CAP_PROP_FPS));
+    }
 
     double fps = cap.get(CV_CAP_PROP_FPS);
 
@@ -45,7 +68,7 @@ int main(int argc, char** argv)
         int ex = static_cast<int>(cap.get(CV_CAP_PROP_FOURCC));
     }
 
-    if(show_output)
+    if(show_video)
     {
         player::create_windows(6,s);
     }
@@ -60,35 +83,59 @@ int main(int argc, char** argv)
 
     for(int i=0;i<frame_count;i++)
     {
+        t = (double)getTickCount();
         cap >> frame;
+        t = ((double)getTickCount() - t)/getTickFrequency();
 
+        if(show_debug)
+        {
+            cout << "Loaded frame : " << t << "s\n";
+        }
+        t = (double)getTickCount();
         resize(frame,frame, s);
+        t = ((double)getTickCount() - t)/getTickFrequency();
 
+        if(show_debug)
+        {
+            cout << "Resized frame : " << t << "s\n";
+        }
+
+        t = (double)getTickCount();
         hough(frame);
+        t = ((double)getTickCount() - t)/getTickFrequency();
+
+        if(show_debug)
+        {
+            cout << "Houghfilter ++ : " << t << "s\n";
+        }
 
         if(write){
             outputVideo << frame;
         }
 
-        if(show_output)
+        if(show_video)
         {
             player::loop();
         }
 
         int key;
 
-        if(!show_output || play)
+        if(!show_video || play)
         {
             key = waitKey(1000/fps);
         }
         else
         {
+            if(show_debug){cout << "Waiting for key\n";}
             key = waitKey(0);
         }
 
-        if(show_output)
+        if(show_video)
         {
-            printf("Key: %d\n", key);
+            if(show_debug)
+            {
+                printf("Key: %d\n", key);
+            }
             switch(key)
             {
                 case 97://a - play previous frame
@@ -98,9 +145,11 @@ int main(int argc, char** argv)
                     break;
                 case 32://space - pause/play
                     play = !play;
+                    break;
                 case 113://q - quit
                     return 0;
             }
+            
         }
     }
 
@@ -113,20 +162,20 @@ void hough(Mat &frame)
 {
     int subframe_y = 240-40;
 
-    if(show_output){player::show_frame(frame);}
+    player::show_frame(frame);
 
     cvtColor(frame,frame,CV_BGR2GRAY);
-    if(show_output){player::show_frame(frame);}
+    if(show_video){player::show_frame(frame);}
 
     blur(frame, frame, Size(4,4));
-    if(show_output){player::show_frame(frame);}
+    player::show_frame(frame);
 
     Mat subframe(frame,Rect(0,240-40,320,40));
     Canny(subframe, subframe, 50,100, 3);
-    if(show_output){player::show_frame(frame);}
+    player::show_frame(frame);
 
     HoughLinesP(subframe, lines, 1, CV_PI/720, 10,10,10);
-    if(show_output){
+    if(show_video){
         cvtColor(frame, frame, CV_GRAY2BGR);
         for(size_t j=0;j<lines.size();j++)
         {

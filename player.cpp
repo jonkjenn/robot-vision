@@ -9,6 +9,7 @@ namespace player{
 Size res = Size(1600,900);
 
 int counter = 0;
+bool show_video = false;
 
 void create_windows(int count, Size size)
 {
