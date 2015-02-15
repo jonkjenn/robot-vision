@@ -1,5 +1,6 @@
 #include <player.h>
 #include <string>
+#include <opencv2/gpu/gpu.hpp>
 
 using namespace cv;
 using namespace std;
@@ -23,6 +24,13 @@ void create_windows(int count, Size size)
 }
 
 void show_frame(const Mat &frame)
+{
+    if(!show_video){return;}
+    imshow("nw" + to_string(counter), frame);
+    counter++;
+}
+
+void show_frame(const cv::gpu::GpuMat &frame)
 {
     if(!show_video){return;}
     imshow("nw" + to_string(counter), frame);

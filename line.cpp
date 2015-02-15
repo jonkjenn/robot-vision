@@ -30,7 +30,7 @@ int main(int argc, char** argv)
         }
     }
 
-    cuda = gpu::getCudaEnabledDeviceCount()>0;
+    cuda = cv::gpu::getCudaEnabledDeviceCount()>0;
     if(show_debug){cout << "Cuda? " << cuda << "\n";}
 
     if(show_debug)
@@ -64,12 +64,9 @@ int main(int argc, char** argv)
         printf("FPS: %f\n", cap.get(CV_CAP_PROP_FPS));
     }
 
-    gpu::GpuMat gpu_frame;
+    cv::gpu::GpuMat gpu_frame;
 
 
-    if(cuda)
-    {
-    }
 
     double fps = cap.get(CV_CAP_PROP_FPS);
 
@@ -103,8 +100,27 @@ int main(int argc, char** argv)
         {
             cout << "Loaded frame : " << t << "s\n";
         }
+
+        if(cuda)
+        {
+            t = (double)getTickCount();
+            gpu_frame.upload(frame);
+            t = ((double)getTickCount() - t)/getTickFrequency();
+
+            if(show_debug)
+            {
+                cout << "Cuda frame uploaded : " << t << "s\n";
+            }
+        }
+
         t = (double)getTickCount();
-        resize(frame,frame, s);
+        if(cuda){
+            cv::gpu::resize(gpu_frame,gpu_frame, s);
+        }
+        else
+        {
+            resize(frame,frame, s);
+        }
         t = ((double)getTickCount() - t)/getTickFrequency();
 
         if(show_debug)
@@ -113,7 +129,15 @@ int main(int argc, char** argv)
         }
 
         t = (double)getTickCount();
-        hough(frame);
+        if(cuda)
+        {
+            hough_gpu(gpu_frame, frame);
+        }
+        else
+        {
+            hough(frame);
+        }
+
         t = ((double)getTickCount() - t)/getTickFrequency();
 
         if(show_debug)
@@ -161,7 +185,6 @@ int main(int argc, char** argv)
                 case 113://q - quit
                     return 0;
             }
-            
         }
     }
 
@@ -169,6 +192,9 @@ int main(int argc, char** argv)
 }
 
 vector<Vec4i> lines;
+cv::gpu::GpuMat gpu_lines;
+Mat mat_lines;
+cv::gpu::HoughLinesBuf hbuf;
 
 void hough(Mat &frame)
 {
@@ -192,6 +218,37 @@ void hough(Mat &frame)
         for(size_t j=0;j<lines.size();j++)
         {
             line(frame, Point(lines[j][0], subframe_y + lines[j][1]), Point(lines[j][2], subframe_y + lines[j][3]), Scalar(0,0,255), 3, 8);
+        }
+        player::show_frame(frame);
+    }
+}
+
+
+void hough_gpu(cv::gpu::GpuMat &gpu_frame, Mat &frame)
+{
+    int subframe_y = 240-40;
+
+    player::show_frame(gpu_frame);
+
+    cv::gpu::cvtColor(gpu_frame,gpu_frame,CV_BGR2GRAY);
+    player::show_frame(gpu_frame);
+
+    cv::gpu::blur(gpu_frame, gpu_frame, Size(4,4));
+    player::show_frame(frame);
+
+    cv::gpu::GpuMat subframe(gpu_frame,Rect(0,240-40,320,40));
+    cv::gpu::Canny(subframe, subframe, 50,100, 3);
+    player::show_frame(gpu_frame);
+
+    cv::gpu::HoughLinesP(subframe, gpu_lines,hbuf, 1, CV_PI/720, 10,10,10);
+    if(show_video){
+        gpu_lines.download(mat_lines);
+        cvtColor(frame, frame, CV_GRAY2BGR);
+        MatIterator_<Vec4i> it, end;
+        for(it = mat_lines.begin<Vec4i>(), end = mat_lines.end<Vec4i>(); it != end; ++it)
+        {
+            //line(frame, Point(mat_lines[j][0], subframe_y + mat_lines[j][1]), Point(mat_lines[j][2], subframe_y + mat_lines[j][3]), Scalar(0,0,255), 3, 8);
+            line(frame, Point((*it)[0], subframe_y + (*it)[1]), Point((*it)[2], subframe_y + (*it)[3]), Scalar(0,0,255), 3, 8);
         }
         player::show_frame(frame);
     }
