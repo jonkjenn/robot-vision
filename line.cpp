@@ -32,6 +32,7 @@ int main(int argc, char** argv)
     if(show_debug)
     {
         cout << "Show video? " << show_video << "\n";
+        cout << "Show debug? " << show_debug << "\n";
     }
 
     VideoWriter outputVideo;

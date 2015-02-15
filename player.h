@@ -10,5 +10,7 @@ void show_frame(const cv::Mat &frame);
 void loop();
 }
 
+extern bool show_video;
+
 //End of header guard
 #endif

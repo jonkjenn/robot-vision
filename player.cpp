@@ -9,7 +9,6 @@ namespace player{
 Size res = Size(1600,900);
 
 int counter = 0;
-bool show_video = false;
 
 void create_windows(int count, Size size)
 {
@@ -25,6 +24,7 @@ void create_windows(int count, Size size)
 
 void show_frame(const Mat &frame)
 {
+    if(!show_video){return;}
     imshow("nw" + to_string(counter), frame);
     counter++;
 }
