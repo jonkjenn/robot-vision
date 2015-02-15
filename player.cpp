@@ -18,7 +18,7 @@ void create_windows(int count, Size size)
     {
         if(i>0 && i%columns==0){row++;}
         namedWindow("nw" + to_string(i), WINDOW_AUTOSIZE);
-        moveWindow("nw" + to_string(i), (i%columns)*size.width, row*size.height);
+        moveWindow("nw" + to_string(i), (i%columns)*size.width, row*(size.height+20)+20);
     }
 }
 
