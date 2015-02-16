@@ -66,8 +66,7 @@ int main(int argc, char** argv)
     }
 
     cv::gpu::GpuMat gpu_frame;
-
-
+    cv::gpu::GpuMat gpu_frame2;
 
     double fps = cap.get(CV_CAP_PROP_FPS);
 
@@ -116,9 +115,8 @@ int main(int argc, char** argv)
 
         t = (double)getTickCount();
         if(cuda){
-            cv::gpu::GpuMat gpu_frame2(s,gpu_frame.type());
+            //cv::gpu::GpuMat gpu_frame2(s,gpu_frame.type());
             cv::gpu::resize(gpu_frame,gpu_frame2, s);
-            gpu_frame = gpu_frame2;
             gpu_frame2.download(frame);
             player::show_frame(frame);
         }
@@ -136,7 +134,7 @@ int main(int argc, char** argv)
         t = (double)getTickCount();
         if(cuda)
         {
-            hough_gpu(gpu_frame, frame);
+            hough_gpu(gpu_frame2, frame);
         }
         else
         {
@@ -240,9 +238,21 @@ void hough_gpu(cv::gpu::GpuMat &gpu_frame, Mat &frame)
     gpu_frame2.download(frame);
     player::show_frame(frame);
     
-    cv::gpu::blur(gpu_frame2, gpu_frame, Size(3,3));
-    gpu_frame.download(frame);
+    cout << "type: " << gpu_frame2.type() << "\n";
+
+    cv::gpu::GpuMat gpu_frame3(gpu_frame2.rows +4 , gpu_frame2.cols + 4, gpu_frame2.type());
+    cv::gpu::copyMakeBorder(gpu_frame2, gpu_frame3, 2, 2 , 2, 2, BORDER_REPLICATE);
+    cv::gpu::GpuMat roi(gpu_frame3, Rect(2, 2, gpu_frame3.cols-4, gpu_frame3.rows-4));
+    gpu_frame3.download(frame);
     player::show_frame(frame);
+    roi.download(frame);
+    player::show_frame(frame);
+    cout << "gpu_frame2.size: " << gpu_frame2.size() << " gpu_frame.size: " << gpu_frame.size() << "\n";
+    cout << "gpu_frame3.size: " << gpu_frame3.size() << " roi.size: " << roi.size() << "\n";
+    cv::gpu::blur(gpu_frame2, roi, Size(3,3));
+    roi.download(frame);
+    player::show_frame(frame);
+    return;
 
     //cv::gpu::GpuMat subframe(gpu_frame,Rect(0,frame.rows-40,frame.cols,40));
     //cv::gpu::GpuMat subframe2(subframe.rows, subframe.cols, subframe.type());
@@ -251,7 +261,6 @@ void hough_gpu(cv::gpu::GpuMat &gpu_frame, Mat &frame)
     cv::gpu::Canny(gpu_frame, gpu_frame2, 50,100, 3);
     gpu_frame2.download(frame);
     player::show_frame(frame);
-    return;
 
     cv::gpu::HoughLinesP(gpu_frame2, gpu_lines,hbuf, 1.0f, (float)(CV_PI/720.0f), 10,10,10);
     if(show_video){
