@@ -234,15 +234,17 @@ void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
 {
     int subframe_y = frame.rows-40;
 
-    cout << "type: " << gpu_frame.type() << "\n";
+    if(show_debug){cout << "type: " << gpu_frame.type() << "\n";}
     
     gpu::GpuMat gpu_frame2(gpu_frame.rows, gpu_frame.cols, gpu_frame.type());
     gpu::cvtColor(gpu_frame,gpu_frame2,CV_BGR2GRAY);
-    gpu_frame2.download(frame);
-    player::show_frame(frame);
+    if(show_video)
+    {
+        gpu_frame2.download(frame);
+        player::show_frame(frame);
+    }
     
-    cout << "type: " << gpu_frame2.type() << "\n";
-
+    if(show_debug){cout << "type: " << gpu_frame2.type() << "\n";}
 
     //Create border for using image with blur, dont know why need 2 pixels instead of 1
     gpu::GpuMat gpu_frame3(gpu_frame2.rows +4 , gpu_frame2.cols + 4, gpu_frame2.type());
@@ -251,18 +253,30 @@ void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
     gpu::blur(gpu_frame3, gpu_frame, Size(3,3));
 
     gpu::GpuMat roi(gpu_frame, Rect(2, 2, gpu_frame.cols-4, gpu_frame.rows-4));
-    cout << "gpu_frame2.size: " << gpu_frame2.size() << " gpu_frame.size: " << gpu_frame.size() << "\n";
-    cout << "gpu_frame3.size: " << gpu_frame3.size() << " roi.size: " << roi.size() << "\n";
-    roi.download(frame);
-    player::show_frame(frame);
+
+    if(show_debug)
+    {
+        cout << "gpu_frame2.size: " << gpu_frame2.size() << " gpu_frame.size: " << gpu_frame.size() << "\n";
+        cout << "gpu_frame3.size: " << gpu_frame3.size() << " roi.size: " << roi.size() << "\n";
+    }
+
+    if(show_video)
+    {
+        roi.download(frame);
+        player::show_frame(frame);
+    }
 
     //gpu::GpuMat subframe(gpu_frame,Rect(0,frame.rows-40,frame.cols,40));
     //gpu::GpuMat subframe2(subframe.rows, subframe.cols, subframe.type());
     //gpu::Canny(subframe, subframe2, 50,100, 3);
 
     gpu::Canny(roi, gpu_frame2, 50,100, 3);
-    gpu_frame2.download(frame);
-    player::show_frame(frame);
+
+    if(show_video)
+    {
+        gpu_frame2.download(frame);
+        player::show_frame(frame);
+    }
 
     gpu::HoughLinesP(gpu_frame2, d_lines,d_buf, 1.0f, (float)(CV_PI/360.0f),10,5);
     if(show_video){
@@ -270,16 +284,11 @@ void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
         Mat h_lines(1, d_lines.cols, CV_32SC4, &lines_gpu[0]);
         d_lines.download(h_lines);
 
-        //gpu_lines.download(mat_lines);
-        //gpu_frame.download(frame);
         cvtColor(frame, frame, CV_GRAY2BGR);
-        //MatIterator_<Vec4i> it, end;
-        //for(it = mat_lines.begin<Vec4i>(), end = mat_lines.end<Vec4i>(); it != end; ++it)
         for(size_t j = 0;j<lines_gpu.size();j++)
         {
             Vec4i l = lines_gpu[j];
             line(frame, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 1, CV_AA);
-            //line(frame, Point((*it)[0], subframe_y + (*it)[1]), Point((*it)[2], subframe_y + (*it)[3]), Scalar(0,0,255), 3, 8);
         }
         player::show_frame(frame);
     }
