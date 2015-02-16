@@ -13,7 +13,7 @@ int counter = 0;
 
 void create_windows(int count, Size size)
 {
-    int columns = 1600/size.width;
+    int columns = (1600)/size.width;
     int row = 0;
     for(int i=0;i<count;i++)
     {

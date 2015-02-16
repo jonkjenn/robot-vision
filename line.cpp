@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <player.h>
 #include <line.h>
-#include <opencv2/opencv.hpp>
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/gpu/gpu.hpp>
 
 using namespace cv;
+using namespace cv::gpu;
 using namespace std;
 
 bool show_video = false;
@@ -30,8 +33,8 @@ int main(int argc, char** argv)
         }
     }
 
-    cuda = cv::gpu::getCudaEnabledDeviceCount()>0;
-    if(cuda){cv::gpu::setDevice(0);}
+    cuda = gpu::getCudaEnabledDeviceCount()>0;
+    if(cuda){gpu::setDevice(0);}
     if(show_debug){cout << "Cuda? " << cuda << "\n";}
 
     if(show_debug)
@@ -65,8 +68,8 @@ int main(int argc, char** argv)
         printf("FPS: %f\n", cap.get(CV_CAP_PROP_FPS));
     }
 
-    cv::gpu::GpuMat gpu_frame;
-    cv::gpu::GpuMat gpu_frame2;
+    gpu::GpuMat gpu_frame;
+    gpu::GpuMat gpu_frame2;
 
     double fps = cap.get(CV_CAP_PROP_FPS);
 
@@ -79,7 +82,7 @@ int main(int argc, char** argv)
 
     if(show_video)
     {
-        player::create_windows(6,s);
+        player::create_windows(9,s);
     }
 
     Mat frame;
@@ -115,8 +118,8 @@ int main(int argc, char** argv)
 
         t = (double)getTickCount();
         if(cuda){
-            //cv::gpu::GpuMat gpu_frame2(s,gpu_frame.type());
-            cv::gpu::resize(gpu_frame,gpu_frame2, s);
+            //gpu::GpuMat gpu_frame2(s,gpu_frame.type());
+            gpu::resize(gpu_frame,gpu_frame2, s);
             gpu_frame2.download(frame);
             player::show_frame(frame);
         }
@@ -161,12 +164,12 @@ int main(int argc, char** argv)
 
         if(!show_video || play)
         {
-            key = waitKey(1000/fps);
+            key = waitKey(1000/fps) & 255;
         }
         else
         {
             if(show_debug){cout << "Waiting for key\n";}
-            key = waitKey(0);
+            key = waitKey(0) & 255;
         }
 
         if(show_video)
@@ -195,9 +198,9 @@ int main(int argc, char** argv)
 }
 
 vector<Vec4i> lines;
-cv::gpu::GpuMat gpu_lines;
-Mat mat_lines;
-cv::gpu::HoughLinesBuf hbuf;
+vector<Vec4i> lines_gpu;
+gpu::GpuMat d_lines;
+gpu::HoughLinesBuf d_buf;
 
 void hough(Mat &frame)
 {
@@ -227,55 +230,55 @@ void hough(Mat &frame)
 }
 
 
-void hough_gpu(cv::gpu::GpuMat &gpu_frame, Mat &frame)
+void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
 {
     int subframe_y = frame.rows-40;
 
     cout << "type: " << gpu_frame.type() << "\n";
     
-    cv::gpu::GpuMat gpu_frame2(gpu_frame.rows, gpu_frame.cols, gpu_frame.type());
-    cv::gpu::cvtColor(gpu_frame,gpu_frame2,CV_BGR2GRAY);
+    gpu::GpuMat gpu_frame2(gpu_frame.rows, gpu_frame.cols, gpu_frame.type());
+    gpu::cvtColor(gpu_frame,gpu_frame2,CV_BGR2GRAY);
     gpu_frame2.download(frame);
     player::show_frame(frame);
     
     cout << "type: " << gpu_frame2.type() << "\n";
 
-    cv::gpu::GpuMat gpu_frame3(gpu_frame2.rows +4 , gpu_frame2.cols + 4, gpu_frame2.type());
-    cv::gpu::copyMakeBorder(gpu_frame2, gpu_frame3, 2, 2 , 2, 2, BORDER_REPLICATE);
-    cv::gpu::GpuMat roi(gpu_frame3, Rect(2, 2, gpu_frame3.cols-4, gpu_frame3.rows-4));
-    gpu_frame3.download(frame);
-    player::show_frame(frame);
-    roi.download(frame);
-    player::show_frame(frame);
+
+    //Create border for using image with blur, dont know why need 2 pixels instead of 1
+    gpu::GpuMat gpu_frame3(gpu_frame2.rows +4 , gpu_frame2.cols + 4, gpu_frame2.type());
+    gpu::copyMakeBorder(gpu_frame2, gpu_frame3, 2, 2 , 2, 2, BORDER_REPLICATE);
+
+    gpu::blur(gpu_frame3, gpu_frame, Size(3,3));
+
+    gpu::GpuMat roi(gpu_frame, Rect(2, 2, gpu_frame.cols-4, gpu_frame.rows-4));
     cout << "gpu_frame2.size: " << gpu_frame2.size() << " gpu_frame.size: " << gpu_frame.size() << "\n";
     cout << "gpu_frame3.size: " << gpu_frame3.size() << " roi.size: " << roi.size() << "\n";
-    cv::gpu::blur(gpu_frame2, roi, Size(3,3));
     roi.download(frame);
     player::show_frame(frame);
-    return;
 
-    //cv::gpu::GpuMat subframe(gpu_frame,Rect(0,frame.rows-40,frame.cols,40));
-    //cv::gpu::GpuMat subframe2(subframe.rows, subframe.cols, subframe.type());
-    //cv::gpu::Canny(subframe, subframe2, 50,100, 3);
+    //gpu::GpuMat subframe(gpu_frame,Rect(0,frame.rows-40,frame.cols,40));
+    //gpu::GpuMat subframe2(subframe.rows, subframe.cols, subframe.type());
+    //gpu::Canny(subframe, subframe2, 50,100, 3);
 
-    cv::gpu::Canny(gpu_frame, gpu_frame2, 50,100, 3);
+    gpu::Canny(roi, gpu_frame2, 50,100, 3);
     gpu_frame2.download(frame);
     player::show_frame(frame);
 
-    cv::gpu::HoughLinesP(gpu_frame2, gpu_lines,hbuf, 1.0f, (float)(CV_PI/720.0f), 10,10,10);
+    gpu::HoughLinesP(gpu_frame2, d_lines,d_buf, 1.0f, (float)(CV_PI/360.0f),10,5);
     if(show_video){
-        lines.resize(gpu_lines.cols);
-        Mat h_lines(1, gpu_lines.cols, CV_32SC4, &lines[0]);
-        gpu_lines.download(h_lines);
+        lines_gpu.resize(d_lines.cols);
+        Mat h_lines(1, d_lines.cols, CV_32SC4, &lines_gpu[0]);
+        d_lines.download(h_lines);
 
-        gpu_lines.download(mat_lines);
-        gpu_frame.download(frame);
+        //gpu_lines.download(mat_lines);
+        //gpu_frame.download(frame);
         cvtColor(frame, frame, CV_GRAY2BGR);
-        MatIterator_<Vec4i> it, end;
+        //MatIterator_<Vec4i> it, end;
         //for(it = mat_lines.begin<Vec4i>(), end = mat_lines.end<Vec4i>(); it != end; ++it)
-        for(size_t j = 0;j<lines.size();j++)
+        for(size_t j = 0;j<lines_gpu.size();j++)
         {
-            line(frame, Point(lines[j][0], subframe_y + lines[j][1]), Point(lines[j][2], subframe_y + lines[j][3]), Scalar(0,0,255), 3, CV_AA);
+            Vec4i l = lines_gpu[j];
+            line(frame, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 1, CV_AA);
             //line(frame, Point((*it)[0], subframe_y + (*it)[1]), Point((*it)[2], subframe_y + (*it)[3]), Scalar(0,0,255), 3, 8);
         }
         player::show_frame(frame);
