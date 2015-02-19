@@ -161,7 +161,7 @@ void QTRSensors::resetCalibration()
 // calibration.  The sensor values are not returned; instead, the
 // maximum and minimum values found over time are stored internally
 // and used for the readCalibrated() method.
-void QTRSensors::calibrate(unsigned char readMode)
+void QTRSensors::calibrate(unsigned char readMode=QTR_EMITTERS_ON)
 {
     if(readMode == QTR_EMITTERS_ON_AND_OFF || readMode == QTR_EMITTERS_ON)
     {
