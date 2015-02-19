@@ -161,7 +161,7 @@ void QTRSensors::resetCalibration()
 // calibration.  The sensor values are not returned; instead, the
 // maximum and minimum values found over time are stored internally
 // and used for the readCalibrated() method.
-void QTRSensors::calibrate(unsigned char readMode=QTR_EMITTERS_ON)
+void QTRSensors::calibrate(unsigned char readMode)
 {
     if(readMode == QTR_EMITTERS_ON_AND_OFF || readMode == QTR_EMITTERS_ON)
     {
@@ -183,16 +183,16 @@ void QTRSensors::calibrateOnOrOff(vector<unsigned int> &calibratedMinimum,
                                         vector<unsigned int> &calibratedMaximum,
                                         unsigned char readMode)
 {
-    vector<unsigned int> sensor_values(16);
-    vector<unsigned int> max_sensor_values(16);
-    vector<unsigned int> min_sensor_values(16);
+    vector<unsigned int> sensor_values;
+    vector<unsigned int> max_sensor_values(_pins.size());
+    vector<unsigned int> min_sensor_values(_pins.size());
 
     if(calibratedMaximum.empty())
     {
         calibratedMaximum.reserve(_pins.size());
         for(size_t i=0;i<_pins.size();i++)
         {
-            calibratedMaximum.assign(i,0);
+            calibratedMaximum[i] = 0;
         }
     }
 
@@ -204,7 +204,7 @@ void QTRSensors::calibrateOnOrOff(vector<unsigned int> &calibratedMinimum,
 
         for(size_t i=0;i<_pins.size();i++)
         {
-            calibratedMinimum.assign(i,_maxValue);
+            calibratedMinimum[i] = _maxValue;
         }
     }
 
@@ -442,7 +442,7 @@ void QTRSensorsRC::readPrivate(vector<unsigned int> &sensor_values)
     if (_pins.size() == 0)
         return;
 
-    for(size_t i=0;i<sensor_values.size();i++)
+    for(size_t i=0;i<_pins.size();i++)
     {
         sensor_values.push_back(_maxValue);
 
@@ -454,7 +454,7 @@ void QTRSensorsRC::readPrivate(vector<unsigned int> &sensor_values)
 
     delayMicroseconds(10);              // charge lines for 10 us
 
-    for(size_t i=0;i<sensor_values.size();i++)
+    for(size_t i=0;i<_pins.size();i++)
     {
         gpio_export(_pins[i]);
         gpio_set_dir(_pins[i], INPUT_PIN);
@@ -473,7 +473,7 @@ void QTRSensorsRC::readPrivate(vector<unsigned int> &sensor_values)
             unsigned int val;
             gpio_get_value(_pins[i], &val) ;
             if (val == LOW && time < sensor_values[i])
-                sensor_values.assign(7,time);
+                sensor_values[i] = time;
         }
     }
 }

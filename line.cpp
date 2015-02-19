@@ -16,11 +16,7 @@ bool cuda = false;
 
 int main(int argc, char** argv)
 {
-    vector<unsigned char> pins = {160,161,162,163};
-    QTRSensorsRC q(pins, 4);
-
     vector<string> args(argv, argv+argc);
-
     for(size_t i=0;i<args.size();i++)
     {
         if(args.at(i).compare("--video") == 0)
@@ -36,7 +32,16 @@ int main(int argc, char** argv)
         }
     }
 
+    if(show_debug){cout << "Starting\n";}
+
+    vector<unsigned char> pins = {160, 161, 162, 163};
+    QTRSensorsRC q(pins, 164);
+    if(show_debug){cout << "Calibrating\n";}
+    q.calibrate();
+    if(show_debug){cout << "Calibrated done\n";}
+
     cuda = gpu::getCudaEnabledDeviceCount()>0;
+    if(show_debug){cout <<"Setting CUDA device\n";}
     if(cuda){gpu::setDevice(0);}
     if(show_debug){cout << "Cuda? " << cuda << "\n";}
 
