@@ -44,6 +44,7 @@
 
 #include <vector>
 
+unsigned long micros();
 
 // This class cannot be instantiated directly (it has no constructor).
 // Instead, you should instantiate one of its two derived classes (either the
@@ -128,6 +129,7 @@ class QTRSensors
     std::vector<unsigned int> calibratedMaximumOn;
     std::vector<unsigned int> calibratedMinimumOff;
     std::vector<unsigned int> calibratedMaximumOff;
+
 
     //~QTRSensors();
 

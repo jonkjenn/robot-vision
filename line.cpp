@@ -5,6 +5,9 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/gpu/gpu.hpp>
 #include "QTRSensors-JetsonTk1/QTRSensors.h"
+#include "easylogging++.h"
+
+INITIALIZE_EASYLOGGINGPP
 
 using namespace cv;
 using namespace cv::gpu;
@@ -16,6 +19,10 @@ bool cuda = false;
 
 int main(int argc, char** argv)
 {
+    el::Configurations c;
+    c.setToDefault();
+    c.parseFromText("*GLOBAL:\n ENABLED = false");
+
     vector<string> args(argv, argv+argc);
     for(size_t i=0;i<args.size();i++)
     {
@@ -32,24 +39,27 @@ int main(int argc, char** argv)
         }
     }
 
-    if(show_debug){cout << "Starting\n";}
+    if(show_debug){
+            el::Configurations conf("log.conf");
+            el::Loggers::reconfigureAllLoggers(conf);
+    }else{ 
+        el::Loggers::reconfigureAllLoggers(c);
+    }
+
+    LOG(INFO) << "Starting";
 
     vector<unsigned char> pins = {160, 161, 162, 163};
     QTRSensorsRC q(pins, 164);
-    if(show_debug){cout << "Calibrating\n";}
+    LOG(INFO) << "Calibrating";
     q.calibrate();
-    if(show_debug){cout << "Calibrated done\n";}
+    LOG(INFO) << "Calibrated done";
 
     cuda = gpu::getCudaEnabledDeviceCount()>0;
-    if(show_debug){cout <<"Setting CUDA device\n";}
+    LOG(INFO) <<"Setting CUDA device";
     if(cuda){gpu::setDevice(0);}
-    if(show_debug){cout << "Cuda? " << cuda << "\n";}
+    LOG(DEBUG) << "Cuda? " << cuda;
 
-    if(show_debug)
-    {
-        cout << "Show video? " << show_video << "\n";
-        cout << "Show debug? " << show_debug << "\n";
-    }
+    LOG(DEBUG) << "Show video? " << show_video ;
 
     VideoWriter outputVideo;
     Size s = Size(320,240);
@@ -60,21 +70,15 @@ int main(int argc, char** argv)
     VideoCapture cap("../out.mp4");
     t = ((double)getTickCount() - t)/getTickFrequency();
 
-    if(show_debug)
-    {
-        cout << "Loaded video : " << t << "s\n";
-    }
+    LOG(DEBUG) << "Loaded video : " << t << "s";
 
     if(!cap.isOpened())
     {
-        printf("Could not open");
+        LOG(ERROR) << "Could not open video/camera";
         return -1;
     }
 
-    if(show_debug)
-    {
-        printf("FPS: %f\n", cap.get(CV_CAP_PROP_FPS));
-    }
+    LOG(INFO) << "FPS: " << cap.get(CV_CAP_PROP_FPS);
 
     gpu::GpuMat gpu_frame;
     gpu::GpuMat gpu_frame2;
@@ -100,28 +104,21 @@ int main(int argc, char** argv)
     }
 
     bool play = (show_debug?false:true);
+    
+    unsigned long loop_time;
 
     for(int i=0;i<frame_count;i++)
     {
-        t = (double)getTickCount();
+        loop_time = micros();
+        LOG(INFO) << "Loading frame : ";
         cap >> frame;
-        t = ((double)getTickCount() - t)/getTickFrequency();
-
-        if(show_debug)
-        {
-            cout << "Loaded frame : " << t << "s\n";
-        }
+        LOG(INFO) << "Loaded frame : ";
 
         if(cuda)
         {
-            t = (double)getTickCount();
             gpu_frame.upload(frame);
-            t = ((double)getTickCount() - t)/getTickFrequency();
 
-            if(show_debug)
-            {
-                cout << "Cuda frame uploaded : " << t << "s\n";
-            }
+            LOG(DEBUG) << "Cuda frame uploaded : ";
         }
 
         t = (double)getTickCount();
@@ -135,14 +132,10 @@ int main(int argc, char** argv)
         {
             resize(frame,frame, s);
         }
-        t = ((double)getTickCount() - t)/getTickFrequency();
 
-        if(show_debug)
-        {
-            cout << "Resized frame : " << t << "s\n";
-        }
+        LOG(DEBUG) << "Resized frame: ";
+        LOG(DEBUG) << "Doing hough++: ";
 
-        t = (double)getTickCount();
         if(cuda)
         {
             hough_gpu(gpu_frame2, frame);
@@ -151,13 +144,7 @@ int main(int argc, char** argv)
         {
             hough(frame);
         }
-
-        t = ((double)getTickCount() - t)/getTickFrequency();
-
-        if(show_debug)
-        {
-            cout << "Houghfilter ++ : " << t << "s\n";
-        }
+        LOG(DEBUG) << "Hough++ complete";
 
         if(write){
             outputVideo << frame;
@@ -176,16 +163,13 @@ int main(int argc, char** argv)
         }
         else
         {
-            if(show_debug){cout << "Waiting for key\n";}
+            LOG(INFO) << "Waiting for key";
             key = waitKey(0) & 255;
         }
 
         if(show_video)
         {
-            if(show_debug)
-            {
-                printf("Key: %d\n", key);
-            }
+            LOG(DEBUG) <<"Key:"<< key;
             switch(key)
             {
                 case 97://a - play previous frame
@@ -200,6 +184,9 @@ int main(int argc, char** argv)
                     return 0;
             }
         }
+        unsigned long dur = micros()-loop_time;
+        LOG(DEBUG) << "Loop duration: " << dur << " fps: " << (float)1000000/dur;
+        printf("fps: %f\n", (float)1000000/dur);
     }
 
     return 0;
@@ -242,7 +229,7 @@ void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
 {
     int subframe_y = frame.rows-40;
 
-    if(show_debug){cout << "type: " << gpu_frame.type() << "\n";}
+    LOG(DEBUG) << "type: " << gpu_frame.type();
     
     gpu::GpuMat gpu_frame2(gpu_frame.rows, gpu_frame.cols, gpu_frame.type());
     gpu::cvtColor(gpu_frame,gpu_frame2,CV_BGR2GRAY);
@@ -252,7 +239,7 @@ void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
         player::show_frame(frame);
     }
     
-    if(show_debug){cout << "type: " << gpu_frame2.type() << "\n";}
+    LOG(DEBUG) << "type: " << gpu_frame2.type();
 
     //Create border for using image with blur, dont know why need 2 pixels instead of 1
     gpu::GpuMat gpu_frame3(gpu_frame2.rows +4 , gpu_frame2.cols + 4, gpu_frame2.type());
@@ -262,11 +249,8 @@ void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
 
     gpu::GpuMat roi(gpu_frame, Rect(2, 2, gpu_frame.cols-4, gpu_frame.rows-4));
 
-    if(show_debug)
-    {
-        cout << "gpu_frame2.size: " << gpu_frame2.size() << " gpu_frame.size: " << gpu_frame.size() << "\n";
-        cout << "gpu_frame3.size: " << gpu_frame3.size() << " roi.size: " << roi.size() << "\n";
-    }
+    LOG(DEBUG) << "gpu_frame2.size: " << gpu_frame2.size() << " gpu_frame.size: " << gpu_frame.size();
+    LOG(DEBUG) << "gpu_frame3.size: " << gpu_frame3.size() << " roi.size: " << roi.size();
 
     if(show_video)
     {

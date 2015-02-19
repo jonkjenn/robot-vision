@@ -38,6 +38,7 @@
 #include <chrono>
 #include <thread>
 #include <vector>
+#include "easylogging++.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -50,7 +51,8 @@ void delayMicroseconds(unsigned int ms)
 }
 unsigned long micros()
 {
-    return high_resolution_clock::now().time_since_epoch().count();
+    auto dur =  high_resolution_clock::now().time_since_epoch();
+    return duration_cast<microseconds>(dur).count();
 }
 
 // Base class data member initialization (called by derived class init())
@@ -462,16 +464,24 @@ void QTRSensorsRC::readPrivate(vector<unsigned int> &sensor_values)
         gpio_unexport(_pins[i]);
     }
 
-    unsigned long startTime = micros();
+    //unsigned long startTime = micros();
+    high_resolution_clock::time_point startTime = high_resolution_clock::now();
 
-    while (micros() - startTime < _maxValue)
+    while (duration_cast<microseconds>(high_resolution_clock::now() - startTime).count() < _maxValue)
     {
-        unsigned int time = micros() - startTime;
+        //unsigned int time = micros() - startTime;
+        unsigned int time = duration_cast<microseconds>(high_resolution_clock::now() - startTime).count();
+        //unsigned int time = (unsigned int)dur.count();
+
+        LOG(DEBUG) << "Pin time: " << time;
 
         for(size_t i=0;i<_pins.size();i++)
         {
             unsigned int val;
+            gpio_export(_pins[i]);
+            gpio_set_dir(_pins[i], INPUT_PIN);
             gpio_get_value(_pins[i], &val) ;
+            gpio_unexport(_pins[i]);
             if (val == LOW && time < sensor_values[i])
                 sensor_values[i] = time;
         }
