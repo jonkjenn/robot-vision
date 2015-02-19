@@ -152,7 +152,7 @@ void QTRSensors::resetCalibration()
             calibratedMinimumOff.assign(i, _maxValue);
         if(!calibratedMaximumOn.empty())
             calibratedMaximumOn.assign(i,0);
-        if(!calibratedMaximumOff.empty)
+        if(!calibratedMaximumOff.empty())
             calibratedMaximumOff.assign(i,0);
     }
 }
@@ -183,35 +183,36 @@ void QTRSensors::calibrateOnOrOff(vector<unsigned int> &calibratedMinimum,
                                         vector<unsigned int> &calibratedMaximum,
                                         unsigned char readMode)
 {
-    unsigned int sensor_values[16];
-    unsigned int max_sensor_values[16];
-    unsigned int min_sensor_values[16];
+    vector<unsigned int> sensor_values(16);
+    vector<unsigned int> max_sensor_values(16);
+    vector<unsigned int> min_sensor_values(16);
 
     if(calibratedMaximum.empty())
     {
-        calibratedMaximum.reserve(_pins.size());        
-        for(size_t=0;i<_pins.size();i++)
-            (calibratedMaximum.assign(i,0);
+        calibratedMaximum.reserve(_pins.size());
+        for(size_t i=0;i<_pins.size();i++)
+        {
+            calibratedMaximum.assign(i,0);
+        }
     }
 
 
-    if(*calibratedMinimum == 0)
+    if(calibratedMinimum.empty())
     {
-        *calibratedMinimum = (unsigned int*)malloc(sizeof(unsigned int)*_numSensors);
+        //*calibratedMinimum = (unsigned int*)malloc(sizeof(unsigned int)*_numSensors);
+        calibratedMinimum.reserve(_pins.size());
 
-        // If the malloc failed, don't continue.
-        if(*calibratedMinimum == 0)
-            return;
-
-        for(i=0;i<_numSensors;i++)
-            (*calibratedMinimum)[i] = _maxValue;
+        for(size_t i=0;i<_pins.size();i++)
+        {
+            calibratedMinimum.assign(i,_maxValue);
+        }
     }
 
     int j;
     for(j=0;j<10;j++)
     {
         read(sensor_values,readMode);
-        for(i=0;i<_numSensors;i++)
+        for(size_t i=0;i<_pins.size();i++)
         {
             // set the max we found THIS time
             if(j == 0 || max_sensor_values[i] < sensor_values[i])
@@ -224,12 +225,16 @@ void QTRSensors::calibrateOnOrOff(vector<unsigned int> &calibratedMinimum,
     }
 
     // record the min and max calibration values
-    for(i=0;i<_numSensors;i++)
+    for(size_t i=0;i<_pins.size();i++)
     {
-        if(min_sensor_values[i] > (*calibratedMaximum)[i])
-            (*calibratedMaximum)[i] = min_sensor_values[i];
-        if(max_sensor_values[i] < (*calibratedMinimum)[i])
-            (*calibratedMinimum)[i] = max_sensor_values[i];
+        if(min_sensor_values[i] > calibratedMaximum[i])
+        {
+            calibratedMaximum[i] = min_sensor_values[i];
+        }
+        if(max_sensor_values[i] < (calibratedMinimum[i]))
+        {
+            calibratedMinimum[i] = max_sensor_values[i];
+        }
     }
 }
 
@@ -239,22 +244,22 @@ void QTRSensors::calibrateOnOrOff(vector<unsigned int> &calibratedMinimum,
 // corresponds to the maximum value.  Calibration values are
 // stored separately for each sensor, so that differences in the
 // sensors are accounted for automatically.
-void QTRSensors::readCalibrated(unsigned int *sensor_values, unsigned char readMode)
+void QTRSensors::readCalibrated(vector<unsigned int> &sensor_values, unsigned char readMode)
 {
     int i;
 
     // if not calibrated, do nothing
     if(readMode == QTR_EMITTERS_ON_AND_OFF || readMode == QTR_EMITTERS_OFF)
-        if(!calibratedMinimumOff || !calibratedMaximumOff)
+        if(calibratedMinimumOff.empty() || !calibratedMaximumOff.empty())
             return;
     if(readMode == QTR_EMITTERS_ON_AND_OFF || readMode == QTR_EMITTERS_ON)
-        if(!calibratedMinimumOn || !calibratedMaximumOn)
+        if(calibratedMinimumOn.empty() || calibratedMaximumOn.empty())
             return;
 
     // read the needed values
     read(sensor_values,readMode);
 
-    for(i=0;i<_numSensors;i++)
+    for(size_t i=0;i<_pins.size();i++)
     {
         unsigned int calmin,calmax;
         unsigned int denominator;
@@ -319,7 +324,7 @@ void QTRSensors::readCalibrated(unsigned int *sensor_values, unsigned char readM
 // black, set the optional second argument white_line to true.  In
 // this case, each sensor value will be replaced by (1000-value)
 // before the averaging.
-int QTRSensors::readLine(unsigned int *sensor_values,
+int QTRSensors::readLine(vector<unsigned int> &sensor_values,
     unsigned char readMode, unsigned char white_line)
 {
     unsigned char i, on_line = 0;
@@ -333,7 +338,8 @@ int QTRSensors::readLine(unsigned int *sensor_values,
     avg = 0;
     sum = 0;
 
-    for(i=0;i<_numSensors;i++) {
+    for(size_t i = 0;i<_pins.size();i++)
+    {
         int value = sensor_values[i];
         if(white_line)
             value = 1000-value;
@@ -353,12 +359,12 @@ int QTRSensors::readLine(unsigned int *sensor_values,
     if(!on_line)
     {
         // If it last read to the left of center, return 0.
-        if(last_value < (_numSensors-1)*1000/2)
+        if(last_value < (_pins.size()-1)*1000/2)
             return 0;
 
         // If it last read to the right of center, return the max.
         else
-            return (_numSensors-1)*1000;
+            return (_pins.size()-1)*1000;
 
     }
 
@@ -372,20 +378,20 @@ int QTRSensors::readLine(unsigned int *sensor_values,
 // Derived RC class constructors
 QTRSensorsRC::QTRSensorsRC()
 {
-    calibratedMinimumOn = 0;
-    calibratedMaximumOn = 0;
-    calibratedMinimumOff = 0;
-    calibratedMaximumOff = 0;
+    calibratedMinimumOn.clear();
+    calibratedMaximumOn.clear();
+    calibratedMinimumOff.clear();
+    calibratedMaximumOff.clear();
     _pins.clear();
 }
 
 QTRSensorsRC::QTRSensorsRC(vector<unsigned char> &pins,
   unsigned int timeout, unsigned char emitterPin)
 {
-    calibratedMinimumOn = 0;
-    calibratedMaximumOn = 0;
-    calibratedMinimumOff = 0;
-    calibratedMaximumOff = 0;
+    calibratedMinimumOn.clear();
+    calibratedMaximumOn.clear();
+    calibratedMinimumOff.clear();
+    calibratedMaximumOff.clear();
     _pins.clear();
 
     init(pins, timeout, emitterPin);
@@ -461,11 +467,12 @@ void QTRSensorsRC::readPrivate(vector<unsigned int> &sensor_values)
     while (micros() - startTime < _maxValue)
     {
         unsigned int time = micros() - startTime;
-        for (i = 0; i < _numSensors; i++)
+
+        for(size_t i=0;i<_pins.size();i++)
         {
             unsigned int val;
             gpio_get_value(_pins[i], &val) ;
-            if (val == LOW && time < sensor_values.at(i))
+            if (val == LOW && time < sensor_values[i])
                 sensor_values.assign(7,time);
         }
     }
@@ -533,14 +540,6 @@ QTRSensorsAnalog::QTRSensorsAnalog(unsigned char* pins,
 
 
 // the destructor frees up allocated memory
-QTRSensors::~QTRSensors()
+/*QTRSensors::~QTRSensors()
 {
-    if(calibratedMaximumOn)
-        free(calibratedMaximumOn);
-    if(calibratedMaximumOff)
-        free(calibratedMaximumOff);
-    if(calibratedMinimumOn)
-        free(calibratedMinimumOn);
-    if(calibratedMinimumOff)
-        free(calibratedMinimumOff);
-}
+}*/

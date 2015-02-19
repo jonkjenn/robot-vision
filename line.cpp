@@ -16,7 +16,8 @@ bool cuda = false;
 
 int main(int argc, char** argv)
 {
-    QTRSensorsRC q((const unsigned char[]){0, 1, 2 ,3}, 4);
+    vector<unsigned char> pins = {160,161,162,163};
+    QTRSensorsRC q(pins, 4);
 
     vector<string> args(argv, argv+argc);
 

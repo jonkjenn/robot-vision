@@ -124,12 +124,12 @@ class QTRSensors
     // These variables are made public so that you can use them for
     // your own calculations and do things like saving the values to
     // EEPROM, performing sanity checking, etc.
-    vector<unsigned int> calibratedMinimumOn;
-    vector<unsigned int> calibratedMaximumOn;
-    vector<unsigned int> calibratedMinimumOff;
-    vector<unsigned int> calibratedMaximumOff;
+    std::vector<unsigned int> calibratedMinimumOn;
+    std::vector<unsigned int> calibratedMaximumOn;
+    std::vector<unsigned int> calibratedMinimumOff;
+    std::vector<unsigned int> calibratedMaximumOff;
 
-    ~QTRSensors();
+    //~QTRSensors();
 
   protected:
 
@@ -151,8 +151,8 @@ class QTRSensors
     // Handles the actual calibration. calibratedMinimum and
     // calibratedMaximum are pointers to the requested calibration
     // arrays, which will be allocated if necessary.
-    void calibrateOnOrOff(unsigned int **calibratedMinimum,
-                          unsigned int **calibratedMaximum,
+    void calibrateOnOrOff(std::vector<unsigned int> &calibratedMinimum,
+                          std::vector<unsigned int> &calibratedMaximum,
                           unsigned char readMode);
 };
 
