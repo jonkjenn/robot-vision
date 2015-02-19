@@ -1,10 +1,10 @@
-#include <stdio.h>
 #include <player.h>
 #include <line.h>
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/gpu/gpu.hpp>
+#include "QTRSensors-JetsonTk1/QTRSensors.h"
 
 using namespace cv;
 using namespace cv::gpu;
@@ -16,6 +16,8 @@ bool cuda = false;
 
 int main(int argc, char** argv)
 {
+    QTRSensorsRC q((const unsigned char[]){0, 1, 2 ,3}, 4);
+
     vector<string> args(argv, argv+argc);
 
     for(size_t i=0;i<args.size();i++)
