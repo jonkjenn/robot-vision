@@ -16,12 +16,14 @@ using namespace std;
 bool show_video = false;
 bool show_debug = false;
 bool cuda = false;
+bool play = false;
 
 int main(int argc, char** argv)
 {
     el::Configurations c;
     c.setToDefault();
     c.parseFromText("*GLOBAL:\n ENABLED = false");
+
 
     vector<string> args(argv, argv+argc);
     for(size_t i=0;i<args.size();i++)
@@ -35,6 +37,12 @@ int main(int argc, char** argv)
         if(args.at(i).compare("--debug") == 0)
         {
             show_debug = true;
+            continue;
+        }
+
+        if(args.at(i).compare("--play") == 0)
+        {
+            play = true;
             continue;
         }
     }
@@ -67,7 +75,8 @@ int main(int argc, char** argv)
     bool write = false;
 
     double t = (double)getTickCount();
-    VideoCapture cap("../out.mp4");
+    //VideoCapture cap("../out.mp4");
+    VideoCapture cap(0);
     t = ((double)getTickCount() - t)/getTickFrequency();
 
     LOG(DEBUG) << "Loaded video : " << t << "s";
@@ -78,7 +87,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    LOG(INFO) << "FPS: " << cap.get(CV_CAP_PROP_FPS);
+    //LOG(INFO) << "FPS: " << cap.get(CV_CAP_PROP_FPS);
 
     gpu::GpuMat gpu_frame;
     gpu::GpuMat gpu_frame2;
@@ -86,6 +95,10 @@ int main(int argc, char** argv)
     double fps = cap.get(CV_CAP_PROP_FPS);
 
     int frame_count = cap.get(CV_CAP_PROP_FRAME_COUNT);
+
+    LOG(DEBUG) << "Frame count " << frame_count;
+
+    if(frame_count <0){frame_count = 1000000;}
 
     if(write){
 
@@ -103,7 +116,6 @@ int main(int argc, char** argv)
         outputVideo.open("../out.mp4",CV_FOURCC('m','4','s','2'),30,s,true);
     }
 
-    bool play = (show_debug?false:true);
     
     unsigned long loop_time;
 
@@ -111,7 +123,9 @@ int main(int argc, char** argv)
     {
         loop_time = micros();
         LOG(INFO) << "Loading frame : ";
-        cap >> frame;
+        do{
+            cap >> frame;
+        }while{frame.empty();}
         LOG(INFO) << "Loaded frame : ";
 
         if(cuda)
@@ -157,9 +171,17 @@ int main(int argc, char** argv)
 
         int key;
 
-        if(!show_video || play)
+        if(!show_video)
+        {
+            waitKey(1);
+        }
+        else if(play && fps>0)
         {
             key = waitKey(1000/fps) & 255;
+        }
+        else if(play)
+        {
+            waitKey(1);
         }
         else
         {
@@ -229,17 +251,18 @@ void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
 {
     int subframe_y = frame.rows-40;
 
-    LOG(DEBUG) << "type: " << gpu_frame.type();
+    LOG(DEBUG) << "Grayscale start";
     
     gpu::GpuMat gpu_frame2(gpu_frame.rows, gpu_frame.cols, gpu_frame.type());
     gpu::cvtColor(gpu_frame,gpu_frame2,CV_BGR2GRAY);
+    LOG(DEBUG) << "Grayscale stop";
     if(show_video)
     {
         gpu_frame2.download(frame);
         player::show_frame(frame);
     }
     
-    LOG(DEBUG) << "type: " << gpu_frame2.type();
+    LOG(DEBUG) << "Blur start";
 
     //Create border for using image with blur, dont know why need 2 pixels instead of 1
     gpu::GpuMat gpu_frame3(gpu_frame2.rows +4 , gpu_frame2.cols + 4, gpu_frame2.type());
@@ -249,8 +272,7 @@ void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
 
     gpu::GpuMat roi(gpu_frame, Rect(2, 2, gpu_frame.cols-4, gpu_frame.rows-4));
 
-    LOG(DEBUG) << "gpu_frame2.size: " << gpu_frame2.size() << " gpu_frame.size: " << gpu_frame.size();
-    LOG(DEBUG) << "gpu_frame3.size: " << gpu_frame3.size() << " roi.size: " << roi.size();
+    LOG(DEBUG) << "Blur stop";
 
     if(show_video)
     {
@@ -262,7 +284,9 @@ void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
     //gpu::GpuMat subframe2(subframe.rows, subframe.cols, subframe.type());
     //gpu::Canny(subframe, subframe2, 50,100, 3);
 
+    LOG(DEBUG) << "Canny start";
     gpu::Canny(roi, gpu_frame2, 50,100, 3);
+    LOG(DEBUG) << "Canny stop";
 
     if(show_video)
     {
@@ -270,7 +294,9 @@ void hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
         player::show_frame(frame);
     }
 
+    LOG(DEBUG) << "Hough start";
     gpu::HoughLinesP(gpu_frame2, d_lines,d_buf, 1.0f, (float)(CV_PI/360.0f),10,5);
+    LOG(DEBUG) << "Hough stop";
     if(show_video){
         lines_gpu.resize(d_lines.cols);
         Mat h_lines(1, d_lines.cols, CV_32SC4, &lines_gpu[0]);
