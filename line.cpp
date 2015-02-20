@@ -125,7 +125,7 @@ int main(int argc, char** argv)
         LOG(INFO) << "Loading frame : ";
         do{
             cap >> frame;
-        }while{frame.empty();}
+        }while(frame.empty());
         LOG(INFO) << "Loaded frame : ";
 
         if(cuda)
