@@ -5,14 +5,20 @@
 using namespace cv;
 using namespace std;
 
-namespace player{
-
-Size res = Size(1600,900);
-
-int counter = 0;
-
-void create_windows(int count, Size size)
+Frameplayer::Frameplayer(bool show_video)
 {
+    is_enabled = show_video;
+}
+
+Frameplayer::Frameplayer(const bool show_video, const int count, const Size &size)
+{
+    is_enabled = show_video;
+    create_windows(count,size);
+}
+
+void Frameplayer::create_windows(const int count, const Size &size)
+{
+    if(!is_enabled){return;}
     int columns = (1600)/size.width;
     int row = 0;
     for(int i=0;i<count;i++)
@@ -23,23 +29,27 @@ void create_windows(int count, Size size)
     }
 }
 
-void show_frame(const Mat &frame)
+void Frameplayer::show_frame(const Mat &frame)
 {
-    if(!show_video){return;}
+    if(!is_enabled){return;}
     imshow("nw" + to_string(counter), frame);
     counter++;
 }
 
-void show_frame(const cv::gpu::GpuMat &frame)
+void Frameplayer::show_frame(const cv::gpu::GpuMat &frame)
 {
-    if(!show_video){return;}
-    imshow("nw" + to_string(counter), frame);
+    if(!is_enabled){return;}
+    cv::Mat cpu_frame;
+    frame.download(cpu_frame);
+    imshow("nw" + to_string(counter), cpu_frame);
     counter++;
 }
 
-void loop()
+void Frameplayer::loop()
 {
     counter = 0;
 }
-
+bool Frameplayer::enabled()
+{
+    return is_enabled;
 }
