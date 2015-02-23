@@ -17,16 +17,16 @@ class Vision{
         bool show_video, play, cuda;
         int frame_count;
         int index = 0;
-        cv::VideoCapture cap;
+        std::unique_ptr<cv::VideoCapture> cap;
         cv::Size size;
         Frameplayer fp;
-        void hough(cv::Mat &frame, Frameplayer &fp);
-        void hough_gpu(cv::gpu::GpuMat &gpu_frame, cv::Mat &frame, Frameplayer &fp);
+        void hough(cv::Mat &frame);
+        void hough_gpu(cv::gpu::GpuMat &gpu_frame, cv::Mat &frame);
         bool configure_videocapture(cv::VideoCapture &cap, int &fps, int &frame_count);
         bool configure_cuda();
-        void draw_hough(cv::gpu::GpuMat &d_lines, cv::Mat &frame, Frameplayer &fp);
-        void process_frame(cv::Mat &frame, Frameplayer &fp);
-        void process_frame_cuda(cv::Mat &frame, Frameplayer &fp);
+        void draw_hough(cv::gpu::GpuMat &d_lines, cv::Mat &frame);
+        void process_frame(cv::Mat &frame);
+        void process_frame_cuda(cv::Mat &frame);
         void setup();
         void handle_keys();
 

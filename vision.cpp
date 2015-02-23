@@ -12,37 +12,38 @@ Vision::Vision(int camera, bool show_video)
 {
     LOG(DEBUG) << "Loading camera " << camera;
     input_type = Type::CAMERA;
-    cap.open(camera);
+    cap = unique_ptr<VideoCapture>(new VideoCapture(camera));
     Vision::show_video = show_video;
     frame_count = -1;
+    play = true;
     setup();
 }
 
 Vision::Vision(const string &file, bool show_video)
 {
     input_type = Type::FILE;
-    cap.open(file);
+    cap = unique_ptr<VideoCapture>(new VideoCapture(file));
     Vision::show_video = show_video;
-    frame_count = cap.get(CV_CAP_PROP_FRAME_COUNT);
+    frame_count = cap->get(CV_CAP_PROP_FRAME_COUNT);
     play = false;
     setup();
 }
 
 void Vision::setup()
 {
-    if(!cap.isOpened())
+    if(!cap->isOpened())
     {
         LOG(ERROR) << "Could not open video/camera";
         return;
     }
 
-    fps = cap.get(CV_CAP_PROP_FPS);
+    fps = cap->get(CV_CAP_PROP_FPS);
 
     configure_cuda();
     //VideoWriter outputVideo;
 
     /*if(write){
-        int ex = static_cast<int>(cap.get(CV_CAP_PROP_FOURCC));
+        int ex = static_cast<int>(cap->get(CV_CAP_PROP_FOURCC));
     }*/
 
 
@@ -70,7 +71,7 @@ void Vision::update()
     auto loop_time = micros();
     LOG(INFO) << "Loading frame";
     do{
-        cap >> frame;
+        *cap.get() >> frame;
     }while(frame.empty());
     LOG(INFO) << "Loaded frame";
 
@@ -79,11 +80,11 @@ void Vision::update()
 
     if(cuda)
     {
-        process_frame_cuda(frame, fp);
+        process_frame_cuda(frame);
     }
     else
     {
-        process_frame(frame, fp);
+        process_frame(frame);
     }
 
     fp.loop();
@@ -101,11 +102,11 @@ void Vision::previous_frame()
 {
     if(input_type == Type::FILE && index > 1){
         LOG(DEBUG) << " index " << index;
-        cap.set(CV_CAP_PROP_POS_FRAMES,index-=2);
+        cap->set(CV_CAP_PROP_POS_FRAMES,index-=2);
     }
 }
 
-void Vision::process_frame_cuda(Mat &frame, Frameplayer &fp)
+void Vision::process_frame_cuda(Mat &frame)
 {
     LOG(DEBUG) << "Processing frame on GPU";
 
@@ -115,22 +116,22 @@ void Vision::process_frame_cuda(Mat &frame, Frameplayer &fp)
 
     fp.show_frame(gpu_frame);
 
-    hough_gpu(gpu_frame, frame, fp);
+    hough_gpu(gpu_frame, frame);
 }
 
-void Vision::process_frame(Mat &frame, Frameplayer &fp)
+void Vision::process_frame(Mat &frame )
 {
     LOG(DEBUG) << "Processing frame on CPU";
 
     LOG(DEBUG) << "Doing hough++: ";
 
-    hough(frame, fp);
+    hough(frame);
 
     LOG(DEBUG) << "Hough++ complete";
 
 }
 
-void Vision::hough(Mat &frame, Frameplayer &fp)
+void Vision::hough(Mat &frame)
 {
     int subframe_y = frame.rows-40;
 
@@ -160,7 +161,7 @@ void Vision::hough(Mat &frame, Frameplayer &fp)
 }
 
 
-void Vision::hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame, Frameplayer &fp)
+void Vision::hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
 {
     //int subframe_y = frame.rows-40;
 
@@ -204,11 +205,11 @@ void Vision::hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame, Frameplayer &fp)
     LOG(DEBUG) << "Hough stop";
 
     if(fp.enabled()){
-        draw_hough(d_lines, frame, fp);
+        draw_hough(d_lines, frame);
     }
 }
 
-void Vision::draw_hough(GpuMat &d_lines, Mat &frame, Frameplayer &fp)
+void Vision::draw_hough(GpuMat &d_lines, Mat &frame)
 {
     vector<Vec4i> lines;
     vector<Vec4i> lines_gpu;
@@ -217,9 +218,9 @@ void Vision::draw_hough(GpuMat &d_lines, Mat &frame, Frameplayer &fp)
     Mat h_lines(1, d_lines.cols, CV_32SC4, &lines_gpu[0]);
     d_lines.download(h_lines);
 
-    cvtColor(frame, frame, CV_GRAY2BGR);
+    //cvtColor(frame, frame, CV_GRAY2BGR);
 
-    Vec4i l;
+    //Vec4i l;
     //for(auto j = 0;j<lines_gpu.size();j++)
     for(Vec4i l:lines_gpu)
     {
