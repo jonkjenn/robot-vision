@@ -15,9 +15,11 @@ class Frameplayer{
         void show_frame(const cv::Mat &frame);
         void show_frame(const cv::gpu::GpuMat &frame);
         void loop();
-        Frameplayer(bool show_video);
+        Frameplayer(bool show_video=false);
         Frameplayer(const bool show_video, const int count, const cv::Size &size);
         bool enabled();
+        void enable();
+        void disable();
 };
 
 //End of header guard

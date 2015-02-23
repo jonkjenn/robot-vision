@@ -1,4 +1,4 @@
-#include <player.h>
+#include <frameplayer.h>
 #include <string>
 #include <opencv2/gpu/gpu.hpp>
 
@@ -11,8 +11,8 @@ Frameplayer::Frameplayer(bool show_video)
 }
 
 Frameplayer::Frameplayer(const bool show_video, const int count, const Size &size)
+    :is_enabled{show_video}
 {
-    is_enabled = show_video;
     create_windows(count,size);
 }
 
@@ -52,4 +52,14 @@ void Frameplayer::loop()
 bool Frameplayer::enabled()
 {
     return is_enabled;
+}
+
+void Frameplayer::enable()
+{
+    is_enabled = true;
+}
+
+void Frameplayer::disable()
+{
+    is_enabled = false;
 }

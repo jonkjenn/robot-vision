@@ -36,24 +36,11 @@
 #include <cerrno>
 #include <ctime>
 #include <chrono>
-#include <thread>
 #include <vector>
 #include "easylogging++.h"
 
 using namespace std;
 using namespace std::chrono;
-
-
-void delayMicroseconds(unsigned int ms)
-{
-    microseconds dura(ms);
-    this_thread::sleep_for(dura);
-}
-unsigned long micros()
-{
-    auto dur =  high_resolution_clock::now().time_since_epoch();
-    return duration_cast<microseconds>(dur).count();
-}
 
 // Base class data member initialization (called by derived class init())
 void QTRSensors::init(vector<unsigned char> &pins,

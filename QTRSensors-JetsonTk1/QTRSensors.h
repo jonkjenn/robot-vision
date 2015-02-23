@@ -43,8 +43,8 @@
 #define QTR_MAX_SENSORS 16
 
 #include <vector>
+#include "utility.h"
 
-unsigned long micros();
 
 // This class cannot be instantiated directly (it has no constructor).
 // Instead, you should instantiate one of its two derived classes (either the
