@@ -4,6 +4,10 @@ using namespace std;
 using namespace cv;
 using namespace cv::gpu;
 
+Vision::Vision()
+{
+}
+
 Vision::Vision(int camera, bool show_video)
 {
     LOG(DEBUG) << "Loading camera " << camera;
@@ -14,12 +18,13 @@ Vision::Vision(int camera, bool show_video)
     setup();
 }
 
-Vision::Vision(string file, bool show_video)
+Vision::Vision(const string &file, bool show_video)
 {
     input_type = Type::FILE;
     cap.open(file);
     Vision::show_video = show_video;
     frame_count = cap.get(CV_CAP_PROP_FRAME_COUNT);
+    play = false;
     setup();
 }
 
@@ -45,7 +50,7 @@ void Vision::setup()
         outputVideo.open("../out.mp4",CV_FOURCC('m','4','s','2'),30,s,true);
     }*/
 
-    Size size = Size(320,240);
+    size = Size(320,240);
     fp = Frameplayer{show_video, 9, size};
 }
 
@@ -60,6 +65,7 @@ bool Vision::configure_cuda()
 
 void Vision::update()
 {
+    if(input_type == Type::FILE && index >= frame_count){handle_keys();return;}
     Mat frame;
     auto loop_time = micros();
     LOG(INFO) << "Loading frame";
@@ -82,21 +88,26 @@ void Vision::update()
 
     fp.loop();
 
+    handle_keys();
+
     auto dur = micros()-loop_time;
     LOG(DEBUG) << "Loop duration: " << dur << " fps: " << (float)1000000/dur;
     printf("fps: %f\n", (float)1000000/dur);
+
+    index++;
 }
 
 void Vision::previous_frame()
 {
-    if(input_type != Type::FILE){return;}
-    cap.set(CV_CAP_PROP_POS_FRAMES,index);
+    if(input_type == Type::FILE && index > 1){
+        LOG(DEBUG) << " index " << index;
+        cap.set(CV_CAP_PROP_POS_FRAMES,index-=2);
+    }
 }
 
 void Vision::process_frame_cuda(Mat &frame, Frameplayer &fp)
 {
     LOG(DEBUG) << "Processing frame on GPU";
-    auto loop_time = micros();
 
     gpu::GpuMat gpu_frame;
     gpu_frame.upload(frame);//Uploads the frame to the GPU
@@ -151,7 +162,7 @@ void Vision::hough(Mat &frame, Frameplayer &fp)
 
 void Vision::hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame, Frameplayer &fp)
 {
-    int subframe_y = frame.rows-40;
+    //int subframe_y = frame.rows-40;
 
     LOG(DEBUG) << "Grayscale start";
     
@@ -209,10 +220,44 @@ void Vision::draw_hough(GpuMat &d_lines, Mat &frame, Frameplayer &fp)
     cvtColor(frame, frame, CV_GRAY2BGR);
 
     Vec4i l;
-    for(auto j = 0;j<lines_gpu.size();j++)
+    //for(auto j = 0;j<lines_gpu.size();j++)
+    for(Vec4i l:lines_gpu)
     {
-        l = lines_gpu[j];
+        //l = lines_gpu[j];
         line(frame, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 1, CV_AA);
     }
     fp.show_frame(frame);
+}
+
+void Vision::handle_keys()
+{
+    auto key = 0;
+    if(play && fps>0)
+    {
+        LOG(DEBUG) << "Waitkey with FPS";
+        key = waitKey(1000/fps) & 255;
+    }
+    else if(play)
+    {
+        LOG(DEBUG) << "waitKey(1)";
+        waitKey(1);
+    }
+    else
+    {
+        LOG(INFO) << "Waiting for key";
+        key = waitKey(0) & 255;
+    }
+
+    LOG(DEBUG) <<"Key:"<< key;
+    switch(key)
+    {
+        case 97://a - play previous frame
+            previous_frame();
+            break;
+        case 32://space - pause/play
+            play = !play;
+            return;
+        default:
+            return;
+    }
 }

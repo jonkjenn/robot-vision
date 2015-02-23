@@ -1,9 +1,4 @@
 #include <line.h>
-#include "QTRSensors-JetsonTk1/QTRSensors.h"
-#include "easylogging++.h"
-#include "opencv2/core/core.hpp"
-#include <utility.h>
-#include "vision.h"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -16,46 +11,67 @@ int main(int argc, char** argv)
     bool play = false;
     bool show_debug = false;
 
+    string *file = nullptr;
+
     vector<string> args(argv, argv+argc);
-    for(string s:args)
+    for(auto i=0;i<args.size();i++)
     {
-        if(s.compare("--video") == 0)
+        if(args[i].compare("--video") == 0)
         {
             show_video = true;
             continue;
         }
 
-        if(s.compare("--debug") == 0)
+        if(args[i].compare("--debug") == 0)
         {
             show_debug = true;
             continue;
         }
 
-        if(s.compare("--play") == 0)
+        if(args[i].compare("--play") == 0)
         {
             play = true;
             continue;
         }
+
+        if(args[i].compare("--file") == 0 && args.size()>i+1)
+        {
+            file = &args[++i];
+        }
     }
 
-    Controller controller{show_video,show_debug,play};
+    Controller controller{show_video,show_debug,file};
 
     return 0;
 }
 
-Controller::Controller(const bool show_video, const bool show_debug, const bool play)
+Controller::Controller(const bool show_video, const bool show_debug, string *file)
 {
     configure_logger(show_debug);
 
     configure_pins();
 
-    bool write = false;
-
     //VideoCapture cap("../out.mp4");
 
-    vision = Vision{0, show_video};
-    
+    if(file == nullptr)
+    {
+        setup_vision(show_video);
+    }
+    else
+    {
+        setup_vision(*file, show_video);
+    }
+
     loop();
+}
+
+void Controller::setup_vision(const bool show_video){
+    vision = unique_ptr<Vision>(new Vision{0, show_video});
+}
+
+void Controller::setup_vision(string &file, const bool show_video)
+{
+    vision = unique_ptr<Vision>(new Vision{file, show_video});
 }
 
 void Controller::configure_logger(const bool show_debug)
@@ -84,45 +100,12 @@ void Controller::configure_pins()
 }
 
 
-void Controller::handle_keys(bool &play)
-{
-    auto key = 0;
-    if(play && vision.fps>0)
-    {
-        LOG(DEBUG) << "Waitkey with FPS";
-        key = waitKey(1000/vision.fps) & 255;
-    }
-    else if(play)
-    {
-        LOG(DEBUG) << "waitKey(1)";
-        waitKey(1);
-    }
-    else
-    {
-        LOG(INFO) << "Waiting for key";
-        key = waitKey(0) & 255;
-    }
-
-    LOG(DEBUG) <<"Key:"<< key;
-    switch(key)
-    {
-        case 97://a - play previous frame
-            vision.previous_frame();
-            break;
-        case 32://space - pause/play
-            vision.toggle_play();
-            play = !play;
-            return;
-        default:
-            return;
-    }
-}
-
 void Controller::loop()
 {
+    
     while(true)
     {
-        vision.update();
+        vision->update();
     }
 }
 

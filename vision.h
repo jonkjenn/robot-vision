@@ -6,7 +6,7 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/gpu/gpu.hpp>
-#include <frameplayer.h>
+#include "frameplayer.h"
 #include <string>
 #include <utility.h>
 
@@ -15,7 +15,8 @@ class Vision{
         enum class Type{CAMERA, FILE};
         Type input_type;
         bool show_video, play, cuda;
-        int frame_count, index;
+        int frame_count;
+        int index = 0;
         cv::VideoCapture cap;
         cv::Size size;
         Frameplayer fp;
@@ -27,11 +28,13 @@ class Vision{
         void process_frame(cv::Mat &frame, Frameplayer &fp);
         void process_frame_cuda(cv::Mat &frame, Frameplayer &fp);
         void setup();
+        void handle_keys();
 
     public:
         double fps;
-        Vision(int camera=0, bool show_video=false);
-        Vision(std::string file, bool show_video);
+        Vision();
+        Vision(int camera, bool show_video);
+        Vision(const std::string &file, bool show_video);
         void previous_frame();
         void update();
 };
