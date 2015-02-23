@@ -232,6 +232,7 @@ void Vision::draw_hough(GpuMat &d_lines, Mat &frame)
 
 void Vision::handle_keys()
 {
+    LOG(DEBUG) << "Play: " << play;
     auto key = 0;
     if(play && fps>0)
     {

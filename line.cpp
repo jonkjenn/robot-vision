@@ -102,7 +102,6 @@ void Controller::configure_pins()
 
 void Controller::loop()
 {
-    
     while(true)
     {
         vision->update();
