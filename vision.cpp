@@ -53,8 +53,12 @@ void Vision::setup()
 
     size = Size(320,240);
     fp = Frameplayer{show_video, 9, size};
-    thread capture_thread(&Vision::capture_frames,this, ref(frame));
-    capture_thread.detach();
+
+    if(input_type == Type::CAMERA)
+    {
+        thread capture_thread(&Vision::capture_frames,this, ref(frame));
+        capture_thread.detach();
+    }
 }
 
 bool Vision::configure_cuda()
@@ -89,10 +93,18 @@ void Vision::update()
     auto loop_time = micros();
     LOG(INFO) << "Loading frame";
 
-    do{
-        lock_guard<mutex> lock(camera_mutex);
-        buffer = frame;
-    }while(buffer.empty());
+    if(input_type == Type::CAMERA)
+    {
+        do{
+            lock_guard<mutex> lock(camera_mutex);
+            buffer = frame;
+        }while(buffer.empty());
+    }else if(input_type == Type::FILE)
+    {
+        do{
+            *cap.get() >> buffer;
+        }while(buffer.empty());
+    }
 
     LOG(INFO) << "Loaded frame";
 
