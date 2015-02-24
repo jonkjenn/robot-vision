@@ -5,47 +5,54 @@ INITIALIZE_EASYLOGGINGPP
 using namespace std;
 using namespace cv;
 
+#define MY_PRIORITY (49)
+#define MAX_SAFE_STACK (8*1024)
+#define NSEC_PER_SEC (1000000000)
+
+void stack_prefault(void){
+    unsigned char dummy[MAX_SAFE_STACK];
+
+    memset(dummy, 0, MAX_SAFE_STACK);
+    return;
+}
+
+
 int main(int argc, char** argv)
 {
     bool show_video = false;
     bool play = false;
     bool show_debug = false;
 
-    string *file = nullptr;
-
     vector<string> args(argv, argv+argc);
     for(auto i=0;i<args.size();i++)
     {
-        if(args[i].compare("--video") == 0)
-        {
-            show_video = true;
-            continue;
-        }
-
         if(args[i].compare("--debug") == 0)
         {
             show_debug = true;
             continue;
         }
-
-        if(args[i].compare("--play") == 0)
-        {
-            play = true;
-            continue;
-        }
-
-        if(args[i].compare("--file") == 0 && args.size()>i+1)
-        {
-            file = &args[++i];
-        }
     }
 
-    Controller controller{show_video,show_debug,file};
+    struct sched_param param;
+    param.sched_priority = MY_PRIORITY;
+    if(sched_setscheduler(0, SCHED_FIFO, &param) == -1){
+        perror("sched_setscheduler failed");
+        exit(-1);
+    }
+
+    stack_prefault();
+
+    if(mlockall(MCL_CURRENT|MCL_FUTURE) == -1){
+        perror("mlockall failed");
+        exit(-2);
+    }
+
+    Controller controller{show_debug,args};
 
     return 0;
 }
 
-Controller::Controller(const bool show_video, const bool show_debug, string *file)
+Controller::Controller(const bool show_debug, vector<string> &args)
 {
     configure_logger(show_debug);
 
@@ -53,25 +60,9 @@ Controller::Controller(const bool show_video, const bool show_debug, string *fil
 
     //VideoCapture cap("../out.mp4");
 
-    if(file == nullptr)
-    {
-        setup_vision(show_video);
-    }
-    else
-    {
-        setup_vision(*file, show_video);
-    }
+    vision = std::unique_ptr<Vision>(new Vision{args});
 
     loop();
-}
-
-void Controller::setup_vision(const bool show_video){
-    vision = unique_ptr<Vision>(new Vision{0, show_video});
-}
-
-void Controller::setup_vision(string &file, const bool show_video)
-{
-    vision = unique_ptr<Vision>(new Vision{file, show_video});
 }
 
 void Controller::configure_logger(const bool show_debug)
@@ -102,9 +93,21 @@ void Controller::configure_pins()
 
 void Controller::loop()
 {
+    struct timespec t;
+    int interval = 500000;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    t.tv_sec++;
+
     while(true)
     {
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
         vision->update();
+
+        t.tv_nsec += interval;
+        while(t.tv_nsec >= NSEC_PER_SEC){
+            t.tv_nsec -= NSEC_PER_SEC;
+            t.tv_sec++;
+        }
     }
 }
 

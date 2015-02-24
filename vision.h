@@ -11,9 +11,13 @@
 #include <utility.h>
 #include <thread>
 #include <mutex>
+#include <time.h>
+#include <sched.h>
+#include <sys/mman.h>
 
 class Vision{
     private:
+        unsigned long previous_micros;
         std::mutex camera_mutex;
         cv::Mat frame;
         enum class Type{CAMERA, FILE};
@@ -37,9 +41,7 @@ class Vision{
 
     public:
         double fps;
-        Vision();
-        Vision(int camera, bool show_video);
-        Vision(const std::string &file, bool show_video);
+        Vision(std::vector<std::string> &args);
         void previous_frame();
         void update();
 };

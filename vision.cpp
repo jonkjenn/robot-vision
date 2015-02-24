@@ -4,28 +4,52 @@ using namespace std;
 using namespace cv;
 using namespace cv::gpu;
 
-Vision::Vision()
+Vision::Vision(vector<string> &args)
 {
-}
+    bool camera = true;
+    string file;
+    for(auto i=0;i<args.size();i++)
+    {
+        if(args[i].compare("--video") == 0)
+        {
+            show_video = true;
+            continue;
+        }
 
-Vision::Vision(int camera, bool show_video)
-{
+        if(args[i].compare("--play") == 0)
+        {
+            play = true;
+            continue;
+        }
+
+        if(args[i].compare("--cuda") == 0)
+        {
+            cuda = true;
+            continue;
+        }
+
+        if(args[i].compare("--file") == 0 && args.size()>i+1)
+        {
+            camera = false;
+            file = args[++i];
+            continue;
+        }
+    }
+
     LOG(DEBUG) << "Loading camera " << camera;
-    input_type = Type::CAMERA;
-    cap = unique_ptr<VideoCapture>(new VideoCapture(camera));
-    Vision::show_video = show_video;
-    frame_count = -1;
-    play = true;
-    setup();
-}
-
-Vision::Vision(const string &file, bool show_video)
-{
-    input_type = Type::FILE;
-    cap = unique_ptr<VideoCapture>(new VideoCapture(file));
-    Vision::show_video = show_video;
-    frame_count = cap->get(CV_CAP_PROP_FRAME_COUNT);
-    play = false;
+    if(camera)
+    {
+        input_type = Type::CAMERA;
+        cap = unique_ptr<VideoCapture>(new VideoCapture(0));
+        frame_count = -1;
+        play = true;
+    }
+    else
+    {
+        input_type = Type::FILE;
+        cap = unique_ptr<VideoCapture>(new VideoCapture(file));
+        frame_count = cap->get(CV_CAP_PROP_FRAME_COUNT);
+    }
     setup();
 }
 
@@ -39,7 +63,10 @@ void Vision::setup()
 
     fps = cap->get(CV_CAP_PROP_FPS);
 
-    configure_cuda();
+    if(cuda)
+    {
+        configure_cuda();
+    }
     //VideoWriter outputVideo;
 
     /*if(write){
@@ -75,14 +102,12 @@ void Vision::capture_frames(Mat &frame)
     Mat buffer;
     while(true)
     {
-        buffer.release();
-        LOG(DEBUG) << "Frame from camera";
         do{
             *cap.get() >> buffer;
         }while(buffer.empty());
-        LOG(DEBUG) << "Complete frame from camera";
         lock_guard<mutex> lock(camera_mutex); 
         frame = buffer;
+        buffer.release();
     }
 }
 
@@ -90,15 +115,17 @@ void Vision::update()
 {
     if(input_type == Type::FILE && index >= frame_count){handle_keys();return;}
     Mat buffer;
-    auto loop_time = micros();
-    LOG(INFO) << "Loading frame";
+    //LOG(INFO) << "Loading frame";
 
     if(input_type == Type::CAMERA)
     {
-        do{
+        {
             lock_guard<mutex> lock(camera_mutex);
             buffer = frame;
-        }while(buffer.empty());
+            frame.release();
+        }
+        if(buffer.empty()){return;}
+
     }else if(input_type == Type::FILE)
     {
         do{
@@ -107,7 +134,6 @@ void Vision::update()
     }
 
     LOG(INFO) << "Loaded frame";
-
     resize(buffer,buffer, size);
     LOG(INFO) << "Resized frame";
 
@@ -122,13 +148,23 @@ void Vision::update()
 
     fp.loop();
 
-    handle_keys();
+    if(show_video || input_type == Type::FILE)
+    {
+        if(input_type == Type::CAMERA && index%5==0)
+        {
+            handle_keys();
+        }
+        else
+        {
+            handle_keys();
+        }
+    }
 
-    auto dur = micros()-loop_time;
+    auto dur = micros()-previous_micros;
     LOG(DEBUG) << "Loop duration: " << dur << " fps: " << (float)1000000/dur;
     printf("fps: %f\n", (float)1000000/dur);
-
     index++;
+    previous_micros = micros();
 }
 
 void Vision::previous_frame()
@@ -170,18 +206,27 @@ void Vision::hough(Mat &frame)
 
     fp.show_frame(frame);
 
+    LOG(DEBUG) << "Grayscale start";
     cvtColor(frame,frame,CV_BGR2GRAY);
+    LOG(DEBUG) << "Grayscale stop";
     fp.show_frame(frame);
 
+
+    LOG(DEBUG) << "Blur start";
     blur(frame, frame, Size(4,4));
+    LOG(DEBUG) << "Blur stop";
     fp.show_frame(frame);
 
+    LOG(DEBUG) << "Canny start";
     Mat subframe(frame,Rect(0,frame.rows-40,frame.cols,40));
     Canny(subframe, subframe, 50,100, 3);
+    LOG(DEBUG) << "Canny stop";
     fp.show_frame(frame);
 
+    LOG(DEBUG) << "HOUGH start";
     vector<Vec4i> lines;
-    HoughLinesP(subframe, lines, 1, CV_PI/720, 10,10,10);
+    HoughLinesP(subframe, lines, 1, CV_PI/360, 10,10,10);
+    LOG(DEBUG) << "HOUGH stop";
 
     if(fp.enabled()){
         cvtColor(frame, frame, CV_GRAY2BGR);
@@ -234,7 +279,7 @@ void Vision::hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
     gpu::HoughLinesBuf d_buf;
 
     LOG(DEBUG) << "Hough start";
-    gpu::HoughLinesP(gpu_frame2, d_lines,d_buf, 1.0f, (float)(CV_PI/360.0f),10,5);
+    gpu::HoughLinesP(gpu_frame2, d_lines,d_buf, 1.0f, (float)(CV_PI/180.0f),10,5);
     LOG(DEBUG) << "Hough stop";
 
     if(fp.enabled()){

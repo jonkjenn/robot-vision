@@ -2,6 +2,10 @@
 #include "easylogging++.h"
 #include <utility.h>
 #include "QTRSensors.h"
+#include <memory>
+#include <time.h>
+#include <sched.h>
+#include <sys/mman.h>
 
 class Controller{
     private:
@@ -13,6 +17,6 @@ class Controller{
         void setup_vision(const bool show_video);
         void setup_vision(std::string &file, const bool show_video);
     public:
-        Controller(const bool show_video, const bool show_debug, std::string *file);
+        Controller(const bool show_debug, std::vector<std::string> &args);
 };
 
