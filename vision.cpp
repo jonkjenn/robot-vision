@@ -53,6 +53,8 @@ void Vision::setup()
 
     size = Size(320,240);
     fp = Frameplayer{show_video, 9, size};
+    thread capture_thread(&Vision::capture_frames,this, ref(frame));
+    capture_thread.detach();
 }
 
 bool Vision::configure_cuda()
@@ -64,27 +66,46 @@ bool Vision::configure_cuda()
     return cuda;
 }
 
+void Vision::capture_frames(Mat &frame)
+{
+    Mat buffer;
+    while(true)
+    {
+        buffer.release();
+        LOG(DEBUG) << "Frame from camera";
+        do{
+            *cap.get() >> buffer;
+        }while(buffer.empty());
+        LOG(DEBUG) << "Complete frame from camera";
+        lock_guard<mutex> lock(camera_mutex); 
+        frame = buffer;
+    }
+}
+
 void Vision::update()
 {
     if(input_type == Type::FILE && index >= frame_count){handle_keys();return;}
-    Mat frame;
+    Mat buffer;
     auto loop_time = micros();
     LOG(INFO) << "Loading frame";
+
     do{
-        *cap.get() >> frame;
-    }while(frame.empty());
+        lock_guard<mutex> lock(camera_mutex);
+        buffer = frame;
+    }while(buffer.empty());
+
     LOG(INFO) << "Loaded frame";
 
-    resize(frame,frame, size);
+    resize(buffer,buffer, size);
     LOG(INFO) << "Resized frame";
 
     if(cuda)
     {
-        process_frame_cuda(frame);
+        process_frame_cuda(buffer);
     }
     else
     {
-        process_frame(frame);
+        process_frame(buffer);
     }
 
     fp.loop();

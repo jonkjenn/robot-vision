@@ -9,9 +9,13 @@
 #include "frameplayer.h"
 #include <string>
 #include <utility.h>
+#include <thread>
+#include <mutex>
 
 class Vision{
     private:
+        std::mutex camera_mutex;
+        cv::Mat frame;
         enum class Type{CAMERA, FILE};
         Type input_type;
         bool show_video, play, cuda;
@@ -29,6 +33,7 @@ class Vision{
         void process_frame_cuda(cv::Mat &frame);
         void setup();
         void handle_keys();
+        void capture_frames(cv::Mat &frame);
 
     public:
         double fps;
