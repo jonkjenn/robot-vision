@@ -17,7 +17,7 @@
 
 class Vision{
     private:
-        unsigned long previous_micros;
+        unsigned long previous_micros = 0;
         std::mutex camera_mutex;
         cv::Mat frame;
         enum class Type{CAMERA, FILE};
