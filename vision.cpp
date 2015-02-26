@@ -49,6 +49,8 @@ Vision::Vision(vector<string> &args)
         input_type = Type::FILE;
         cap = unique_ptr<VideoCapture>(new VideoCapture(file));
         frame_count = cap->get(CV_CAP_PROP_FRAME_COUNT);
+    LOG(DEBUG) << "frame_count " << frame_count;
+        play = false;
     }
     setup();
 }
@@ -62,6 +64,8 @@ void Vision::setup()
     }
 
     fps = cap->get(CV_CAP_PROP_FPS);
+
+    LOG(DEBUG) << "Fps:" << fps;
 
     if(cuda)
     {
@@ -86,6 +90,7 @@ void Vision::setup()
         thread capture_thread(&Vision::capture_frames,this, ref(frame));
         capture_thread.detach();
     }
+    previous_micros = micros();
 }
 
 bool Vision::configure_cuda()

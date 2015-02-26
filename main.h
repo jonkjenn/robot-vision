@@ -6,6 +6,7 @@
 #include <time.h>
 #include <sched.h>
 #include <sys/mman.h>
+#include <sys/utsname.h>
 
 class Controller{
     private:
