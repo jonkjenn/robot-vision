@@ -115,7 +115,7 @@ void Vision::update()
 {
     if(input_type == Type::FILE && index >= frame_count){handle_keys();return;}
     Mat buffer;
-    //LOG(INFO) << "Loading frame";
+    LOG(INFO) << "Loading frame";
 
     if(input_type == Type::CAMERA)
     {
@@ -128,9 +128,8 @@ void Vision::update()
 
     }else if(input_type == Type::FILE)
     {
-        do{
-            *cap.get() >> buffer;
-        }while(buffer.empty());
+        *cap.get() >> buffer;
+        if(buffer.empty()){return;}
     }
 
     LOG(INFO) << "Loaded frame";
