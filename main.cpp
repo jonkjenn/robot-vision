@@ -1,4 +1,4 @@
-#include <main.h>
+#include <main.hpp>
 
 INITIALIZE_EASYLOGGINGPP
 

@@ -1,4 +1,4 @@
-#include <vision.h>
+#include <vision.hpp>
 
 using namespace std;
 using namespace cv;
@@ -34,6 +34,12 @@ Vision::Vision(vector<string> &args)
             file = args[++i];
             continue;
         }
+
+        if(args[i].compare("--nowait") == 0)
+        {
+            no_wait = true;
+            continue;
+        }
     }
 
     LOG(DEBUG) << "Loading camera " << camera;
@@ -49,8 +55,7 @@ Vision::Vision(vector<string> &args)
         input_type = Type::FILE;
         cap = unique_ptr<VideoCapture>(new VideoCapture(file));
         frame_count = cap->get(CV_CAP_PROP_FRAME_COUNT);
-    LOG(DEBUG) << "frame_count " << frame_count;
-        play = false;
+        LOG(DEBUG) << "frame_count " << frame_count;
     }
     setup();
 }
@@ -77,12 +82,12 @@ void Vision::setup()
         int ex = static_cast<int>(cap->get(CV_CAP_PROP_FOURCC));
     }*/
 
-
     /*if(write){
         outputVideo.open("../out.mp4",CV_FOURCC('m','4','s','2'),30,s,true);
     }*/
 
     size = Size(320,240);
+    sub_rect = Rect(0,size.height-41,size.width,40);
     fp = Frameplayer{show_video, 9, size};
 
     if(input_type == Type::CAMERA)
@@ -90,16 +95,39 @@ void Vision::setup()
         thread capture_thread(&Vision::capture_frames,this, ref(frame));
         capture_thread.detach();
     }
+    if(input_type == Type::FILE)
+    {
+        thread capture_thread(&Vision::capture_frames_file,this, ref(frame));
+        capture_thread.detach();
+    }
     previous_micros = micros();
 }
 
-bool Vision::configure_cuda()
+void Vision::configure_cuda()
 {
     cuda = gpu::getCudaEnabledDeviceCount()>0;
     LOG(INFO) <<"Setting CUDA device";
-    if(cuda){gpu::setDevice(0);}
+    if(!cuda){return;}
+    gpu::setDevice(0);
     LOG(DEBUG) << "Cuda? " << cuda;
-    return cuda;
+
+    blur_filter = gpu::createGaussianFilter_GPU(CV_8U,Size(3,3),-1);
+}
+
+void Vision::capture_frames_file(Mat &frame)
+{
+    Mat buffer;
+    while(true)
+    {
+        do{
+            delayMicroseconds(10);
+        }while(!frame.empty());
+        *cap.get() >> buffer;
+        lock_guard<mutex> lock(camera_mutex); 
+        frame = buffer;
+        resize(frame,frame, size);
+        buffer.release();
+    }
 }
 
 void Vision::capture_frames(Mat &frame)
@@ -112,6 +140,7 @@ void Vision::capture_frames(Mat &frame)
         }while(buffer.empty());
         lock_guard<mutex> lock(camera_mutex); 
         frame = buffer;
+        resize(frame,frame, size);
         buffer.release();
     }
 }
@@ -133,13 +162,18 @@ void Vision::update()
 
     }else if(input_type == Type::FILE)
     {
-        *cap.get() >> buffer;
-        if(buffer.empty()){return;}
+        {
+            lock_guard<mutex> lock(camera_mutex);
+            if(frame.empty()){LOG(DEBUG) << "Buffer empty"; return;}
+            buffer = frame;
+            frame.release();
+        }
+        /*cap.get() >> buffer;
+        if(buffer.empty()){return;}*/
     }
 
     LOG(INFO) << "Loaded frame";
-    resize(buffer,buffer, size);
-    LOG(INFO) << "Resized frame";
+    //LOG(INFO) << "Resized frame";
 
     if(cuda)
     {
@@ -152,7 +186,7 @@ void Vision::update()
 
     fp.loop();
 
-    if(show_video || input_type == Type::FILE)
+    if(!no_wait && (show_video || input_type == Type::FILE))
     {
         if(input_type == Type::CAMERA && index%5==0)
         {
@@ -183,7 +217,6 @@ void Vision::process_frame_cuda(Mat &frame)
 {
     LOG(DEBUG) << "Processing frame on GPU";
 
-    gpu::GpuMat gpu_frame;
     gpu_frame.upload(frame);//Uploads the frame to the GPU
     LOG(DEBUG) << "Cuda frame uploaded ";
 
@@ -214,7 +247,6 @@ void Vision::hough(Mat &frame)
     cvtColor(frame,frame,CV_BGR2GRAY);
     LOG(DEBUG) << "Grayscale stop";
     fp.show_frame(frame);
-
 
     LOG(DEBUG) << "Blur start";
     blur(frame, frame, Size(4,4));
@@ -249,41 +281,64 @@ void Vision::hough_gpu(gpu::GpuMat &gpu_frame, Mat &frame)
 
     LOG(DEBUG) << "Grayscale start";
     
-    gpu::GpuMat gpu_frame2(gpu_frame.rows, gpu_frame.cols, gpu_frame.type());
-    gpu::cvtColor(gpu_frame,gpu_frame2,CV_BGR2GRAY);
+    /*if(gpu_grayscale.empty())
+    {
+        gpu_grayscale = gpu::GpuMat(gpu_frame.rows, gpu_frame.cols, gpu_frame.type());
+    }*/
+    gpu::cvtColor(gpu_frame,gpu_grayscale,CV_BGR2GRAY,1);
     LOG(DEBUG) << "Grayscale stop";
 
-    fp.show_frame(gpu_frame2);
+    fp.show_frame(gpu_grayscale);
     
     LOG(DEBUG) << "Blur start";
 
     //Create border for using image with blur, dont know why need 2 pixels instead of 1
-    gpu::GpuMat gpu_frame3(gpu_frame2.rows +4 , gpu_frame2.cols + 4, gpu_frame2.type());
-    gpu::copyMakeBorder(gpu_frame2, gpu_frame3, 2, 2 , 2, 2, BORDER_REPLICATE);
+    /*if(gpu_border.empty()){
+        gpu_border = gpu::GpuMat gpu::GpuMat(gpu_grayscale.rows +4 , gpu_grayscale.cols + 4, gpu_grayscale.type());
+    }
 
-    gpu::blur(gpu_frame3, gpu_frame, Size(3,3));
+    gpu::copyMakeBorder(gpu_grayscale, gpu_frame3, 2, 2 , 2, 2, BORDER_REPLICATE);*/
+
+    /*if(gpu_blurbuffer.empty())
+    {
+        gpu_blurbuffer = gpu::GpuMat(gpu_frame.rows, gpu_frame.cols, gpu_frame.type());
+    }*/
+
+/*    if(gpu_blur.empty())
+    {
+        gpu_blur = gpu::GpuMat(gpu_frame.rows, gpu_frame.cols, gpu_frame.type());
+    }
+
+    gpu::blur(gpu_grayscale, gpu_blur, Size(3,3));
 
     gpu::GpuMat roi(gpu_frame, Rect(2, 2, gpu_frame.cols-4, gpu_frame.rows-4));
+    */
+
+    LOG(DEBUG) << "Subframe start";
+    gpu_subframe = gpu::GpuMat(gpu_grayscale,sub_rect);
+
+    LOG(DEBUG) << "Filter start";
+
+    blur_filter->apply(gpu_subframe, gpu_blur, Rect(0,0,gpu_subframe.cols, gpu_subframe.rows));
 
     LOG(DEBUG) << "Blur stop";
 
-    fp.show_frame(roi);
+    fp.show_frame(gpu_blur);
 
     //gpu::GpuMat subframe(gpu_frame,Rect(0,frame.rows-40,frame.cols,40));
     //gpu::GpuMat subframe2(subframe.rows, subframe.cols, subframe.type());
     //gpu::Canny(subframe, subframe2, 50,100, 3);
 
+
+
     LOG(DEBUG) << "Canny start";
-    gpu::Canny(roi, gpu_frame2, 50,100, 3);
-    LOG(DEBUG) << "Canny stop";
+    gpu::Canny(gpu_blur, gpu_canny, 50.0f,100.0f);
+    LOG(DEBUG) << "Canny stop, rows " << gpu_canny.rows << "cols " << gpu_canny.cols;
 
-    fp.show_frame(gpu_frame2);
-
-    gpu::GpuMat d_lines;
-    gpu::HoughLinesBuf d_buf;
+    fp.show_frame(gpu_canny);
 
     LOG(DEBUG) << "Hough start";
-    gpu::HoughLinesP(gpu_frame2, d_lines,d_buf, 1.0f, (float)(CV_PI/180.0f),10,5);
+    gpu::HoughLinesP(gpu_canny, d_lines,d_buf, 1.0f,hough_angles,10,10);
     LOG(DEBUG) << "Hough stop";
 
     if(fp.enabled()){
@@ -314,12 +369,16 @@ void Vision::draw_hough(GpuMat &d_lines, Mat &frame)
 
 void Vision::handle_keys()
 {
+    auto dur_ms = (micros() - previous_micros)/1000;
     LOG(DEBUG) << "Play: " << play;
     auto key = 0;
     if(play && fps>0)
     {
         LOG(DEBUG) << "Waitkey with FPS";
-        key = waitKey(1000/fps) & 255;
+        unsigned int wait_dur = 1000/fps-dur_ms;
+        if(wait_dur<=0){wait_dur = 1;}
+        LOG(DEBUG) << "Waiting for " << wait_dur << " ms";
+        key = waitKey(wait_dur) & 255;
     }
     else if(play)
     {

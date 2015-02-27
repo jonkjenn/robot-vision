@@ -43,7 +43,7 @@
 #define QTR_MAX_SENSORS 16
 
 #include <vector>
-#include "utility.h"
+#include "utility.hpp"
 
 
 // This class cannot be instantiated directly (it has no constructor).
