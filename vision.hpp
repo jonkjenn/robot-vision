@@ -8,7 +8,7 @@
 #include <opencv2/gpu/gpu.hpp>
 #include "frameplayer.hpp"
 #include <string>
-#include <utility.hpp>
+#include "utility.hpp"
 #include <thread>
 #include <mutex>
 #include <time.h>
@@ -22,7 +22,7 @@ class Vision{
         cv::Mat frame;
         enum class Type{CAMERA, FILE};
         Type input_type;
-        bool show_video, play, cuda, no_wait;
+        bool show_video = false, play = false, cuda = false, no_wait = false;
         int frame_count;
         int index = 0;
         std::unique_ptr<cv::VideoCapture> cap;

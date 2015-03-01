@@ -1,4 +1,4 @@
-#include <vision.hpp>
+#include "vision.hpp"
 
 using namespace std;
 using namespace cv;
@@ -8,7 +8,7 @@ Vision::Vision(vector<string> &args)
 {
     bool camera = true;
     string file;
-    for(auto i=0;i<args.size();i++)
+    for(size_t i=0;i<args.size();i++)
     {
         if(args[i].compare("--video") == 0)
         {
@@ -42,6 +42,8 @@ Vision::Vision(vector<string> &args)
         }
     }
 
+    LOG(DEBUG) << "Cuda: " << cuda;
+
     LOG(DEBUG) << "Loading camera " << camera;
     if(camera)
     {
@@ -71,6 +73,8 @@ void Vision::setup()
     fps = cap->get(CV_CAP_PROP_FPS);
 
     LOG(DEBUG) << "Fps:" << fps;
+
+    LOG(DEBUG) << "Cuda: " << cuda;
 
     if(cuda)
     {
@@ -121,8 +125,9 @@ void Vision::capture_frames_file(Mat &frame)
     {
         do{
             delayMicroseconds(10);
-        }while(!frame.empty());
+        }while(!play || !frame.empty());
         *cap.get() >> buffer;
+        if(buffer.empty()){continue;}
         lock_guard<mutex> lock(camera_mutex); 
         frame = buffer;
         resize(frame,frame, size);
@@ -147,9 +152,9 @@ void Vision::capture_frames(Mat &frame)
 
 void Vision::update()
 {
-    if(input_type == Type::FILE && index >= frame_count){handle_keys();return;}
+    if(input_type == Type::FILE && index >= frame_count){play = false; handle_keys();return;}
     Mat buffer;
-    LOG(INFO) << "Loading frame";
+    auto loading_time = micros();
 
     if(input_type == Type::CAMERA)
     {
@@ -172,7 +177,7 @@ void Vision::update()
         if(buffer.empty()){return;}*/
     }
 
-    LOG(INFO) << "Loaded frame";
+    LOG(INFO) << "Loaded frame: " << (micros() - loading_time) << " microseconds";
     //LOG(INFO) << "Resized frame";
 
     if(cuda)

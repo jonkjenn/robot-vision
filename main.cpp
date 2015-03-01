@@ -1,4 +1,4 @@
-#include <main.hpp>
+#include "main.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     bool show_debug = false;
 
     vector<string> args(argv, argv+argc);
-    for(auto i=0;i<args.size();i++)
+    for(size_t i=0;i<args.size();i++)
     {
         if(args[i].compare("--debug") == 0)
         {
@@ -56,6 +56,8 @@ int main(int argc, char** argv)
 Controller::Controller(const bool show_debug, vector<string> &args)
 {
     configure_logger(show_debug);
+
+    LOG(DEBUG) << "Show debug " << show_debug;
 
     configure_pins();
 
@@ -116,6 +118,7 @@ void Controller::loop()
         int interval = 50000;
         clock_gettime(CLOCK_MONOTONIC, &t);
         t.tv_sec++;
+
         while(true)
         {
             clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
