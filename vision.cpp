@@ -6,10 +6,16 @@ using namespace cv::gpu;
 
 Vision::Vision(vector<string> &args)
 {
-    bool camera = true;
     string file;
     for(size_t i=0;i<args.size();i++)
     {
+        if(args[i].compare("--camera") == 0)
+        {
+            camera = true;
+            camera_id = stoi(args[++i]);//should be more checks here
+            continue;
+        }
+
         if(args[i].compare("--video") == 0)
         {
             show_video = true;
@@ -31,7 +37,7 @@ Vision::Vision(vector<string> &args)
         if(args[i].compare("--file") == 0 && args.size()>i+1)
         {
             camera = false;
-            file = args[++i];
+            file = args[++i];//should be more checks here
             continue;
         }
 
@@ -48,7 +54,7 @@ Vision::Vision(vector<string> &args)
     if(camera)
     {
         input_type = Type::CAMERA;
-        cap = unique_ptr<VideoCapture>(new VideoCapture(1));
+        cap = unique_ptr<VideoCapture>(new VideoCapture(camera_id));
         cap->set(CV_CAP_PROP_FRAME_WIDTH,898);
         cap->set(CV_CAP_PROP_FRAME_HEIGHT,200);
         cap->set(CV_CAP_PROP_FPS,240);

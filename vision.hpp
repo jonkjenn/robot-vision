@@ -22,7 +22,8 @@ class Vision{
         cv::Mat frame;
         enum class Type{CAMERA, FILE};
         Type input_type;
-        bool show_video = false, play = false, cuda = false, no_wait = false;
+        bool show_video = false, play = false, cuda = false, no_wait = false, camera = true;
+        int camera_id = 0;
         int frame_count;
         int index = 0;
         std::unique_ptr<cv::VideoCapture> cap;
