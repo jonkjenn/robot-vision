@@ -48,7 +48,10 @@ Vision::Vision(vector<string> &args)
     if(camera)
     {
         input_type = Type::CAMERA;
-        cap = unique_ptr<VideoCapture>(new VideoCapture(0));
+        cap = unique_ptr<VideoCapture>(new VideoCapture(1));
+        cap->set(CV_CAP_PROP_FRAME_WIDTH,898);
+        cap->set(CV_CAP_PROP_FRAME_HEIGHT,200);
+        cap->set(CV_CAP_PROP_FPS,240);
         frame_count = -1;
         play = true;
     }

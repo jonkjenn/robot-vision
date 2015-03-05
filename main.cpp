@@ -136,7 +136,7 @@ void Controller::loop()
         while(true)
         {
             vision->update();
-            delayMicroseconds(50);
+            //delayMicroseconds(50);
         }
     }
 }
