@@ -1,4 +1,5 @@
 #include "main.hpp"
+#include "SimpleGPIO/SimpleGPIO.h"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -8,6 +9,7 @@ using namespace cv;
 #define MY_PRIORITY (49)
 #define MAX_SAFE_STACK (8*1024)
 #define NSEC_PER_SEC (1000000000)
+int pin = -1;
 
 void stack_prefault(void){
     unsigned char dummy[MAX_SAFE_STACK];
@@ -34,6 +36,43 @@ bool preempt_check()
     return crit1 && crit2;
 }
 
+int prevval = 0;
+void readPin(int pin)
+{
+    unsigned int val = 0;
+    gpio_export(pin);
+    gpio_set_dir(pin, INPUT_PIN);
+    gpio_get_value(pin, &val);
+    gpio_unexport(pin);
+    if(val != prevval){
+        LOG(DEBUG) << "READPIN: " << val;
+        prevval = val;
+    }
+}
+
+unsigned int res = 0;
+int irtime = 0;
+void irarray(int pin)
+{
+    res = 1;
+    irtime = 0;
+    gpio_export(pin);
+    gpio_set_dir(pin,OUTPUT_PIN);
+    gpio_set_value(pin,HIGH);
+    delayMicroseconds(10);
+    gpio_set_dir(pin,INPUT_PIN);
+    do
+    {
+        gpio_get_value(pin, &res);
+        irtime++;
+        delayMicroseconds(100000);
+    }while(res != 0);
+
+    LOG(DEBUG) << "Time: " << irtime;
+    gpio_unexport(pin);
+}
+
+
 int main(int argc, char** argv)
 {
     bool show_debug = false;
@@ -46,7 +85,21 @@ int main(int argc, char** argv)
             show_debug = true;
             continue;
         }
+
+        if(args[i].compare("--readpin") == 0)
+        {
+            pin = stoi(args[++i]);
+        }
     }
+
+    if(pin>=0)
+    {
+        while(true)
+        {
+            irarray(pin);
+        }
+    }
+
 
     Controller controller{show_debug,args};
 

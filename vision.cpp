@@ -57,6 +57,7 @@ Vision::Vision(vector<string> &args)
         cap = unique_ptr<VideoCapture>(new VideoCapture(camera_id));
         cap->set(CV_CAP_PROP_FRAME_WIDTH,898);
         cap->set(CV_CAP_PROP_FRAME_HEIGHT,200);
+        LOG(DEBUG) << "Setting fps";
         cap->set(CV_CAP_PROP_FPS,240);
         frame_count = -1;
         play = true;
