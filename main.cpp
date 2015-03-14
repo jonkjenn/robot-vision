@@ -25,7 +25,7 @@ bool preempt_check()
     FILE *fd;
 
     uname(&u);
-    crit1 = strcasestr (u.version, "PREEMPT RT");
+    crit1 = strcasestr (u.version, "PREEMPT");
 
     if ((fd = fopen("/sys/kernel/realtime","r")) != NULL) {
         int flag;
@@ -33,7 +33,7 @@ bool preempt_check()
         fclose(fd);
     }
 
-    return crit1 && crit2;
+    return crit1 || crit2;
 }
 
 int prevval = 0;
@@ -117,6 +117,7 @@ Controller::Controller(const bool show_debug, vector<string> &args)
     //VideoCapture cap("../out.mp4");
 
     vision = std::unique_ptr<Vision>(new Vision{args});
+    arduino = std::unique_ptr<Arduinocomm>(new Arduinocomm);
 
     loop();
 }
@@ -151,6 +152,7 @@ void Controller::loop()
 {
     bool preempt = preempt_check();
 
+    LOG(DEBUG) << "Preempt? " << preempt;
     if(preempt)
     {
         struct sched_param param;
@@ -175,6 +177,7 @@ void Controller::loop()
         while(true)
         {
             clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
+            arduino->update();
             vision->update();
 
             t.tv_nsec += interval;
