@@ -22,7 +22,7 @@ class Vision{
         cv::Mat frame;
         enum class Type{CAMERA, FILE};
         Type input_type;
-        bool show_video = false, play = false, cuda = false, no_wait = false, camera = true;
+        bool show_video = false, play = false, cuda = false, no_wait = false, camera = true, ps4 = false;
         int camera_id = 0;
         int frame_count;
         int index = 0;

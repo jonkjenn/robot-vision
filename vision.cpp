@@ -34,6 +34,12 @@ Vision::Vision(vector<string> &args)
             continue;
         }
 
+        if(args[i].compare("--ps4") == 0)
+        {
+            ps4 = true;
+            continue;
+        }
+
         if(args[i].compare("--file") == 0 && args.size()>i+1)
         {
             camera = false;
@@ -57,7 +63,7 @@ Vision::Vision(vector<string> &args)
         cap = unique_ptr<VideoCapture>(new VideoCapture(camera_id));
         cap->set(CV_CAP_PROP_FRAME_WIDTH,898);
         cap->set(CV_CAP_PROP_FRAME_HEIGHT,200);
-        cap->set(CV_CAP_PROP_FPS,240);
+        cap->set(CV_CAP_PROP_FPS,120);
         frame_count = -1;
         play = true;
     }
@@ -75,7 +81,7 @@ void Vision::setup()
 {
     if(!cap->isOpened())
     {
-        LOG(ERROR) << "Could not open video/camera";
+        LOG(ERROR) << "Could not open vidieo/camera";
         return;
     }
 
@@ -99,8 +105,17 @@ void Vision::setup()
         outputVideo.open("../out.mp4",CV_FOURCC('m','4','s','2'),30,s,true);
     }*/
 
-    size = Size(320,240);
-    sub_rect = Rect(0,size.height-41,size.width,40);
+    if(ps4)
+    {
+        //size = Size(320,192);//Regular frame
+        size = Size(896,200);
+        sub_rect = Rect(0,0,size.width,size.height);
+    }
+    else
+    {
+        size = Size(320,240);
+        sub_rect = Rect(0,size.height-41,size.width,40);
+    }
     fp = Frameplayer{show_video, 9, size};
 
     if(input_type == Type::CAMERA)
@@ -139,7 +154,7 @@ void Vision::capture_frames_file(Mat &frame)
         if(buffer.empty()){continue;}
         lock_guard<mutex> lock(camera_mutex); 
         frame = buffer;
-        resize(frame,frame, size);
+        //resize(frame,frame, size);
         buffer.release();
     }
 }
@@ -153,8 +168,19 @@ void Vision::capture_frames(Mat &frame)
             *cap.get() >> buffer;
         }while(buffer.empty());
         lock_guard<mutex> lock(camera_mutex); 
-        frame = buffer;
-        resize(frame,frame, size);
+        if(ps4)
+        {
+            //frame = buffer(Rect(48-1,0,320,200)); //left frame
+            //frame = buffer(Rect(48+320,0,320,200));
+            //frame = buffer(Rect(0,192-1,896,8));
+            frame = buffer;
+            printf("Size %d %d\n", buffer.rows, buffer.cols);
+        }
+        else
+        {
+            frame = buffer;
+        }
+        //resize(frame,frame, size);
         buffer.release();
     }
 }
@@ -268,7 +294,8 @@ void Vision::hough(Mat &frame)
     fp.show_frame(frame);
 
     LOG(DEBUG) << "Canny start";
-    Mat subframe(frame,Rect(0,frame.rows-40,frame.cols,40));
+    //Mat subframe(frame,Rect(0,frame.rows-40,frame.cols,40));
+    Mat subframe(frame);
     Canny(subframe, subframe, 50,100, 3);
     LOG(DEBUG) << "Canny stop";
     fp.show_frame(frame);
