@@ -84,13 +84,14 @@
 
 #include "SerialStream.h"
 #include <string>
+#include <functional>
 
 extern "C" {
   // callback function types
   typedef void (*callbackFunction)(unsigned char, int);
   typedef void (*systemResetCallbackFunction)(void);
   typedef void (*stringCallbackFunction)(char *);
-  typedef void (*sysexCallbackFunction)(unsigned char command, unsigned char argc, unsigned char *argv);
+//  typedef void (*sysexCallbackFunction)(unsigned char command, unsigned char argc, unsigned char *argv);
 }
 
 
@@ -123,13 +124,15 @@ class FirmataClass
     void attach(unsigned char command, callbackFunction newFunction);
     void attach(unsigned char command, systemResetCallbackFunction newFunction);
     void attach(unsigned char command, stringCallbackFunction newFunction);
-    void attach(unsigned char command, sysexCallbackFunction newFunction);
+    //void attach(unsigned char command, sysexCallbackFunction newFunction);
     void detach(unsigned char command);
 
     /* utility methods */
     void sendValueAsTwo7bitBytes(int value);
     void startSysex(void);
     void endSysex(void);
+
+    std::function<void(unsigned char, unsigned char, unsigned char*)> currentSysexCallback;
 
   private:
     LibSerial::SerialStream FirmataStream;
@@ -145,14 +148,15 @@ class FirmataClass
     boolean parsingSysex;
     int sysexBytesRead;
     /* callback functions */
-    callbackFunction currentAnalogCallback;
+    //callbackFunction currentAnalogCallback;
+    std::function<void(unsigned char, int)> currentAnalogCallback;
     callbackFunction currentDigitalCallback;
     callbackFunction currentReportAnalogCallback;
     callbackFunction currentReportDigitalCallback;
     callbackFunction currentPinModeCallback;
     systemResetCallbackFunction currentSystemResetCallback;
     stringCallbackFunction currentStringCallback;
-    sysexCallbackFunction currentSysexCallback;
+    //sysexCallbackFunction currentSysexCallback;
 
     /* private methods ------------------------------ */
     void processSysexMessage(void);

@@ -13,6 +13,7 @@
 //******************************************************************************
 //* Includes
 //******************************************************************************
+#include "easylogging++.h"
 
 #include "Firmata.h"
 #include "binary.h"
@@ -22,7 +23,7 @@ extern "C" {
 #include <stdlib.h>
 }
 
-#define byte unsigned char
+#define byte uint8_t
 
 using namespace LibSerial;
 using namespace std;
@@ -39,12 +40,14 @@ void FirmataClass::sendValueAsTwo7bitBytes(int value)
 
 void FirmataClass::startSysex(void)
 {
-    FirmataStream << (START_SYSEX);
+    
+    FirmataStream << (uint8_t)(START_SYSEX);
 }
 
 void FirmataClass::endSysex(void)
 {
-    FirmataStream << (END_SYSEX);
+    LOG(DEBUG) << "Writing END_SYSEX " << END_SYSEX;
+    FirmataStream << (uint8_t)(END_SYSEX);
 }
 
 //******************************************************************************
@@ -64,14 +67,18 @@ FirmataClass::FirmataClass()
 /* begin method with default serial bitrate */
 void FirmataClass::begin()
 {
-    begin("/dev/ttyACM0",SerialStreamBuf::BAUD_115200);
+    begin("/dev/ttyACM0",SerialStreamBuf::BAUD_57600);
 }
 
 /* begin method for overriding default serial bitrate */
 void FirmataClass::begin(string port, SerialStreamBuf::BaudRateEnum speed)
 {
+    FirmataStream.SetBaudRate(speed);
+    FirmataStream.SetCharSize(SerialStreamBuf::CHAR_SIZE_8);
+    FirmataStream.SetNumOfStopBits(1);
+    FirmataStream.SetParity(SerialStreamBuf::PARITY_NONE);
+    FirmataStream.SetFlowControl(SerialStreamBuf::FLOW_CONTROL_NONE);
     FirmataStream.Open(port);
-    FirmataStream.SetBaudRate(SerialStreamBuf::BAUD_115200);
 }
 
 // output the protocol version message to the serial port
@@ -125,7 +132,7 @@ void FirmataClass::processSysexMessage(void)
             break;
         default:
             if (currentSysexCallback)
-                (*currentSysexCallback)(storedInputData[0], sysexBytesRead - 1, storedInputData + 1);
+                (currentSysexCallback)(storedInputData[0], sysexBytesRead - 1, storedInputData + 1);
     }
 }
 
@@ -136,6 +143,8 @@ void FirmataClass::processInput(void)
     int command;
 
     // TODO make sure it handles -1 properly
+
+    //LOG(DEBUG) << "char: " << (unsigned int)inputData;
 
     if (parsingSysex) {
         if (inputData == END_SYSEX) {
@@ -155,7 +164,7 @@ void FirmataClass::processInput(void)
             switch (executeMultiByteCommand) {
                 case ANALOG_MESSAGE:
                     if (currentAnalogCallback) {
-                        (*currentAnalogCallback)(multiByteChannel,
+                        (currentAnalogCallback)(multiByteChannel,
                                 (storedInputData[0] << 7)
                                 + storedInputData[1]);
                     }
@@ -259,7 +268,10 @@ void FirmataClass::sendSysex(byte command, byte bytec, byte *bytev)
 {
     byte i;
     startSysex();
+
     FirmataStream << (command);
+    LOG(DEBUG) << "Writing command: " << command << endl;
+
     for (i = 0; i < bytec; i++) {
         sendValueAsTwo7bitBytes(bytev[i]);
     }
@@ -296,12 +308,12 @@ void FirmataClass::attach(byte command, callbackFunction newFunction)
     }
 }
 
-void FirmataClass::attach(byte command, systemResetCallbackFunction newFunction)
+/*void FirmataClass::attach(byte command, systemResetCallbackFunction newFunction)
 {
     switch (command) {
         case SYSTEM_RESET: currentSystemResetCallback = newFunction; break;
     }
-}
+}*/
 
 void FirmataClass::attach(byte command, stringCallbackFunction newFunction)
 {
@@ -310,10 +322,10 @@ void FirmataClass::attach(byte command, stringCallbackFunction newFunction)
     }
 }
 
-void FirmataClass::attach(byte command, sysexCallbackFunction newFunction)
+/*void FirmataClass::attach(byte command, sysexCallbackFunction newFunction)
 {
     currentSysexCallback = newFunction;
-}
+}*/
 
 void FirmataClass::detach(byte command)
 {
@@ -322,6 +334,6 @@ void FirmataClass::detach(byte command)
         case STRING_DATA: currentStringCallback = NULL; break;
         case START_SYSEX: currentSysexCallback = NULL; break;
         default:
-                          attach(command, (callbackFunction)NULL);
+          attach(command, (callbackFunction)NULL);
     }
 }

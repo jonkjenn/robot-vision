@@ -11,9 +11,16 @@ using namespace cv;
 #define NSEC_PER_SEC (1000000000)
 int pin = -1;
 
-void sysexCallback(unsigned char command, unsigned char argc, unsigned char *argv)
+void Controller::sysexCallback(unsigned char command, unsigned char argc, unsigned char *argv)
 {
-    LOG(DEBUG) << "Got sysex call"  << endl;
+    LOG(DEBUG) << "Got sysex call length"  << (uint8_t) argc << endl;
+
+    for(int i=0;i<argc;i++)
+    {
+        LOG(DEBUG) << (unsigned int)argv[i] <<endl;
+    }
+
+    arduino->sendSysex(command, argc, argv);
 }
 
 void stack_prefault(void){
@@ -125,7 +132,7 @@ Controller::Controller(const bool show_debug, vector<string> &args)
     //arduino = std::unique_ptr<Arduinocomm>(new Arduinocomm);
     arduino = std::unique_ptr<FirmataClass>(new FirmataClass);
     arduino->begin();
-    arduino->attach(0,&sysexCallback);
+    arduino->currentSysexCallback = bind(&Controller::sysexCallback, this,placeholders::_1, placeholders::_2, placeholders::_3);
 
     loop();
 }
@@ -186,8 +193,9 @@ void Controller::loop()
         {
             clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
             //arduino->update();
+            //LOG(DEBUG) << "Arduino available " << arduino->available();
             if(arduino->available()){arduino->processInput();}
-            vision->update();
+            //vision->update();
 
             t.tv_nsec += interval;
             while(t.tv_nsec >= NSEC_PER_SEC){
