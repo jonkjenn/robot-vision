@@ -32,20 +32,13 @@ void Arduinocomm::update()
     }
 }
 #else
-
 void Arduinocomm::update()
 {
-<<<<<<< HEAD
-    LOG(DEBUG) << "Peek?";
-    while(serialstream.IsDataAvailable() != EOF)
-    {
-        LOG(DEBUG) << " available.";
-        unsigned int ret = serialstream.readsome(input_buffer,MAX_BUFFER);
-=======
+    LOG(DEBUG) << "Checking for data";
     while(mSerial->available())
     {
+        LOG(DEBUG) << "Reading";
         unsigned int ret = mSerial->read((uint8_t *)input_buffer,MAX_BUFFER);
->>>>>>> a3517caec4dd90acfc6b9b9bcf47e0051188e458
 
         LOG(DEBUG) << "ret: " << ret << endl;
 
