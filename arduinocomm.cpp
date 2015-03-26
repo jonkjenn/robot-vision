@@ -2,7 +2,7 @@
 using namespace std;
 
 #ifndef __AVR_ATmega2560__
-using namespace LibSerial;
+using namespace serial;
 #endif
 
 
@@ -12,12 +12,13 @@ Arduinocomm::Arduinocomm()
 #ifdef __AVR_ATmega2560__
     Serial.begin(115200);
 #else
-    serialstream.SetBaudRate(SerialStreamBuf::BAUD_115200);
+    mSerial = unique_ptr<Serial>(new Serial("/dev/ttyACM0",115200,Timeout::simpleTimeout(1)));
+    /*serialstream.SetBaudRate(SerialStreamBuf::BAUD_115200);
     serialstream.SetCharSize(SerialStreamBuf::CHAR_SIZE_8);
     serialstream.SetNumOfStopBits(1);
     serialstream.SetParity(SerialStreamBuf::PARITY_NONE);
     serialstream.SetFlowControl(SerialStreamBuf::FLOW_CONTROL_NONE);
-    serialstream.Open("/dev/ttyACM0");
+    serialstream.Open("/dev/ttyACM0");*/
 #endif
 }
 
@@ -34,11 +35,17 @@ void Arduinocomm::update()
 
 void Arduinocomm::update()
 {
+<<<<<<< HEAD
     LOG(DEBUG) << "Peek?";
     while(serialstream.IsDataAvailable() != EOF)
     {
         LOG(DEBUG) << " available.";
         unsigned int ret = serialstream.readsome(input_buffer,MAX_BUFFER);
+=======
+    while(mSerial->available())
+    {
+        unsigned int ret = mSerial->read((uint8_t *)input_buffer,MAX_BUFFER);
+>>>>>>> a3517caec4dd90acfc6b9b9bcf47e0051188e458
 
         LOG(DEBUG) << "ret: " << ret << endl;
 
@@ -133,14 +140,16 @@ void Arduinocomm::writebyte(uint8_t byte)
 #else
 void Arduinocomm::writecommand(uint8_t byte)
 {
-    serialstream << byte;
+    mSerial->write(&byte,1);
 }
 
 //Writes 1 byte as 2 bytes, converting from 8-bit to 7-bit packing.
 void Arduinocomm::writebyte(uint8_t byte)
 {
-    serialstream << (byte & 0x7F);
-    serialstream << ((byte & 0x80) >> 7);
+    uint8_t bytes[2] = {0,0};
+    bytes[0] =  byte & 0x7F;
+    bytes[1] = (byte & 0x80) >> 7;
+    mSerial->write(bytes,2);
 }
 #endif
 

@@ -5,8 +5,9 @@
 #ifdef __AVR_ATmega2560__
 #include "Arduino.h"
 #else
+#include <memory>
 #include "easylogging++.h"
-#include "SerialStream.h"
+#include "serial/serial.h"
 #endif
 
 class Arduinocomm{
@@ -15,7 +16,7 @@ class Arduinocomm{
         static const uint8_t END_DATA = 0xFF;
 
 #ifndef __AVR_ATmega2560__
-        LibSerial::SerialStream serialstream;
+        std::unique_ptr<serial::Serial> mSerial;
 #endif
         void writebyte(uint8_t);
         void writeuint32(uint32_t);
