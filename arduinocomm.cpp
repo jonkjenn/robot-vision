@@ -34,12 +34,17 @@ void Arduinocomm::update()
 
 void Arduinocomm::update()
 {
-    while(serialstream.peek() != EOF)
+    LOG(DEBUG) << "Peek?";
+    while(serialstream.IsDataAvailable() != EOF)
     {
+        LOG(DEBUG) << " available.";
         unsigned int ret = serialstream.readsome(input_buffer,MAX_BUFFER);
+
+        LOG(DEBUG) << "ret: " << ret << endl;
 
         if(ret>0){process(ret);}
     }
+    LOG(DEBUG) << "Peek stop";
 }
 #endif
 
@@ -149,6 +154,9 @@ void Arduinocomm::writeuint32(uint32_t value)
 
 void Arduinocomm::driveForward(uint8_t speed, uint32_t duration)
 {
+#ifdef __AVR_ATmega2560__
+    LOG(DEBUG) << "Sending drive forward" << endl;
+#endif
     writebyte(DRIVE_DURATION);
     writebyte(speed);
     writeuint32(duration);
