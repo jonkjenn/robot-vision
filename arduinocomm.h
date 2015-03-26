@@ -38,7 +38,11 @@ class Arduinocomm{
     public:
         void update();
         Arduinocomm();
+#ifndef __AVR_ATmega2560__
         void driveForward(uint8_t, uint32_t);
+#else
+        void writeok();
+#endif
         void stop();
 
         uint8_t packet_buffer[MAX_BUFFER];

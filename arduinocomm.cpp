@@ -154,12 +154,23 @@ void Arduinocomm::writeuint32(uint32_t value)
     writebyte((value >> 24) & 0xFF);
 }
 
+#ifdef __AVR_ATmega2560__
+void Arduinocomm::writeok()
+{
+    writecommand(START_DATA);
+    writebyte(OK);
+    writecommand(END_DATA);
+}
+#endif
+
+#ifndef __AVR_ATmega2560__
 void Arduinocomm::driveForward(uint8_t speed, uint32_t duration)
 {
-#ifdef __AVR_ATmega2560__
     LOG(DEBUG) << "Sending drive forward" << endl;
-#endif
+    writecommand(START_DATA);
     writebyte(DRIVE_DURATION);
     writebyte(speed);
     writeuint32(duration);
+    writecommand(END_DATA);
 }
+#endif
