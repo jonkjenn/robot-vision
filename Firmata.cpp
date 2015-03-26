@@ -32,7 +32,7 @@ using namespace std;
 //* Support Functions
 //******************************************************************************
 
-void FirmataClass::sendValueAsTwo7bitBytes(int value)
+void FirmataClass::sendValueAsTwo7bitBytes(uint8_t value)
 {
     FirmataStream << (value & B01111111); // LSB
     FirmataStream << (value >> 7 & B01111111); // MSB
@@ -132,7 +132,7 @@ void FirmataClass::processSysexMessage(void)
             break;
         default:
             if (currentSysexCallback)
-                (currentSysexCallback)(storedInputData[0], sysexBytesRead - 1, storedInputData + 1);
+                (currentSysexCallback)(storedInputData[0], sysexBytesRead, storedInputData + 1);
     }
 }
 
@@ -144,7 +144,7 @@ void FirmataClass::processInput(void)
 
     // TODO make sure it handles -1 properly
 
-    //LOG(DEBUG) << "char: " << (unsigned int)inputData;
+    LOG(DEBUG) << "char: " << (unsigned int)inputData;
 
     if (parsingSysex) {
         if (inputData == END_SYSEX) {

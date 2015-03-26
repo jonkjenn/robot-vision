@@ -118,7 +118,7 @@ class FirmataClass
     void sendDigitalPort(unsigned char portNumber, int portData);
     void sendString(const char *string);
     void sendString(unsigned char command, const char *string);
-    void sendSysex(unsigned char command, unsigned char bytec, unsigned char *bytev);
+    void sendSysex(uint8_t command, uint8_t bytec, uint8_t *bytev);
     void write(unsigned char c);
     /* attach & detach callback functions to messages */
     void attach(unsigned char command, callbackFunction newFunction);
@@ -128,11 +128,11 @@ class FirmataClass
     void detach(unsigned char command);
 
     /* utility methods */
-    void sendValueAsTwo7bitBytes(int value);
+    void sendValueAsTwo7bitBytes(uint8_t value);
     void startSysex(void);
     void endSysex(void);
 
-    std::function<void(unsigned char, unsigned char, unsigned char*)> currentSysexCallback;
+    std::function<void(uint8_t, uint8_t, uint8_t*)> currentSysexCallback;
 
   private:
     LibSerial::SerialStream FirmataStream;
