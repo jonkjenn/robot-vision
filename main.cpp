@@ -11,6 +11,10 @@ using namespace cv;
 #define NSEC_PER_SEC (1000000000)
 int pin = -1;
 
+unsigned int serial_delay = 0;
+
+bool waiting_ok = false;
+
 void stack_prefault(void){
     unsigned char dummy[MAX_SAFE_STACK];
 
@@ -147,6 +151,29 @@ void Controller::configure_pins()
     LOG(INFO) << "Calibrated done";
 }
 
+void Controller::parsepacket()
+{
+    LOG(DEBUG) << "Parsing packet: " << (int)arduino->packet_buffer[0] << " size:" << (int)arduino->packet_size;
+    uint8_t s = arduino->packet_size;
+    if(s>0)
+    {
+        switch(arduino->packet_buffer[0])
+        {
+            case Arduinocomm::OK:
+                LOG(DEBUG) << "Got OK";
+                if(waiting_ok)
+                {
+                    waiting_ok = false;
+                }
+                else
+                {
+                    LOG(DEBUG) << "OK when not waiting for OK";
+                }
+            break;
+        }
+    }
+    arduino->packet_ready = false;
+}
 
 void Controller::loop()
 {
@@ -177,11 +204,28 @@ void Controller::loop()
         while(true)
         {
             clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-            arduino->update();
-            arduino->driveForward((uint8_t)110,(uint32_t)2000);
-            delayMicroseconds(5000000);
-            //LOG(DEBUG) << "Arduino available " << arduino->available();
-            //vision->update();
+
+
+            if(serial_delay > 10000)
+            {
+                arduino->update();
+                if(!waiting_ok)
+                {
+                    arduino->driveForward(110,100);
+                    waiting_ok = true;
+                }
+                if(arduino->packet_ready)
+                {
+                    parsepacket();
+                }
+                //delayMicroseconds(1000000);
+                //LOG(DEBUG) << "Arduino available " << arduino->available();
+                //vision->update();
+            }
+            else
+            {
+                serial_delay++;
+            }
 
             t.tv_nsec += interval;
             while(t.tv_nsec >= NSEC_PER_SEC){

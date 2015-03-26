@@ -19,6 +19,7 @@ class Controller{
         std::unique_ptr<Arduinocomm> arduino;
         void setup_vision(const bool show_video);
         void setup_vision(std::string &file, const bool show_video);
+        void parsepacket();
     public:
         Controller(const bool show_debug, std::vector<std::string> &args);
 };

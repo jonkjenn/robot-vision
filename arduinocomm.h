@@ -22,16 +22,18 @@ class Arduinocomm{
         void writeuint32(uint32_t);
         uint8_t readbyte(unsigned int position);
         static const uint16_t MAX_BUFFER = 256;
-        char input_buffer[MAX_BUFFER];
-        char output_buffer[MAX_BUFFER];
-        void process(unsigned int);
+        uint8_t input_buffer[MAX_BUFFER];
+        uint8_t temp_buffer[MAX_BUFFER];
+        uint8_t output_buffer[MAX_BUFFER];
+        void process();
 
         void writecommand(uint8_t byte);
 
         uint16_t packet_length;
         bool reading_packet = false;
 
-        bool waiting_ok = false;
+        uint8_t input_position = 0;
+        uint8_t input_size = 0;
 
         void handlepacket(uint8_t (&packet)[MAX_BUFFER], uint8_t);
 
@@ -44,6 +46,7 @@ class Arduinocomm{
         void writeok();
 #endif
         void stop();
+        void sendcustombyte(uint8_t byte);
 
         uint8_t packet_buffer[MAX_BUFFER];
         uint8_t packet_position = 0;
@@ -56,6 +59,7 @@ class Arduinocomm{
         //Packet definitions
         static const uint8_t OK = 0x01;//Acknowledge packet
         static const uint8_t DRIVE_DURATION = 0x02;//Drive straight for duration
+        static const uint8_t DEBUG = 0x03;
 
 };
 
