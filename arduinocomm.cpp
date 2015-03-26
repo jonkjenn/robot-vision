@@ -10,9 +10,9 @@ Arduinocomm::Arduinocomm()
 {
     
 #ifdef __AVR_ATmega2560__
-    Serial.begin(115200);
+    Serial.begin(57600);
 #else
-    mSerial = unique_ptr<Serial>(new Serial("/dev/ttyACM0",115200,Timeout::simpleTimeout(1)));
+    mSerial = unique_ptr<Serial>(new Serial("/dev/ttyACM0",57600,Timeout::simpleTimeout(1)));
     /*serialstream.SetBaudRate(SerialStreamBuf::BAUD_115200);
     serialstream.SetCharSize(SerialStreamBuf::CHAR_SIZE_8);
     serialstream.SetNumOfStopBits(1);
