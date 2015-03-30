@@ -41,9 +41,11 @@ class Arduinocomm{
         void update();
         Arduinocomm();
 #ifndef __AVR_ATmega2560__
-        void driveForward(uint8_t, uint32_t);
+        void driveDuration(uint8_t, uint32_t);
+        void driveDistance(uint8_t, uint32_t);
 #else
         void writeok();
+        void writeDriveCompleted();
 #endif
         void stop();
         void sendcustombyte(uint8_t byte);
@@ -60,6 +62,8 @@ class Arduinocomm{
         static const uint8_t OK = 0x01;//Acknowledge packet
         static const uint8_t DRIVE_DURATION = 0x02;//Drive straight for duration
         static const uint8_t DEBUG = 0x03;
+        static const uint8_t DRIVE_DISTANCE = 0x04;//Drive straight for duration
+        static const uint8_t DRIVE_COMPLETED = 0x05;//Drive straight for duration
 
 };
 

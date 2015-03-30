@@ -198,18 +198,36 @@ void Arduinocomm::writeok()
     writebyte(OK);
     writecommand(END_DATA);
 }
+
+void Arduinocomm::writeDriveCompleted()
+{
+    writecommand(START_DATA);
+    writebyte(DRIVE_COMPLETED);
+    writecommand(END_DATA);
+}
+
 #endif
 
 #ifndef __AVR_ATmega2560__
-void Arduinocomm::driveForward(uint8_t speed, uint32_t duration)
+//speed from 0-180, duration in milliseconds
+void Arduinocomm::driveDuration(uint8_t speed, uint32_t duration)
 {
-    LOG(DEBUG) << "Sending drive forward" << endl;
+    LOG(DEBUG) << "Sending drive duration" << endl;
     writecommand(START_DATA);
     writebyte(DRIVE_DURATION);
     writebyte(speed);
-    mSerial->flush();
     writeuint32(duration);
-    mSerial->flush();
+    writecommand(END_DATA);
+}
+//
+//speed from 0-180, duration in milliseconds
+void Arduinocomm::driveDistance(uint8_t speed, uint32_t distance)
+{
+    LOG(DEBUG) << "Sending drive distance" << endl;
+    writecommand(START_DATA);
+    writebyte(DRIVE_DISTANCE);
+    writebyte(speed);
+    writeuint32(distance);
     writecommand(END_DATA);
 }
 #endif
