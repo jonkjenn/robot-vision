@@ -9,6 +9,8 @@ int main(int argc, char** argv)
     vector<string> args(argv, argv+argc);
     Controller controller{args};
 
+    controller.driveForward(110,3000);
+
     string input;
     while(true)
     {

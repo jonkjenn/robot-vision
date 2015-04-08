@@ -170,26 +170,6 @@ void Controller::loop()
             clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
 
 
-            if(use_serial && serial_delay > 10000)
-            {
-                arduino->update();
-                if(!waiting_ok)
-                {
-                    waiting_ok = true;
-                }
-                if(arduino->packet_ready)
-                {
-                    parsepacket();
-                }
-                //delayMicroseconds(1000000);
-                //LOG(DEBUG) << "Arduino available " << arduino->available();
-                //vision->update();
-            }
-            else
-            {
-                serial_delay++;
-            }
-
             t.tv_nsec += interval;
             while(t.tv_nsec >= NSEC_PER_SEC){
                 t.tv_nsec -= NSEC_PER_SEC;
@@ -201,12 +181,30 @@ void Controller::loop()
     {
         while(true)
         {
-            vision->update();
+            if(use_serial && serial_delay > 50000)
+            {
+                arduino->update();
+                if(arduino->packet_ready)
+                {
+                    parsepacket();
+                }
+                //delayMicroseconds(1000000);
+                //LOG(DEBUG) << "Arduino available " << arduino->available();
+                //
+                //vision->update();
+                driveForward(110,3000);
+            }
+            else
+            {
+                serial_delay++;
+            }
+            //vision->update();
             //delayMicroseconds(50);
         }
     }
 
 }
+
 
 //Speed: 0-180, 90 = stop, 180 = max speed forward.
 //Duration in milliseconds
@@ -214,7 +212,9 @@ void Controller::driveForward(uint8_t speed, uint32_t duration)
 {
     if(arduino != NULL && !waiting_ok)
     {
+        LOG(DEBUG) << "Drive forward";
         arduino->driveDuration(speed,duration);
         waiting_completed = true;
+        waiting_ok = true;
     }
 }

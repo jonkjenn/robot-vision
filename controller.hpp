@@ -27,12 +27,12 @@ class Controller{
         void setup_vision(std::string &file, const bool show_video);
         void parsepacket();
 
-        void driveForward(uint8_t speed, uint32_t duration);//speed 0 -> 180, 90 = stop. 90+ forward. duration in milliseconds
-
         bool use_serial = true;
         bool waiting_ok = false;
         bool waiting_completed = false;
     public:
         Controller(std::vector<std::string> &args);
+        void driveForward(uint8_t speed, uint32_t duration);//speed 0 -> 180, 90 = stop. 90+ forward. duration in milliseconds
+
 };
 
