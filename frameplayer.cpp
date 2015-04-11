@@ -1,6 +1,7 @@
 #include <frameplayer.hpp>
 #include <string>
 #include <opencv2/gpu/gpu.hpp>
+#include "easylogging++.h"
 
 using namespace cv;
 using namespace std;
@@ -19,6 +20,7 @@ Frameplayer::Frameplayer(const bool show_video, const int count, const Size &siz
 void Frameplayer::create_windows(const int count, const Size &size)
 {
     if(!is_enabled){return;}
+    LOG(DEBUG) << "Creating windows: " << count;
     int columns = (1600)/size.width;
     int row = 0;
     for(int i=0;i<count;i++)
@@ -32,6 +34,7 @@ void Frameplayer::create_windows(const int count, const Size &size)
 void Frameplayer::show_frame(const Mat &frame)
 {
     if(!is_enabled){return;}
+    LOG(DEBUG) << "Showing frame";
     imshow("nw" + to_string(counter), frame);
     counter++;
 }

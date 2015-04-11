@@ -29,7 +29,7 @@ bool preempt_check()
         fclose(fd);
     }
 
-    return crit1 && crit2;
+    return crit1 || crit2;
 }
 
 int prevval = 0;
@@ -169,6 +169,7 @@ void Controller::loop()
         {
             clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
 
+            vision->update();
 
             t.tv_nsec += interval;
             while(t.tv_nsec >= NSEC_PER_SEC){
@@ -198,7 +199,7 @@ void Controller::loop()
             {
                 serial_delay++;
             }
-            //vision->update();
+            vision->update();
             //delayMicroseconds(50);
         }
     }

@@ -14,15 +14,16 @@
 #include <time.h>
 #include <sched.h>
 #include <sys/mman.h>
+#include "ps4driver.hpp"
 
 class Vision{
     private:
         unsigned long previous_micros = 0;
         std::mutex camera_mutex;
         cv::Mat frame;
-        enum class Type{CAMERA, FILE};
+        enum class Type{PS4, CAMERA, FILE};
         Type input_type;
-        bool show_video = false, play = false, cuda = false, no_wait = false, camera = true, ps4 = false;
+        bool show_video = false, play = false, cuda = false, no_wait = false, camera = false, ps4 = false;
         int camera_id = 0;
         int frame_count;
         int index = 0;
@@ -39,7 +40,10 @@ class Vision{
         void setup();
         void handle_keys();
         void capture_frames(cv::Mat &frame);
+        void capture_ps4(cv::Mat &frame);
         void capture_frames_file(cv::Mat &frame);
+
+        std::unique_ptr<ps4driver> ps4cam;
 
         cv::Ptr<cv::gpu::FilterEngine_GPU> blur_filter;
 

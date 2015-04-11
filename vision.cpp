@@ -56,9 +56,9 @@ Vision::Vision(vector<string> &args)
 
     LOG(DEBUG) << "Cuda: " << cuda;
 
-    LOG(DEBUG) << "Loading camera " << camera;
     if(camera)
     {
+        LOG(DEBUG) << "Loading camera " << camera;
         input_type = Type::CAMERA;
         cap = unique_ptr<VideoCapture>(new VideoCapture(camera_id));
         cap->set(CV_CAP_PROP_FRAME_WIDTH,898);
@@ -68,8 +68,17 @@ Vision::Vision(vector<string> &args)
         frame_count = -1;
         play = true;
     }
+    else if(ps4)
+    {
+        LOG(DEBUG) << "Loading PS4 camera";
+        input_type = Type::PS4;
+        ps4cam = unique_ptr<ps4driver>(new ps4driver());
+        frame_count = -1;
+        play = true;
+    }
     else
     {
+        LOG(DEBUG) << "Loading file";
         input_type = Type::FILE;
         cap = unique_ptr<VideoCapture>(new VideoCapture(file));
         frame_count = cap->get(CV_CAP_PROP_FRAME_COUNT);
@@ -80,13 +89,16 @@ Vision::Vision(vector<string> &args)
 
 void Vision::setup()
 {
-    if(!cap->isOpened())
+    if(!ps4 && !cap->isOpened())
     {
-        LOG(ERROR) << "Could not open vidieo/camera";
+        LOG(ERROR) << "Could not open video/camera";
         return;
     }
 
-    fps = cap->get(CV_CAP_PROP_FPS);
+    if(!ps4)
+    {
+        fps = cap->get(CV_CAP_PROP_FPS);
+    }
 
     LOG(DEBUG) << "Fps:" << fps;
 
@@ -106,26 +118,28 @@ void Vision::setup()
         outputVideo.open("../out.mp4",CV_FOURCC('m','4','s','2'),30,s,true);
     }*/
 
-    if(ps4)
-    {
-        //size = Size(320,192);//Regular frame
-        size = Size(896,200);
-        sub_rect = Rect(0,0,size.width,size.height);
-    }
-    else
-    {
-        size = Size(320,240);
-        sub_rect = Rect(0,size.height-41,size.width,40);
-    }
+    size = Size(320,192);
+    sub_rect = Rect(0,size.height-41,size.width,40);
+
     fp = Frameplayer{show_video, 9, size};
+
+    LOG(DEBUG) << "Frameplayer started";
 
     if(input_type == Type::CAMERA)
     {
+        LOG(DEBUG) << "Starting camera thread";
         thread capture_thread(&Vision::capture_frames,this, ref(frame));
         capture_thread.detach();
     }
-    if(input_type == Type::FILE)
+    else if(input_type == Type::PS4)
     {
+        LOG(DEBUG) << "Starting PS4 thread";
+        thread capture_thread(&Vision::capture_ps4,this, ref(frame));
+        capture_thread.detach();
+    }
+    else if(input_type == Type::FILE)
+    {
+        LOG(DEBUG) << "Starting file thread";
         thread capture_thread(&Vision::capture_frames_file,this, ref(frame));
         capture_thread.detach();
     }
@@ -169,18 +183,25 @@ void Vision::capture_frames(Mat &frame)
             *cap.get() >> buffer;
         }while(buffer.empty());
         lock_guard<mutex> lock(camera_mutex); 
-        if(ps4)
-        {
-            //frame = buffer(Rect(48-1,0,320,200)); //left frame
-            //frame = buffer(Rect(48+320,0,320,200));
-            //frame = buffer(Rect(0,192-1,896,8));
-            frame = buffer;
-            printf("Size %d %d\n", buffer.rows, buffer.cols);
-        }
-        else
-        {
-            frame = buffer;
-        }
+
+        frame = buffer;
+        //resize(frame,frame, size);
+        buffer.release();
+    }
+}
+
+void Vision::capture_ps4(Mat &frame)
+{
+    Mat buffer;
+    while(true)
+    {
+        do{
+            ps4cam->update();
+            buffer = ps4cam->getFrame();
+        }while(buffer.empty());
+        lock_guard<mutex> lock(camera_mutex); 
+
+        frame = buffer;
         //resize(frame,frame, size);
         buffer.release();
     }
@@ -192,7 +213,7 @@ void Vision::update()
     Mat buffer;
     auto loading_time = micros();
 
-    if(input_type == Type::CAMERA)
+    if(input_type == Type::CAMERA || input_type == Type::PS4)
     {
         {
             lock_guard<mutex> lock(camera_mutex);
