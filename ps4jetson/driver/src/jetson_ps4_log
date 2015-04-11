@@ -1,0 +1,233 @@
+Creating instance
+USBMgr create
+libusb error: 0
+Found PlayStation Camera
+Firmware already loaded...
+Before init
+Setting frame bufferconfiguration set to 1
+claim interface 1
+set alt to 1 in interface 1
+control transfer for video get return 26
+bmHint: 0001
+bFormatIndex: 0
+bFrameIndex: 2
+dwFrameInterval: 666666
+wKeyFrameRate: 0
+wPFrameRate: 0
+wCompQuality: 0
+wCompWindowSize: 0
+wDelay: 49347
+dwMaxVideoFrameSize: 1426368
+dwMaxPayloadTransferSize: 49152
+bInterfaceNumber: 51
+Frame resolutiion: 640x400 framerate: 15 
+control transfer for video set return 26
+control transfer for video get return 26
+bmHint: 0001
+bFormatIndex: 1
+bFrameIndex: 2
+dwFrameInterval: 666666
+wKeyFrameRate: 0
+wPFrameRate: 0
+wCompQuality: 0
+wCompWindowSize: 0
+wDelay: 49347
+dwMaxVideoFrameSize: 1426368
+dwMaxPayloadTransferSize: 49152
+bInterfaceNumber: 1
+0Current brightness 2
+0Current brightness 2
+Ret: 00Min brightness 2
+0Max brightness 4
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+read sensor_id from sensor 1
+reg 0x300a
+subaddr 0x0001
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+sensor_id_h 255
+reg 0x300b
+subaddr 0x0001
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+sensor_id_l 255
+sensor 1 id 0xffff 
+Sensor 1 is not ready, exit
+Error reading Sensor 1
+Sanity check from sensors failed
+init failed
+frame number 1
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Control transfer error: Stall
+phase 2 read failed received 0 bytes instead of 64
+Controltransfer completed
+Controltransfererror 1
+phase 2 read failed register read  0x0000 not 0xff71 
+i=0 Write register 0xff70 to f1
+BEGIN MULTIWRITE USB brequest a4
+
+USB DATA HEADER BYTE 8 TO 15
+0x03 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+USB DATA REGISTER LIST
+16 0x70 0xff 0xf1 0xff 
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+END MULTIWRITE USB
+Rightframe 0
+h: 400, w: 640
+Loop duration: 709090735 fps: 0.00141026fps: 0.001410
+frame number 2
+i=1 Write register 0xff70 to 01
+BEGIN MULTIWRITE USB brequest a4
+
+USB DATA HEADER BYTE 8 TO 15
+0x03 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+USB DATA REGISTER LIST
+16 0x71 0xff 0x01 0xff 
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+END MULTIWRITE USB
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Control transfer error: Stall
+phase 2 read failed received 0 bytes instead of 64
+Controltransfer completed
+Controltransfererror 1
+phase 2 read failed register read  0x0000 not 0xff71 
+i=1 val=0
+Rightframe 0
+h: 400, w: 640
+Loop duration: 155916 fps: 6.41371fps: 6.413710
+frame number 3
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Control transfer error: Stall
+phase 2 read failed received 0 bytes instead of 64
+Controltransfer completed
+Controltransfererror 1
+phase 2 read failed register read  0x0000 not 0xff71 
+i=2 val=0
+Rightframe 0
+h: 400, w: 640
+Loop duration: 69281 fps: 14.434fps: 14.433971
+frame number 4
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Control transfer error: Stall
+phase 2 read failed received 0 bytes instead of 64
+Controltransfer completed
+Controltransfererror 1
+phase 2 read failed register read  0x0000 not 0xff71 
+i=3 val=0
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Control transfer error: Stall
+phase 2 read failed received 0 bytes instead of 64
+Controltransfer completed
+Controltransfererror 1
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+i=3 val=3
+Rightframe 0
+h: 400, w: 640
+Loop duration: 47484 fps: 21.0597fps: 21.059725
+frame number 5
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Control transfer error: Stall
+phase 2 read failed received 0 bytes instead of 64
+Controltransfer completed
+Controltransfererror 1
+phase 2 read failed register read  0x0000 not 0xff71 
+4 val=0
+Rightframe 0
+h: 400, w: 640
+Loop duration: 66308 fps: 15.0811fps: 15.081137
+frame number 6
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Control transfer error: Stall
+phase 2 read failed received 0 bytes instead of 64
+Controltransfer completed
+Controltransfererror 1
+phase 2 read failed register read  0x0000 not 0xff71 
+5 val=0
+Rightframe 0
+h: 400, w: 640
+Loop duration: 59385 fps: 16.8393fps: 16.839270
+frame number 7
+Rightframe 0
+h: 400, w: 640
+Loop duration: 72068 fps: 13.8758fps: 13.875784
+frame number 8
+Rightframe 0
+h: 400, w: 640
+Loop duration: 129924 fps: 7.69681fps: 7.696807
+frame number 9
+Rightframe 0
+h: 400, w: 640
+Loop duration: 65207 fps: 15.3358fps: 15.335777
+frame number 10
+Rightframe 0
+h: 400, w: 640
+Loop duration: 64379 fps: 15.533fps: 15.533015
+frame number 11
+Rightframe 0
+h: 400, w: 640
+Loop duration: 66518 fps: 15.0335fps: 15.033525
+frame number 12
+Rightframe 0
+h: 400, w: 640
+Loop duration: 67070 fps: 14.9098fps: 14.909796
+frame number 13
+Rightframe 0
+h: 400, w: 640
+Loop duration: 66600 fps: 15.015fps: 15.015015
+frame number 14
+Rightframe 0
+h: 400, w: 640
+Loop duration: 68961 fps: 14.5009fps: 14.500950
+frame number 15
+Rightframe 0
+h: 400, w: 640
+Loop duration: 66027 fps: 15.1453fps: 15.145319
+frame

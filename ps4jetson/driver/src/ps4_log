@@ -1,0 +1,784 @@
+Creating instance
+USBMgr create
+libusb error: 0
+Found PlayStation Camera
+Firmware already loaded...
+Before init
+Setting frame bufferconfiguration set to 1
+claim interface 1
+set alt to 1 in interface 1
+control transfer for video get return 26
+bmHint: 0001
+bFormatIndex: 0
+bFrameIndex: 2
+dwFrameInterval: 83333
+wKeyFrameRate: 0
+wPFrameRate: 0
+wCompQuality: 0
+wCompWindowSize: 0
+wDelay: 49347
+dwMaxVideoFrameSize: 1426368
+dwMaxPayloadTransferSize: 49152
+bInterfaceNumber: 0
+Frame resolutiion: 640x400 framerate: 120 
+control transfer for video set return 26
+control transfer for video get return 26
+bmHint: 0001
+bFormatIndex: 1
+bFrameIndex: 2
+dwFrameInterval: 83333
+wKeyFrameRate: 0
+wPFrameRate: 0
+wCompQuality: 0
+wCompWindowSize: 0
+wDelay: 0
+dwMaxVideoFrameSize: 1426368
+dwMaxPayloadTransferSize: 49152
+bInterfaceNumber: 1
+0Current brightness 4
+0Current brightness 2
+Ret: 00Min brightness 2
+0Max brightness 4
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+read sensor_id from sensor 1
+reg 0x300a
+subaddr 0x0001
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+sensor_id_h 255
+reg 0x300b
+subaddr 0x0001
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+sensor_id_l 255
+sensor 1 id 0xffff 
+Sensor 1 is not ready, exit
+Error reading Sensor 1
+Sanity check from sensors failed
+init failed
+frame number 1
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+i=0 Write register 0xff70 to f1
+BEGIN MULTIWRITE USB brequest a4
+
+USB DATA HEADER BYTE 8 TO 15
+0x03 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+USB DATA REGISTER LIST
+16 0x70 0xff 0xf1 0xff 
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+END MULTIWRITE USB
+Rightframe 0
+h: 400, w: 640
+Loop duration: 1428403842222031 fps: 7.00082e-10fps: 0.000000
+frame number 3
+i=1 Write register 0xff70 to 01
+BEGIN MULTIWRITE USB brequest a4
+
+USB DATA HEADER BYTE 8 TO 15
+0x03 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+USB DATA REGISTER LIST
+16 0x71 0xff 0x01 0xff 
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+END MULTIWRITE USB
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+i=1 val=1
+Rightframe 0
+h: 400, w: 640
+Loop duration: 21080 fps: 47.4383fps: 47.438332
+frame number 5
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+i=2 val=3
+Rightframe 0
+h: 400, w: 640
+Loop duration: 14573 fps: 68.62fps: 68.620049
+frame number 7
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+i=3 val=0
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+i=3 val=0
+Rightframe 0
+h: 400, w: 640
+Loop duration: 14575 fps: 68.6106fps: 68.610634
+frame number 9
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+4 val=0
+Rightframe 0
+h: 400, w: 640
+Loop duration: 12423 fps: 80.4959fps: 80.495857
+frame number 10
+reg 0xff71
+subaddr 0x00ff
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+Libusb_submit_transfer 0
+Controltransfer completed
+Controltransfererror 0
+5 val=0
+Rightframe 0
+h: 400, w: 640
+Loop duration: 12023 fps: 83.1739fps: 83.173920
+frame number 12
+Rightframe 0
+h: 400, w: 640
+Loop duration: 10276 fps: 97.3141fps: 97.314133
+frame number 13
+Rightframe 0
+h: 400, w: 640
+Loop duration: 10098 fps: 99.0295fps: 99.029510
+frame number 14
+Rightframe 0
+h: 400, w: 640
+Loop duration: 11026 fps: 90.6947fps: 90.694725
+frame number 15
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9041 fps: 110.607fps: 110.607231
+frame number 17
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9046 fps: 110.546fps: 110.546097
+frame number 18
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9150 fps: 109.29fps: 109.289619
+frame number 19
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8031 fps: 124.517fps: 124.517494
+frame number 20
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8685 fps: 115.141fps: 115.141045
+frame number 21
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8485 fps: 117.855fps: 117.855042
+frame number 22
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8813 fps: 113.469fps: 113.468742
+frame number 23
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9071 fps: 110.241fps: 110.241432
+frame number 24
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8950 fps: 111.732fps: 111.731842
+frame number 25
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8565 fps: 116.754fps: 116.754234
+frame number 26
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8839 fps: 113.135fps: 113.134972
+frame number 27
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8973 fps: 111.445fps: 111.445450
+frame number 28
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8758 fps: 114.181fps: 114.181320
+frame number 29
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8746 fps: 114.338fps: 114.337982
+frame number 30
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9117 fps: 109.685fps: 109.685204
+frame number 31
+Rightframe 0
+h: 400, w: 640
+Loop duration: 7429 fps: 134.608fps: 134.607620
+frame number 32
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8871 fps: 112.727fps: 112.726860
+frame number 33
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8825 fps: 113.314fps: 113.314445
+frame number 34
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8751 fps: 114.273fps: 114.272652
+frame number 35
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8782 fps: 113.869fps: 113.869278
+frame number 36
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9342 fps: 107.043fps: 107.043457
+frame number 38
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8723 fps: 114.639fps: 114.639458
+frame number 39
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8983 fps: 111.321fps: 111.321388
+frame number 40
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8843 fps: 113.084fps: 113.083794
+frame number 41
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8505 fps: 117.578fps: 117.577896
+frame number 42
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9027 fps: 110.779fps: 110.778778
+frame number 43
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9156 fps: 109.218fps: 109.218002
+frame number 44
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8923 fps: 112.07fps: 112.069931
+frame number 45
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9044 fps: 110.571fps: 110.570541
+frame number 46
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8861 fps: 112.854fps: 112.854080
+frame number 47
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8969 fps: 111.495fps: 111.495148
+frame number 48
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8936 fps: 111.907fps: 111.906891
+frame number 49
+Rightframe 0
+h: 400, w: 640
+Loop duration: 7836 fps: 127.616fps: 127.616127
+frame number 50
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8668 fps: 115.367fps: 115.366867
+frame number 51
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8633 fps: 115.835fps: 115.834587
+frame number 52
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8868 fps: 112.765fps: 112.764999
+frame number 54
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9593 fps: 104.243fps: 104.242676
+frame number 55
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8983 fps: 111.321fps: 111.321388
+frame number 56
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8587 fps: 116.455fps: 116.455109
+frame number 57
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8579 fps: 116.564fps: 116.563705
+frame number 58
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9129 fps: 109.541fps: 109.541023
+frame number 59
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9211 fps: 108.566fps: 108.565842
+frame number 60
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8728 fps: 114.574fps: 114.573784
+frame number 61
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8801 fps: 113.623fps: 113.623451
+frame number 62
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8882 fps: 112.587fps: 112.587257
+frame number 63
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8530 fps: 117.233fps: 117.233292
+frame number 64
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9138 fps: 109.433fps: 109.433136
+frame number 65
+Rightframe 0
+h: 400, w: 640
+Loop duration: 10249 fps: 97.5705fps: 97.570496
+frame number 67
+Rightframe 0
+h: 400, w: 640
+Loop duration: 7602 fps: 131.544fps: 131.544327
+frame number 68
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8859 fps: 112.88fps: 112.879555
+frame number 69
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8851 fps: 112.982fps: 112.981583
+frame number 70
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8648 fps: 115.634fps: 115.633675
+frame number 71
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8826 fps: 113.302fps: 113.301605
+frame number 72
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8676 fps: 115.26fps: 115.260490
+frame number 73
+Rightframe 0
+h: 400, w: 640
+Loop duration: 7670 fps: 130.378fps: 130.378098
+frame number 74
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8812 fps: 113.482fps: 113.481613
+frame number 75
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8742 fps: 114.39fps: 114.390297
+frame number 76
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8760 fps: 114.155fps: 114.155251
+frame number 77
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8581 fps: 116.537fps: 116.536537
+frame number 78
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9036 fps: 110.668fps: 110.668434
+frame number 79
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8996 fps: 111.161fps: 111.160515
+frame number 80
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8458 fps: 118.231fps: 118.231262
+frame number 81
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9001 fps: 111.099fps: 111.098770
+frame number 82
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8845 fps: 113.058fps: 113.058228
+frame number 83
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9065 fps: 110.314fps: 110.314400
+frame number 84
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8666 fps: 115.393fps: 115.393494
+frame number 85
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8564 fps: 116.768fps: 116.767868
+frame number 86
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8750 fps: 114.286fps: 114.285713
+frame number 87
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8716 fps: 114.732fps: 114.731529
+frame number 88
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8827 fps: 113.289fps: 113.288773
+frame number 90
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8516 fps: 117.426fps: 117.426025
+frame number 91
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8875 fps: 112.676fps: 112.676056
+frame number 92
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8622 fps: 115.982fps: 115.982368
+frame number 93
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8713 fps: 114.771fps: 114.771034
+frame number 94
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8919 fps: 112.12fps: 112.120193
+frame number 95
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8454 fps: 118.287fps: 118.287201
+frame number 96
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9056 fps: 110.424fps: 110.424026
+frame number 97
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8806 fps: 113.559fps: 113.558937
+frame number 98
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8883 fps: 112.575fps: 112.574577
+frame number 99
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8448 fps: 118.371fps: 118.371216
+frame number 100
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9057 fps: 110.412fps: 110.411835
+frame number 101
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8675 fps: 115.274fps: 115.273773
+frame number 102
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8727 fps: 114.587fps: 114.586914
+frame number 103
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9093 fps: 109.975fps: 109.974709
+frame number 104
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8589 fps: 116.428fps: 116.427986
+frame number 105
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8631 fps: 115.861fps: 115.861427
+frame number 106
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9013 fps: 110.951fps: 110.950851
+frame number 108
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8666 fps: 115.393fps: 115.393494
+frame number 109
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9051 fps: 110.485fps: 110.485031
+frame number 110
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9263 fps: 107.956fps: 107.956383
+frame number 111
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8679 fps: 115.221fps: 115.220650
+frame number 112
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8780 fps: 113.895fps: 113.895218
+frame number 113
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8944 fps: 111.807fps: 111.806801
+frame number 114
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8719 fps: 114.692fps: 114.692055
+frame number 115
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8624 fps: 115.955fps: 115.955475
+frame number 116
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8973 fps: 111.445fps: 111.445450
+frame number 117
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8778 fps: 113.921fps: 113.921165
+frame number 118
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8846 fps: 113.045fps: 113.045441
+frame number 119
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9284 fps: 107.712fps: 107.712196
+frame number 120
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8826 fps: 113.302fps: 113.301605
+frame number 121
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8559 fps: 116.836fps: 116.836082
+frame number 122
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8983 fps: 111.321fps: 111.321388
+frame number 124
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8724 fps: 114.626fps: 114.626320
+frame number 125
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9089 fps: 110.023fps: 110.023102
+frame number 126
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8838 fps: 113.148fps: 113.147774
+frame number 127
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9425 fps: 106.101fps: 106.100800
+frame number 128
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8995 fps: 111.173fps: 111.172874
+frame number 129
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8999 fps: 111.123fps: 111.123459
+frame number 130
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8668 fps: 115.367fps: 115.366867
+frame number 131
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8647 fps: 115.647fps: 115.647049
+frame number 132
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8799 fps: 113.649fps: 113.649277
+frame number 133
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8732 fps: 114.521fps: 114.521301
+frame number 134
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9032 fps: 110.717fps: 110.717445
+frame number 135
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8894 fps: 112.435fps: 112.435349
+frame number 136
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8671 fps: 115.327fps: 115.326950
+frame number 137
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8855 fps: 112.931fps: 112.930550
+frame number 139
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8903 fps: 112.322fps: 112.321686
+frame number 140
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8730 fps: 114.548fps: 114.547539
+frame number 141
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8912 fps: 112.208fps: 112.208260
+frame number 142
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8779 fps: 113.908fps: 113.908188
+frame number 143
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8626 fps: 115.929fps: 115.928589
+frame number 144
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8913 fps: 112.196fps: 112.195671
+frame number 145
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8958 fps: 111.632fps: 111.632057
+frame number 146
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8726 fps: 114.6fps: 114.600044
+frame number 147
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8963 fps: 111.57fps: 111.569786
+frame number 148
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8910 fps: 112.233fps: 112.233444
+frame number 149
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8133 fps: 122.956fps: 122.955856
+frame number 150
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8817 fps: 113.417fps: 113.417259
+frame number 151
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8809 fps: 113.52fps: 113.520264
+frame number 152
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8631 fps: 115.861fps: 115.861427
+frame number 153
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8880 fps: 112.613fps: 112.612610
+frame number 154
+Rightframe 0
+h: 400, w: 640
+Loop duration: 21611 fps: 46.2727fps: 46.272732
+frame number 157
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9078 fps: 110.156fps: 110.156425
+frame number 158
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8867 fps: 112.778fps: 112.777718
+frame number 159
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8650 fps: 115.607fps: 115.606934
+frame number 160
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8742 fps: 114.39fps: 114.390297
+frame number 161
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8806 fps: 113.559fps: 113.558937
+frame number 162
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9114 fps: 109.721fps: 109.721306
+frame number 163
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8696 fps: 114.995fps: 114.995399
+frame number 164
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8840 fps: 113.122fps: 113.122169
+frame number 165
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9180 fps: 108.932fps: 108.932465
+frame number 167
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8673 fps: 115.3fps: 115.300354
+frame number 168
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8784 fps: 113.843fps: 113.843353
+frame number 169
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8965 fps: 111.545fps: 111.544899
+frame number 170
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8717 fps: 114.718fps: 114.718369
+frame number 171
+Rightframe 0
+h: 400, w: 640
+Loop duration: 9033 fps: 110.705fps: 110.705193
+frame number 172
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8766 fps: 114.077fps: 114.077118
+frame number 173
+Rightframe 0
+h: 400, w: 640
+Loop duration: 8888 fps: 112.511fps: 112.511253
+frame number 174
+Rightframe 0
+h: 400, w: 640
+Loop du

@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 2.8)
+project (ps4eyedriver)
+
+find_package(OpenCV REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
+include_directories(ps4eye ../include ${CMAKE_CURRENT_SOURCE_DIR} ../../libusb/libusb)
+link_directories(../../libusb/libusb/.libs)
+add_library(ps4eye ps4eye.cpp)
+add_executable(mytest test.cpp)
+target_link_libraries(mytest ps4eye ${OpenCV_LIBS})
+target_link_libraries(ps4eye usb-1.0)
