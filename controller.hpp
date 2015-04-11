@@ -9,6 +9,7 @@
 #include <sys/utsname.h>
 #include "arduinocomm.h"
 #include "SimpleGPIO/SimpleGPIO.h"
+#include "gyroscope.hpp"
 
 #define MY_PRIORITY (49)
 #define MAX_SAFE_STACK (8*1024)
@@ -23,6 +24,7 @@ class Controller{
         void loop();
         std::unique_ptr<Vision> vision;
         std::unique_ptr<Arduinocomm> arduino;
+        std::unique_ptr<gyroscope> gyro;
         void setup_vision(const bool show_video);
         void setup_vision(std::string &file, const bool show_video);
         void parsepacket();

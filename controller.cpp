@@ -5,8 +5,6 @@ using namespace std;
 
 unsigned int serial_delay = 0;
 
-
-
 void stack_prefault(void){
     unsigned char dummy[MAX_SAFE_STACK];
 
