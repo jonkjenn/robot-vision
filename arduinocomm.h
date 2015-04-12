@@ -2,7 +2,7 @@
 #ifndef ARDUINOCOMM_H
 #define ARDUINOCOMM_H
 
-#ifdef __AVR_ATmega2560__
+#ifdef __AVR_ATmega328P__
 #include "Arduino.h"
 #else
 #include <memory>
@@ -15,7 +15,7 @@ class Arduinocomm{
         static const uint8_t START_DATA = 0x80;
         static const uint8_t END_DATA = 0xFF;
 
-#ifndef __AVR_ATmega2560__
+#ifndef __AVR_ATmega328P__
         std::unique_ptr<serial::Serial> mSerial;
 #endif
         void writebyte(uint8_t);
@@ -40,12 +40,13 @@ class Arduinocomm{
     public:
         void update();
         Arduinocomm();
-#ifndef __AVR_ATmega2560__
-        void driveDuration(uint8_t, uint32_t);
-        void driveDistance(uint8_t, uint32_t);
+#ifndef __AVR_ATmega328P__
+        /*void driveDuration(uint8_t, uint32_t);
+        void driveDistance(uint8_t, uint32_t);*/
+        void drive(uint8_t,uint8_t);
 #else
         void writeok();
-        void writeDriveCompleted();
+        //void writeDriveCompleted();
 #endif
         void stop();
         void sendcustombyte(uint8_t byte);
@@ -60,7 +61,7 @@ class Arduinocomm{
         //
         //Packet definitions
         static const uint8_t OK = 0x01;//Acknowledge packet
-        static const uint8_t DRIVE_DURATION = 0x02;//Drive straight for duration
+        static const uint8_t DRIVE = 0x02;//Contains specific engine speeds to be sendt to robot
         static const uint8_t DEBUG = 0x03;
         static const uint8_t DRIVE_DISTANCE = 0x04;//Drive straight for duration
         static const uint8_t DRIVE_COMPLETED = 0x05;//Drive straight for duration

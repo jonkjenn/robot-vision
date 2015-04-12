@@ -10,6 +10,7 @@
 #include "arduinocomm.h"
 #include "SimpleGPIO/SimpleGPIO.h"
 #include "gyroscope.hpp"
+#include "drive.h"
 
 #define MY_PRIORITY (49)
 #define MAX_SAFE_STACK (8*1024)

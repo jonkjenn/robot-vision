@@ -1,7 +1,7 @@
 #include "arduinocomm.h"
 using namespace std;
 
-#ifndef __AVR_ATmega2560__
+#ifndef __AVR_ATmega328P__
 using namespace serial;
 #endif
 
@@ -9,10 +9,10 @@ using namespace serial;
 Arduinocomm::Arduinocomm()
 {
     
-#ifdef __AVR_ATmega2560__
-    Serial.begin(57600);
+#ifdef __AVR_ATmega328P__
+    Serial.begin(115200);
 #else
-    mSerial = unique_ptr<Serial>(new Serial("/dev/ttyACM0",57600,Timeout::simpleTimeout(100)));
+    mSerial = unique_ptr<Serial>(new Serial("/dev/ttyACM0",115200,Timeout::simpleTimeout(100)));
     /*serialstream.SetBaudRate(SerialStreamBuf::BAUD_115200);
     serialstream.SetCharSize(SerialStreamBuf::CHAR_SIZE_8);
     serialstream.SetNumOfStopBits(1);
@@ -27,7 +27,7 @@ void Arduinocomm::update()
     if(input_position >= input_size){
         input_position = 0; 
         input_size = 0;
-#ifdef __AVR_ATmega2560__
+#ifdef __AVR_ATmega328P__
         if(Serial.available() > 0)
         {
             //sendcustombyte((uint8_t)Serial.available());
@@ -58,7 +58,7 @@ void Arduinocomm::process()
         val = input_buffer[input_position];
         if(val > 127)//Command
         {
-#ifndef __AVR_ATmega2560__
+#ifndef __AVR_ATmega328P__
             LOG(DEBUG) << "command:"  << (int)val;
 #endif
             switch(val)
@@ -69,19 +69,19 @@ void Arduinocomm::process()
                     reading_packet = true;
                     packet_size = 0;
                     input_position++;
-#ifndef __AVR_ATmega2560__
+#ifndef __AVR_ATmega328P__
                     LOG(DEBUG) << "Got packet start";
 #endif
                     continue;
                 case END_DATA:
-#ifndef __AVR_ATmega2560__
+#ifndef __AVR_ATmega328P__
                     LOG(DEBUG) << "Got packet end";
 
 #endif
                     for(int i=0;i<packet_position;i+=2)
                     {
                         packet_buffer[i/2] = readbyte(i);
-#ifndef __AVR_ATmega2560__
+#ifndef __AVR_ATmega328P__
                         LOG(DEBUG) << "i: " << i/2 << " p: " << (unsigned int)packet_buffer[i/2];
 #endif
                     }
@@ -95,7 +95,7 @@ void Arduinocomm::process()
                     input_position++;
                     return;
                 default:
-#ifndef __AVR_ATmega2560__
+#ifndef __AVR_ATmega328P__
                     LOG(DEBUG) << "Corrupted packet?";
 #endif
                     sendcustombyte(22);
@@ -109,10 +109,10 @@ void Arduinocomm::process()
         }
         else
         {
-#ifndef __AVR_ATmega2560__
+#ifndef __AVR_ATmega328P__
             //LOG(DEBUG) << "raw val: " << (int)input_buffer[input_position];
 #endif
-#ifdef __AVR_ATmega2560__
+#ifdef __AVR_ATmega328P__
             //sendcustombyte(input_buffer[input_position]);
 #endif
             if(reading_packet)
@@ -145,7 +145,7 @@ uint32_t Arduinocomm::read_uint32(uint8_t (&packet)[MAX_BUFFER], unsigned int po
     return packet[position] + (packet[position+1] << 8) + (packet[position+2] << 16) + (packet[position+3] << 24);
 }
 
-#ifdef __AVR_ATmega2560__
+#ifdef __AVR_ATmega328P__
 
 void Arduinocomm::writecommand(uint8_t byte)
 {
@@ -191,7 +191,7 @@ void Arduinocomm::sendcustombyte(uint8_t byte)
     writecommand(END_DATA);
 }
 
-#ifdef __AVR_ATmega2560__
+#ifdef __AVR_ATmega328P__
 void Arduinocomm::writeok()
 {
     writecommand(START_DATA);
@@ -199,35 +199,18 @@ void Arduinocomm::writeok()
     writecommand(END_DATA);
 }
 
-void Arduinocomm::writeDriveCompleted()
-{
-    writecommand(START_DATA);
-    writebyte(DRIVE_COMPLETED);
-    writecommand(END_DATA);
-}
-
 #endif
 
-#ifndef __AVR_ATmega2560__
-//speed from 0-180, duration in milliseconds
-void Arduinocomm::driveDuration(uint8_t speed, uint32_t duration)
+#ifndef __AVR_ATmega328P__
+
+//Speed from 0 to 180, 90 = stop,  180 max forward
+void Arduinocomm::drive(uint8_t left, uint8_t right)
 {
-    LOG(DEBUG) << "Sending drive duration" << endl;
     writecommand(START_DATA);
-    writebyte(DRIVE_DURATION);
-    writebyte(speed);
-    writeuint32(duration);
+    writebyte(DRIVE);
+    writebyte(left);
+    writebyte(right);
     writecommand(END_DATA);
 }
-//
-//speed from 0-180, duration in milliseconds
-void Arduinocomm::driveDistance(uint8_t speed, uint32_t distance)
-{
-    LOG(DEBUG) << "Sending drive distance" << endl;
-    writecommand(START_DATA);
-    writebyte(DRIVE_DISTANCE);
-    writebyte(speed);
-    writeuint32(distance);
-    writecommand(END_DATA);
-}
+
 #endif

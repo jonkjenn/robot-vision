@@ -1,13 +1,19 @@
-void gyroscope::setup(const string device&, uint32_t speed)
+gyroscope::gyroscope(const string device&, uint32_t speed)
 {
     mSerial = unique_ptr<Serial>(new Serial(device,speed,Timeout::simpleTimeout(100)));
+}
+
+void gyroscope::start(float degrees)
+{
+    goal_rotation = degrees * DEG_RAD_RATIO;
+    total_rotation = 0;
 }
 
 float gyroscope::get_rotation()
 {
     float ret = rotation;
     rotation = 0;
-    return ret;
+    return ret * RAD_DEG_RATIO;
 }
 
 //
@@ -40,18 +46,19 @@ void gyroscope::update()
 			// Handle message
 
 			switch(msg.msgid)
-		dadum	{
+		        {
                             case 105:
                               mavlink_highres_imu_t sensors;
                               mavlink_msg_highres_imu_decode(&msg, &sensors);
                               
                               if(prevtime == 0){prevtime = sensors.time_usec;continue;}
+                              if(abs(sensors.zgyro) < 0.005){return;}
                               
                               uint32_t dur = sensors.time_usec - prevtime;
                               
                               if(((sensors.fields_updated & 0x20) >> 5) == 1)
                               {
-                                  rotation += sensors.zgyro;
+                                  total_rotation += sensors.zgyro * dur * 1e-6;
                               }
                               
                               prevtime = sensors.time_usec;
