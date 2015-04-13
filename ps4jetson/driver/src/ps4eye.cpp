@@ -2844,7 +2844,6 @@ namespace ps4eye {
             {
                 cout << "Unable to open firmware.bin!" << endl;
             }
-            exit(0);
         }
         else
         {

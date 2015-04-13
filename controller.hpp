@@ -11,6 +11,8 @@
 #include "SimpleGPIO/SimpleGPIO.h"
 #include "gyroscope.hpp"
 #include "drive.h"
+#include <functional>
+#include <unistd.h>
 
 #define MY_PRIORITY (49)
 #define MAX_SAFE_STACK (8*1024)
@@ -24,18 +26,20 @@ class Controller{
         void configure_logger(const bool show_debug);
         void loop();
         std::unique_ptr<Vision> vision;
-        std::unique_ptr<Arduinocomm> arduino;
+        std::shared_ptr<Arduinocomm> arduino;
         std::unique_ptr<gyroscope> gyro;
         void setup_vision(const bool show_video);
         void setup_vision(std::string &file, const bool show_video);
         void parsepacket();
 
+        std::function<void()> callback;
+
         bool use_serial = true;
         bool waiting_ok = false;
         bool waiting_completed = false;
     public:
-        Controller(std::vector<std::string> &args);
-        void driveForward(uint8_t speed, uint32_t duration);//speed 0 -> 180, 90 = stop. 90+ forward. duration in milliseconds
-
+        void start();
+        std::shared_ptr<Drive> driver;
+        Controller(std::vector<std::string> &args, std::function<void()> callback);
 };
 

@@ -435,7 +435,7 @@ void Vision::handle_keys()
     auto dur_ms = (micros() - previous_micros)/1000;
     LOG(DEBUG) << "Play: " << play;
     auto key = 0;
-    if(play && fps>0)
+    if(play && fps>0 && !ps4)
     {
         LOG(DEBUG) << "Waitkey with FPS";
         unsigned int wait_dur = 1000/fps-dur_ms;
@@ -457,6 +457,9 @@ void Vision::handle_keys()
     LOG(DEBUG) <<"Key:"<< key;
     switch(key)
     {
+        case 113://q
+            exit(0);
+            break;
         case 97://a - play previous frame
             previous_frame();
             break;

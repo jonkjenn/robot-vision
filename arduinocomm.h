@@ -15,13 +15,11 @@ class Arduinocomm{
         static const uint8_t START_DATA = 0x80;
         static const uint8_t END_DATA = 0xFF;
 
-#ifndef __AVR_ATmega328P__
         std::unique_ptr<serial::Serial> mSerial;
-#endif
         void writebyte(uint8_t);
         void writeuint32(uint32_t);
         uint8_t readbyte(unsigned int position);
-        static const uint16_t MAX_BUFFER = 256;
+        static const uint16_t MAX_BUFFER = 255;
         uint8_t input_buffer[MAX_BUFFER];
         uint8_t temp_buffer[MAX_BUFFER];
         uint8_t output_buffer[MAX_BUFFER];
@@ -39,15 +37,12 @@ class Arduinocomm{
 
     public:
         void update();
-        Arduinocomm();
-#ifndef __AVR_ATmega328P__
+        Arduinocomm(std::string device, const unsigned int speed);
         /*void driveDuration(uint8_t, uint32_t);
         void driveDistance(uint8_t, uint32_t);*/
         void drive(uint8_t,uint8_t);
-#else
         void writeok();
         //void writeDriveCompleted();
-#endif
         void stop();
         void sendcustombyte(uint8_t byte);
 

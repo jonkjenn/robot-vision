@@ -1,7 +1,10 @@
-#include "Arduino.h"
 
 #ifndef BACHELOR_ENCODER
 #define BACHELOR_ENCODER
+#include "easylogging++.h"
+#include "utility.hpp"
+#include <cstdint>
+#include "SimpleGPIO.h"
 
 
 class Encoder{
@@ -9,12 +12,10 @@ class Encoder{
         unsigned char _pinA, _pinB;
         int dir = 0;
 
-        uint8_t encAout = 0;
-        uint8_t encBout = 0;
-        uint8_t encAoutprev = -1;
-        uint8_t encBoutprev = -1;
-        uint8_t prevAout = 0;
-        uint8_t prevBout = 0;
+        unsigned int encAout = 0;
+        unsigned int  encBout = 0;
+        unsigned int encAoutprev = 0;
+        unsigned int encBoutprev = 0;
 
         char direction = 0;
 
@@ -38,6 +39,7 @@ class Encoder{
         float updateSpeed();
 
     public:
+        ~Encoder();
         void setup(unsigned char pinA, unsigned char pinB);
         void update();
         uint32_t getDistance();

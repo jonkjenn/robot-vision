@@ -44,8 +44,9 @@ void readPin(int pin)
     }
 }
 
-Controller::Controller(vector<string> &args)
+Controller::Controller(vector<string> &args, function<void()> callback)
 {
+    this->callback = callback;
     bool show_debug = false;
     int pin = -1;
 
@@ -77,12 +78,17 @@ Controller::Controller(vector<string> &args)
     //VideoCapture cap("../out.mp4");
 
     vision = std::unique_ptr<Vision>(new Vision{args});
-    
+
     if(use_serial)
     {
-        arduino = std::unique_ptr<Arduinocomm>(new Arduinocomm);
+        arduino = std::shared_ptr<Arduinocomm>(new Arduinocomm("/dev/ttyTHS0",115200));
     }
 
+    driver = std::shared_ptr<Drive>(new Drive(161,160,163,164,arduino));
+}
+
+void Controller::start()
+{
     loop();
 }
 
@@ -131,6 +137,8 @@ void Controller::parsepacket()
                 }
             case Arduinocomm::DRIVE_COMPLETED:
                 LOG(DEBUG) << "Got drive completed";
+            case Arduinocomm::DEBUG:
+                LOG(DEBUG) << "From Arduino : " << (int)arduino->packet_buffer[1];
             break;
         }
     }
@@ -167,7 +175,17 @@ void Controller::loop()
         {
             clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
 
-            vision->update();
+            driver->update();
+
+            //vision->update();
+
+            arduino->update();
+            if(arduino->packet_ready)
+            {
+                parsepacket();
+            }
+
+            callback();
 
             t.tv_nsec += interval;
             while(t.tv_nsec >= NSEC_PER_SEC){
@@ -191,7 +209,6 @@ void Controller::loop()
                 //LOG(DEBUG) << "Arduino available " << arduino->available();
                 //
                 //vision->update();
-                driveForward(110,3000);
             }
             else
             {
@@ -202,18 +219,4 @@ void Controller::loop()
         }
     }
 
-}
-
-
-//Speed: 0-180, 90 = stop, 180 = max speed forward.
-//Duration in milliseconds
-void Controller::driveForward(uint8_t speed, uint32_t duration)
-{
-    if(arduino != NULL && !waiting_ok)
-    {
-        LOG(DEBUG) << "Drive forward";
-        arduino->driveDuration(speed,duration);
-        waiting_completed = true;
-        waiting_ok = true;
-    }
 }

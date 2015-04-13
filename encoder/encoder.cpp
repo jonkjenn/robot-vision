@@ -1,53 +1,48 @@
 #include "encoder.h"
 
 void Encoder::setup(unsigned char pinA, unsigned char pinB) {
-    /*
+
     _pinA = pinA;
     _pinB = pinB;
 
+    gpio_export(_pinA);
+    gpio_set_dir(_pinA, INPUT_PIN);
+    gpio_get_value(_pinA, &encAoutprev);
+
+    gpio_export(_pinB);
+    gpio_set_dir(_pinB, INPUT_PIN);
+    gpio_get_value(_pinB, &encBoutprev);
+
     prevTime = micros();
-    //pinMode(_pinA,INPUT);
-    //pinMode(_pinB,INPUT);
-    DDRC &= B11110000;
-    encAoutprev = (PINC & (1<< _pinA)) >> _pinA;
-    encBoutprev = (PINC & (1<< _pinB)) >> _pinB;
-    */
 }
 
 void Encoder::update() {
 
-    encAout = (PINC & (1<< _pinA)) >> _pinA;
-    encBout = (PINC & (1<< _pinB)) >> _pinB;
+    if(gpio_get_value(_pinA, &encAout) < 0){return;}
+    if(gpio_get_value(_pinB, &encBout) < 0){return;}
 
-    //encAout = digitalRead(_pinA);
-    //encBout = digitalRead(_pinB);
-
-    if(encAoutprev >= 0 && encBoutprev >= 0){
-        if((encAout == encAoutprev && encBout != encBoutprev && encBout == encAout)
-                || (encAoutprev == encBoutprev && encAout != encAoutprev))
-        {
-            direction = 1;
-            fDist++;
-            //Serial.println("Forward");
-        }
-        else if((encBout == encBoutprev && encAout != encAoutprev && encAout == encBout)
-                || (encBoutprev == encAoutprev && encBout != encBoutprev))
-        {
-            direction = -1;
-            bDist++;
-            //Serial.println("Backward");
-        }
-        else
-        {
-            if(!(encAout == encAoutprev && encBout == encBoutprev))
-            {
-                Serial.println("WTF");
-            }
-            //Serial.println("Not moving");
-        }
+    if((encAout == encAoutprev && encBout != encBoutprev && encBout == encAout)
+            || (encAoutprev == encBoutprev && encAout != encAoutprev))
+    {
+        direction = 1;
+        fDist++;
+        //LOG(DEBUG) << "Forward";
+    }
+    else if((encBout == encBoutprev && encAout != encAoutprev && encAout == encBout)
+            || (encBoutprev == encAoutprev && encBout != encBoutprev))
+    {
+        direction = -1;
+        bDist++;
+        //Serial.println("Backward");
+        //LOG(DEBUG) << "Backward";
     }
     else
     {
+        if(!(encAout == encAoutprev && encBout == encBoutprev))
+        {
+            LOG(DEBUG) << "WTF unknown encoder value, you're to slow?";
+        }
+        //Serial.println("Not moving");
     }
 
     encAoutprev = encAout;
@@ -100,8 +95,14 @@ uint32_t Encoder::getDistance()
 
 void Encoder::reset()
 {
-    Serial.println("Reset");
     prevTime = micros();
     fDist = 0;
     bDist = 0;
 }
+
+Encoder::~Encoder()
+{
+    gpio_unexport(_pinA);
+    gpio_unexport(_pinB);
+}
+

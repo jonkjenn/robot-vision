@@ -8,8 +8,6 @@
 #include <memory>
 #include "arduinocomm.h"
 
-using DriveCompletedCallback = void(*)();
-
 class Drive{
     private:
         unsigned int stopPower = 90;//stand still
@@ -28,19 +26,22 @@ class Drive{
 
         State state = STOPPED;
 
-        std::function<void> driveCompletedCallback;
-
         std::unique_ptr<gyroscope> gyro;
 
         std::shared_ptr<Arduinocomm> serial;
 
+        std::function<void()> driveCompletedCallback;
+
     public:
-        void setup(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, const std::shared_ptr<Arduinocomm>& serial);
-        void driveDuration(unsigned int speed, unsigned long duration);
-        void driveDistance(unsigned int speed, unsigned long distance);
-        void rotate(unsigned int speed, uint16_t degrees);
-        void drive(unsigned int power1, unsigned int power2, unsigned long duration);
-        bool update();
+        ~Drive();
+        Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, const std::shared_ptr<Arduinocomm> serial);
+        void driveDuration(unsigned int speed, unsigned long duration, std::function<void()> callback);
+        void driveDistance(unsigned int speed, unsigned long distance, std::function<void()> callback);
+        void rotateLeft(unsigned int speed, float degrees, std::function<void()> callback);
+        void rotateRight(unsigned int speed, float degrees, std::function<void()> callback);
+        void rotate(unsigned int speed, float degrees, std::function<void()> callback);
+        void drive(unsigned int power1, unsigned int power2);
+        void update();
         void stop();
         uint32_t getDistance();
 };

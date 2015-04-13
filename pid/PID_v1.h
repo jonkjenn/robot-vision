@@ -2,6 +2,7 @@
 #define PID_v1_h
 #define LIBRARY_VERSION	1.0.0
 
+#include "utility.hpp"
 class PID
 {
 

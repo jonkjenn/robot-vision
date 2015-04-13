@@ -1,4 +1,9 @@
-gyroscope::gyroscope(const string device&, uint32_t speed)
+#include "gyroscope.hpp"
+
+using namespace std;
+using namespace serial;
+
+gyroscope::gyroscope(const string &device, uint32_t speed)
 {
     mSerial = unique_ptr<Serial>(new Serial(device,speed,Timeout::simpleTimeout(100)));
 }
@@ -9,18 +14,9 @@ void gyroscope::start(float degrees)
     total_rotation = 0;
 }
 
-float gyroscope::get_rotation()
-{
-    float ret = rotation;
-    rotation = 0;
-    return ret * RAD_DEG_RATIO;
-}
-
 //
 // Example variable, by declaring them static they're persistent
 // and will thus track the system state
-static int packet_drops = 0;
-static uint64_t prevtime = 0;
 //static int mode = MAV_MODE_UNINIT; /* Defined in mavlink_types.h, which is included by mavlink.h */
  
 /**
@@ -40,7 +36,7 @@ void gyroscope::update()
 	while(mSerial->available())
 	{
 		uint8_t c;
-                mSerial->read(c,1);
+                mSerial->read(&c,1);
 		// Try to get a new message
 		if(mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status)) {
 			// Handle message
@@ -58,6 +54,8 @@ void gyroscope::update()
                               
                               if(((sensors.fields_updated & 0x20) >> 5) == 1)
                               {
+                                  //LOG(DEBUG) << "Rotation: " << sensors.zgyro * dur * 1e-6;
+                                  //LOG(DEBUG) << "Total rotation: " << total_rotation;
                                   total_rotation += sensors.zgyro * dur * 1e-6;
                               }
                               

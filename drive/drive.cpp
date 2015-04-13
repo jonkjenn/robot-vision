@@ -2,9 +2,11 @@
 
 using namespace std;
 
-void Drive::setup(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, const shared_ptr<Arduinocomm>& arduino_serial)
+Drive::Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, const shared_ptr<Arduinocomm> arduino_serial)
 {
     serial = arduino_serial;
+
+    gyro = unique_ptr<gyroscope>(new gyroscope("/dev/ttyTHS1",115200));
 
     encoderRight.setup(encoder_right_a,encoder_right_b);
     encoderLeft.setup(encoder_left_a,encoder_left_b);
@@ -14,10 +16,15 @@ void Drive::setup(unsigned char encoder_left_a, unsigned char encoder_left_b, un
     encoderPID->SetMode(AUTOMATIC);
 }
 
-//duration in milliseconds
-void Drive::driveDuration(unsigned int speed, unsigned long duration)
+//Speed: 0-180, 90 = stop, 180 = max speed forward.
+//Duration in milliseconds
+void Drive::driveDuration(unsigned int speed, unsigned long duration, function<void()> callback)
 {
     if(state != STOPPED){return;}
+
+    LOG(DEBUG) << "Starting driveduration";
+
+    driveCompletedCallback = callback;
 
     state = DRIVING_DURATION;
     encoderRight.reset();
@@ -27,15 +34,19 @@ void Drive::driveDuration(unsigned int speed, unsigned long duration)
     _duration = duration * 1000;
     _startTime = micros();
 
+    LOG(DEBUG) << "Sending serial drive signal";
+
     serial->drive(speed,speed);
 
     leftSpeed = speed;
     rightSpeed = speed;
 }
 
-void Drive::driveDistance(unsigned int speed, unsigned long distance)
+void Drive::driveDistance(unsigned int speed, unsigned long distance, function<void()> callback)
 {
     if(state != STOPPED){return;}
+
+    driveCompletedCallback = callback;
 
     encoderRight.reset();
     encoderLeft.reset();
@@ -49,28 +60,49 @@ void Drive::driveDistance(unsigned int speed, unsigned long distance)
     rightSpeed = speed;
 }
 
-void Drive::drive(unsigned int power1, unsigned int power2, unsigned long duration)
+void Drive::drive(unsigned int power1, unsigned int power2)
 {
     if(state == DRIVING_MANUAL || state == STOPPED){
         state = DRIVING_MANUAL;
-        _duration = duration * 1000;
-        _startTime = micros();
-
         serial->drive(power1,power2);
     }
 }
 
-//Speed from 90-180, automatically calculates the reverse speed
-void Drive::rotate(unsigned int speed, uint16_t degrees)
+void Drive::rotateLeft(unsigned int speed, float degrees, function<void()> callback)
 {
     if(state != STOPPED){return;}
+
+    driveCompletedCallback = callback;
+
+    state = ROTATING;
+    gyro->start(degrees);
+    serial->drive(180-speed, speed);
+}
+
+void Drive::rotateRight(unsigned int speed, float degrees, function<void()> callback)
+{
+    if(state != STOPPED){return;}
+
+    driveCompletedCallback = callback;
 
     state = ROTATING;
     gyro->start(degrees);
     serial->drive(speed, 180-speed);
 }
 
-bool Drive::update()
+//Speed from 90-180, automatically calculates the reverse speed
+void Drive::rotate(unsigned int speed, float degrees, function<void()> callback)
+{
+    if(state != STOPPED){return;}
+
+    driveCompletedCallback = callback;
+
+    state = ROTATING;
+    gyro->start(degrees);
+    serial->drive(speed, 180-speed);
+}
+
+void Drive::update()
 {
     encoderLeft.update();
     encoderRight.update();
@@ -82,7 +114,8 @@ bool Drive::update()
             //Serial.println("Stopping");
             stop();
             _duration = 0;
-            return true;
+
+            if(driveCompletedCallback){driveCompletedCallback();}
         }
     }else if(state == DRIVING_DISTANCE)
     {
@@ -96,7 +129,7 @@ bool Drive::update()
             stop();
             _distance = 0;
 
-            return true;
+            if(driveCompletedCallback){driveCompletedCallback();}
         }
         else
         {
@@ -119,13 +152,13 @@ bool Drive::update()
     }
     else if(state == ROTATING)
     {
-        if(gyro->total_rotation >= gyro->goal_rotation)
+        gyro->update();
+        if(abs(gyro->total_rotation) >= abs(gyro->goal_rotation))
         {
-            return true;
+            if(driveCompletedCallback){driveCompletedCallback();}
+            stop();
         }
     }
-
-    return false;
 }
 
 void Drive::stop()
@@ -141,4 +174,9 @@ void Drive::stop()
 uint32_t Drive::getDistance()
 {
     return (encoderRight.getDistance() + encoderLeft.getDistance());
+}
+
+Drive::~Drive()
+{
+    stop();
 }
