@@ -26,7 +26,7 @@ void Encoder::update() {
     {
         direction = 1;
         fDist++;
-        //LOG(DEBUG) << "Forward";
+        LOG(DEBUG) << (int)_pinA << " Forward";
     }
     else if((encBout == encBoutprev && encAout != encAoutprev && encAout == encBout)
             || (encBoutprev == encAoutprev && encBout != encBoutprev))
@@ -34,13 +34,13 @@ void Encoder::update() {
         direction = -1;
         bDist++;
         //Serial.println("Backward");
-        //LOG(DEBUG) << "Backward";
+        LOG(DEBUG) << (int)_pinA << " Backward";
     }
     else
     {
         if(!(encAout == encAoutprev && encBout == encBoutprev))
         {
-            LOG(DEBUG) << "WTF unknown encoder value, you're to slow?";
+            LOG(DEBUG) << (int)_pinA << " WTF unknown encoder value, you're to slow?";
         }
         //Serial.println("Not moving");
     }

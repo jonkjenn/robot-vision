@@ -11,7 +11,10 @@ Drive::Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigne
     encoderRight.setup(encoder_right_a,encoder_right_b);
     encoderLeft.setup(encoder_left_a,encoder_left_b);
 
-    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,encoder_consKp,encoder_consKi,encoder_consKd,DIRECT,-10,0,&encoder_pid_weight));
+    /*thread encoder_thread(&Drive::encoder_thread,this, ref(frame));
+    capture_thread.detach();*/
+
+    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,encoder_consKp,encoder_consKi,encoder_consKd,DIRECT,-10,0));
     encoder_pid_SetPoint = 0.0;
     encoderPID->SetMode(AUTOMATIC);
 }
@@ -68,46 +71,37 @@ void Drive::drive(unsigned int power1, unsigned int power2)
     }
 }
 
-void Drive::rotateLeft(unsigned int speed, float degrees, function<void()> callback)
-{
-    if(state != STOPPED){return;}
-
-    driveCompletedCallback = callback;
-
-    state = ROTATING;
-    gyro->start(degrees);
-    leftSpeed = 180-speed;
-    rightSpeed = speed;
-    currentLeftSpeed = leftSpeed;
-    currentRightSpeed = rightSpeed;
-    serial->drive(leftSpeed, rightSpeed);
-}
-
-void Drive::rotateRight(unsigned int speed, float degrees, function<void()> callback)
-{
-    if(state != STOPPED){return;}
-
-    driveCompletedCallback = callback;
-
-    state = ROTATING;
-    gyro->start(degrees);
-    leftSpeed = speed;
-    rightSpeed = 180-speed;
-    currentLeftSpeed = leftSpeed;
-    currentRightSpeed = rightSpeed;
-    serial->drive(leftSpeed, rightSpeed);
-}
-
 //Speed from 90-180, automatically calculates the reverse speed
-void Drive::rotate(unsigned int speed, float degrees, function<void()> callback)
+void Drive::rotate(unsigned int speed, float degrees, Rotation_Direction direction, function<void()> callback)
 {
     if(state != STOPPED){return;}
 
+    rot_dir = direction;
+
+    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,encoder_consKp,encoder_consKi,encoder_consKd,DIRECT,-10,0));
+    encoder_pid_SetPoint = 0.0;
+    encoderPID->SetMode(AUTOMATIC);
+
     driveCompletedCallback = callback;
+
 
     state = ROTATING;
     gyro->start(degrees);
-    serial->drive(speed, 180-speed);
+
+    if(rot_dir == RIGHT)
+    {
+        leftSpeed = speed;
+        rightSpeed = 180-speed;
+    }
+    else if(rot_dir == LEFT)
+    {
+        leftSpeed = 180-speed;
+        rightSpeed = speed;
+    }
+
+    currentLeftSpeed = leftSpeed;
+    currentRightSpeed = rightSpeed;
+    serial->drive(leftSpeed, rightSpeed);
 }
 
 void Drive::update()
@@ -168,58 +162,58 @@ void Drive::update()
         //LOG(DEBUG) << "Left speed: " << lspeed;
         //LOG(DEBUG) << "Right speed: " << rspeed;
 
-        if(rspeed < lspeed && rspeed > 0.0001)
+        unsigned int tempspeedLeft = 0;
+        unsigned int tempspeedRight = 0;
+
+        if(rspeed < lspeed && rspeed > 0.0001)//Left wheel running faster then right wheel
         {
             encoder_pid_Input = lspeed - rspeed;
             encoderPID->Compute();
 
             //LOG(DEBUG) << "Pid output: " << (int)encoder_pid_Output;
 
-            if(leftSpeed<90)
+            if(leftSpeed<90)//Turning left
             {
-                if(currentLeftSpeed != leftSpeed - (int)encoder_pid_Output)
-                {
-                    currentLeftSpeed = leftSpeed - (int)encoder_pid_Output;
-                    currentRightSpeed = rightSpeed;
-                    serial->drive(currentLeftSpeed, currentRightSpeed);
-                }
+                tempspeedLeft = leftSpeed - (int)encoder_pid_Output;
+                tempspeedRight = rightSpeed;
             }
-            else
+            else//Turning right
             {
-                if(currentLeftSpeed != leftSpeed + (int)encoder_pid_Output)
-                {
-                    currentLeftSpeed = leftSpeed + (int)encoder_pid_Output;
-                    currentRightSpeed = rightSpeed;
-                    serial->drive(currentLeftSpeed, currentRightSpeed);
-                }
+                tempspeedLeft = leftSpeed + (int)encoder_pid_Output;
+                tempspeedRight = rightSpeed;
             }
-        }else
+        }else//Right wheel running faster then left wheel
         {
             encoder_pid_Input = lspeed - rspeed;
             encoderPID->Compute();
 
             //LOG(DEBUG) << "Pid output: " << (int)encoder_pid_Output;
 
-            if(rightSpeed < 90)
+            if(rightSpeed < 90)//Turning right
             {
-                if(currentRightSpeed != rightSpeed - (int)encoder_pid_Output)
-                {
-                    currentRightSpeed = rightSpeed - (int)encoder_pid_Output;
-                    currentLeftSpeed = leftSpeed;
-                    serial->drive(currentLeftSpeed, currentRightSpeed);
-                }
+                tempspeedRight = rightSpeed - (int)encoder_pid_Output;
+                tempspeedLeft = leftSpeed;
             }
-            else
+            else//Turning left
             {
-                if(currentRightSpeed != rightSpeed + (int)encoder_pid_Output)
-                {
-                    currentRightSpeed = rightSpeed + (int)encoder_pid_Output;
-                    currentLeftSpeed = leftSpeed;
-                    serial->drive(currentLeftSpeed, currentRightSpeed);
-                }
+                tempspeedRight = rightSpeed + (int)encoder_pid_Output;
+                tempspeedLeft = leftSpeed;
             }
         }
 
+        //If new speed is different the old speed
+        if((currentLeftSpeed != tempspeedLeft && currentRightSpeed == tempspeedRight) 
+                || (currentRightSpeed != tempspeedRight && currentLeftSpeed == tempspeedLeft))
+        {
+            serial->drive(currentLeftSpeed, currentRightSpeed);
+        }
+
+        if((abs(gyro->total_rotation) - abs(gyro->goal_rotation)) < 5.0)
+        {
+            leftSpeed 
+            currentLeftSpeed *= 0.9;
+            currentRightSpeed *= 0.9;
+        }
         if(abs(gyro->total_rotation) >= abs(gyro->goal_rotation))
         {
             if(driveCompletedCallback){driveCompletedCallback();}

@@ -199,7 +199,7 @@ void Controller::loop()
             //LOG(DEBUG) << "callback";
             callback();
 
-            //LOG(DEBUG) << "complete";
+            //&LOG(DEBUG) << "complete";
 
             t.tv_nsec += interval;
             while(t.tv_nsec >= NSEC_PER_SEC){

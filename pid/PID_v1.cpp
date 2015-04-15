@@ -12,13 +12,12 @@
  *    reliable defaults, so we need to have the user set them.
  ***************************************************************************/
 PID::PID(double* Input, double* Output, double* Setpoint,
-        double Kp, double Ki, double Kd, int ControllerDirection, int limitLow, int limitHigh, double *weigth)
+        double Kp, double Ki, double Kd, int ControllerDirection, int limitLow, int limitHigh)
 {
 	
     myOutput = Output;
     myInput = Input;
     mySetpoint = Setpoint;
-    myWeigth = weigth;
 	inAuto = false;
 	
 	PID::SetOutputLimits(limitLow, limitHigh);				//default output limit corresponds to 
@@ -57,7 +56,7 @@ bool PID::Compute()
       double dInput = (input - lastInput);
  
       /*Compute PID Output*/
-      double output = kp * error * *myWeigth + ITerm- kd * dInput * *myWeigth;
+      double output = kp * error + ITerm- kd * dInput ;
       
 	  if(output > outMax) output = outMax;
       else if(output < outMin) output = outMin;

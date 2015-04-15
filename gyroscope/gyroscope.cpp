@@ -36,13 +36,14 @@ void gyroscope::update()
     // COMMUNICATION THROUGH EXTERNAL UART PORT (XBee serial)
     //
     int count = 0;
-    while(mSerial->available() && count < 3)
+    while(mSerial->available())
     {
         count++;
         mSerial->read(&gyro_temp,1);
         // Try to get a new message
         if(mavlink_parse_char(MAVLINK_COMM_0, gyro_temp, &msg, &status)) {
             // Handle message
+            LOG(DEBUG) << "GYRO msg: " << msg.msgid;
 
             switch(msg.msgid)
             {
@@ -59,8 +60,8 @@ void gyroscope::update()
 
                     if(((sensors.fields_updated & 0x20) >> 5) == 1)
                     {
-                        //LOG(DEBUG) << "Rotation: " << sensors.zgyro * dur * 1e-6 * RAD_DEG_RATIO;
-                        //LOG(DEBUG) << "Total rotation: " << total_rotation * RAD_DEG_RATIO;
+                        LOG(DEBUG) << "Rotation: " << sensors.zgyro * gyro_dur * 1e-6 * RAD_DEG_RATIO;
+                        LOG(DEBUG) << "Total rotation: " << total_rotation * RAD_DEG_RATIO;
                         total_rotation += sensors.zgyro * gyro_dur * 1e-6;
                     }
 
