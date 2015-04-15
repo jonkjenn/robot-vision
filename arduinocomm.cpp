@@ -55,7 +55,7 @@ void Arduinocomm::process()
                     for(int i=0;i<packet_position;i+=2)
                     {
                         packet_buffer[i/2] = readbyte(i);
-                        LOG(DEBUG) << "i: " << i/2 << " p: " << (unsigned int)packet_buffer[i/2];
+                        //LOG(DEBUG) << "i: " << i/2 << " p: " << (unsigned int)packet_buffer[i/2];
                     }
 
                     if(reading_packet)
@@ -112,7 +112,7 @@ uint32_t Arduinocomm::read_uint32(uint8_t (&packet)[MAX_BUFFER], unsigned int po
 void Arduinocomm::writecommand(uint8_t byte)
 {
     mSerial->write(&byte,1);
-    LOG(DEBUG) << "writecommand" << (unsigned int) byte;
+    //LOG(DEBUG) << "writecommand" << (unsigned int) byte;
     mSerial->flush();
 }
 
@@ -123,7 +123,7 @@ void Arduinocomm::writebyte(uint8_t byte)
     bytes[0] =  byte & 0x7F;
     bytes[1] = (byte & 0x80) >> 7;
     int written = mSerial->write(bytes,2);
-    LOG(DEBUG) << "Writebyte: " << (unsigned int)bytes[0] << ", " << (unsigned int)bytes[1];
+    //LOG(DEBUG) << "Writebyte: " << (unsigned int)bytes[0] << ", " << (unsigned int)bytes[1];
     mSerial->flush();
 }
 

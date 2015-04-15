@@ -6,12 +6,12 @@ Drive::Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigne
 {
     serial = arduino_serial;
 
-    gyro = unique_ptr<gyroscope>(new gyroscope("/dev/ttyTHS1",115200));
+    gyro = unique_ptr<gyroscope>(new gyroscope("/dev/ttyTHS1",921600));
 
     encoderRight.setup(encoder_right_a,encoder_right_b);
     encoderLeft.setup(encoder_left_a,encoder_left_b);
 
-    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,encoder_consKp,encoder_consKi,encoder_consKd,DIRECT,-10,10,&encoder_pid_weight));
+    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,encoder_consKp,encoder_consKi,encoder_consKd,DIRECT,-10,0,&encoder_pid_weight));
     encoder_pid_SetPoint = 0.0;
     encoderPID->SetMode(AUTOMATIC);
 }
@@ -76,7 +76,11 @@ void Drive::rotateLeft(unsigned int speed, float degrees, function<void()> callb
 
     state = ROTATING;
     gyro->start(degrees);
-    serial->drive(180-speed, speed);
+    leftSpeed = 180-speed;
+    rightSpeed = speed;
+    currentLeftSpeed = leftSpeed;
+    currentRightSpeed = rightSpeed;
+    serial->drive(leftSpeed, rightSpeed);
 }
 
 void Drive::rotateRight(unsigned int speed, float degrees, function<void()> callback)
@@ -87,7 +91,11 @@ void Drive::rotateRight(unsigned int speed, float degrees, function<void()> call
 
     state = ROTATING;
     gyro->start(degrees);
-    serial->drive(speed, 180-speed);
+    leftSpeed = speed;
+    rightSpeed = 180-speed;
+    currentLeftSpeed = leftSpeed;
+    currentRightSpeed = rightSpeed;
+    serial->drive(leftSpeed, rightSpeed);
 }
 
 //Speed from 90-180, automatically calculates the reverse speed
@@ -153,6 +161,65 @@ void Drive::update()
     else if(state == ROTATING)
     {
         gyro->update();
+        
+        float rspeed = encoderRight.getSpeed();
+        float lspeed = encoderLeft.getSpeed();
+
+        //LOG(DEBUG) << "Left speed: " << lspeed;
+        //LOG(DEBUG) << "Right speed: " << rspeed;
+
+        if(rspeed < lspeed && rspeed > 0.0001)
+        {
+            encoder_pid_Input = lspeed - rspeed;
+            encoderPID->Compute();
+
+            //LOG(DEBUG) << "Pid output: " << (int)encoder_pid_Output;
+
+            if(leftSpeed<90)
+            {
+                if(currentLeftSpeed != leftSpeed - (int)encoder_pid_Output)
+                {
+                    currentLeftSpeed = leftSpeed - (int)encoder_pid_Output;
+                    currentRightSpeed = rightSpeed;
+                    serial->drive(currentLeftSpeed, currentRightSpeed);
+                }
+            }
+            else
+            {
+                if(currentLeftSpeed != leftSpeed + (int)encoder_pid_Output)
+                {
+                    currentLeftSpeed = leftSpeed + (int)encoder_pid_Output;
+                    currentRightSpeed = rightSpeed;
+                    serial->drive(currentLeftSpeed, currentRightSpeed);
+                }
+            }
+        }else
+        {
+            encoder_pid_Input = lspeed - rspeed;
+            encoderPID->Compute();
+
+            //LOG(DEBUG) << "Pid output: " << (int)encoder_pid_Output;
+
+            if(rightSpeed < 90)
+            {
+                if(currentRightSpeed != rightSpeed - (int)encoder_pid_Output)
+                {
+                    currentRightSpeed = rightSpeed - (int)encoder_pid_Output;
+                    currentLeftSpeed = leftSpeed;
+                    serial->drive(currentLeftSpeed, currentRightSpeed);
+                }
+            }
+            else
+            {
+                if(currentRightSpeed != rightSpeed + (int)encoder_pid_Output)
+                {
+                    currentRightSpeed = rightSpeed + (int)encoder_pid_Output;
+                    currentLeftSpeed = leftSpeed;
+                    serial->drive(currentLeftSpeed, currentRightSpeed);
+                }
+            }
+        }
+
         if(abs(gyro->total_rotation) >= abs(gyro->goal_rotation))
         {
             if(driveCompletedCallback){driveCompletedCallback();}

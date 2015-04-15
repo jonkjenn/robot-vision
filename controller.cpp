@@ -67,6 +67,11 @@ Controller::Controller(vector<string> &args, function<void()> callback)
         {
             use_serial = false;
         }
+
+        if(args[i].compare("--nocam") == 0)
+        {
+            cam = false;
+        }
     }
 
     configure_logger(show_debug);
@@ -175,17 +180,26 @@ void Controller::loop()
         {
             clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
 
+            //LOG(DEBUG) << "driver";
             driver->update();
 
-            //vision->update();
+            //LOG(DEBUG) << "vision";
+            if(cam)
+            {
+                vision->update();
+            }
 
+            //LOG(DEBUG) << "arduino";
             arduino->update();
             if(arduino->packet_ready)
             {
                 parsepacket();
             }
 
+            //LOG(DEBUG) << "callback";
             callback();
+
+            //LOG(DEBUG) << "complete";
 
             t.tv_nsec += interval;
             while(t.tv_nsec >= NSEC_PER_SEC){
@@ -198,7 +212,7 @@ void Controller::loop()
     {
         while(true)
         {
-            if(use_serial && serial_delay > 50000)
+            if(use_serial && serial_delay > 1000)
             {
                 arduino->update();
                 if(arduino->packet_ready)

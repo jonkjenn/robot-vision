@@ -22,6 +22,7 @@
 class Controller{
     private:
         bool show_debug{false};
+        bool cam{true};
         void configure_pins();
         void configure_logger(const bool show_debug);
         void loop();

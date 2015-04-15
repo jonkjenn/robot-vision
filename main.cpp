@@ -47,12 +47,12 @@ void loop()
     {
         case 0:
             LOG(DEBUG) << "Sending drive";
-            driver->driveDuration(110,3000, []{drive_complete();});
-            //driver->rotateRight(110,90,[]{drive_complete();});
+            //driver->driveDuration(110,3000, []{drive_complete();});
+            driver->rotateRight(110,90,[]{drive_complete();});
             step++;
             break;
         case 2:
-            driver->rotateLeft(110,90,[]{drive_complete();});
+            //driver->rotateLeft(110,90,[]{drive_complete();});
             step++;
             break;
     }

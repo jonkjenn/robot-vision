@@ -19,8 +19,11 @@ class Drive{
         uint8_t leftSpeed= 90;
         uint8_t rightSpeed = 90;
 
+        uint8_t currentLeftSpeed= 90;
+        uint8_t currentRightSpeed = 90;
+
         double encoder_pid_SetPoint,encoder_pid_Input,encoder_pid_Output;
-        double encoder_consKp=1.0, encoder_consKi=0.0, encoder_consKd=0.0, encoder_pid_weight = 1.0;
+        double encoder_consKp=3.0, encoder_consKi=5.0, encoder_consKd=0.0, encoder_pid_weight = 1.0;
         std::unique_ptr<PID> encoderPID;
         enum State{ DRIVING_MANUAL, DRIVING_DURATION, DRIVING_DISTANCE, ROTATING, STOPPED };
 

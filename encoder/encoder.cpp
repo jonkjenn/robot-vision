@@ -55,7 +55,11 @@ void Encoder::update() {
       * uMeter / uSeconds = m/s
       *
       * */
-    speed = (float)getDistance()/(micros()-prevTime);
+    prevprevspeed = prevspeed;
+    prevspeed = speed;
+    speed = encoder_tick_distance/(micros()-prevTime);
+    prevTime = micros();
+
     /*Serial.print(encAout);
     Serial.print(" ");
     Serial.print(encBout);
@@ -72,7 +76,7 @@ void Encoder::update() {
 //m/s
 float  Encoder::getSpeed()
      {
-         return speed;
+         return middle_of_3(speed,prevspeed,prevprevspeed);
      }
 
 //Returns distance in micrometer
@@ -82,12 +86,12 @@ uint32_t Encoder::getDistance()
     if(fDist>=bDist)
     {
         //val = fDist/64.0/18.75 * PI * WHEEL_SIZE;
-        val = fDist*distance_modifier;
+        val = fDist*encoder_tick_distance;
     }
     else
     {
         //val = -bDist/64.0/18.75 * PI * WHEEL_SIZE;
-        val = fDist*distance_modifier;
+        val = bDist*encoder_tick_distance;
     }
 
     return val;
