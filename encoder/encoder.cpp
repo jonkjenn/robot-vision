@@ -26,7 +26,7 @@ void Encoder::update() {
     {
         direction = 1;
         fDist++;
-        LOG(DEBUG) << (int)_pinA << " Forward";
+//        LOG(DEBUG) << (int)_pinA << " Forward";
     }
     else if((encBout == encBoutprev && encAout != encAoutprev && encAout == encBout)
             || (encBoutprev == encAoutprev && encBout != encBoutprev))
@@ -34,7 +34,7 @@ void Encoder::update() {
         direction = -1;
         bDist++;
         //Serial.println("Backward");
-        LOG(DEBUG) << (int)_pinA << " Backward";
+ //       LOG(DEBUG) << (int)_pinA << " Backward";
     }
     else
     {

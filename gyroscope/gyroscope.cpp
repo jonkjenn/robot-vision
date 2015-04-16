@@ -12,6 +12,7 @@ void gyroscope::start(float degrees)
 {
     goal_rotation = degrees * DEG_RAD_RATIO;
     total_rotation = 0;
+    distance_rotation = abs(goal_rotation)*RAD_DEG_RATIO -  abs(total_rotation)*RAD_DEG_RATIO;
 }
 
 //
@@ -43,7 +44,7 @@ void gyroscope::update()
         // Try to get a new message
         if(mavlink_parse_char(MAVLINK_COMM_0, gyro_temp, &msg, &status)) {
             // Handle message
-            LOG(DEBUG) << "GYRO msg: " << msg.msgid;
+            //LOG(DEBUG) << "GYRO msg: " << msg.msgid;
 
             switch(msg.msgid)
             {
@@ -51,7 +52,7 @@ void gyroscope::update()
                     mavlink_highres_imu_t sensors;
                     mavlink_msg_highres_imu_decode(&msg, &sensors);
 
-                    if(prevtime == 0){prevtime = sensors.time_usec;continue;}
+                    if(prevtime == 0){prevtime = sensors.time_usec;break;}
                     if(abs(sensors.zgyro) < 0.005){
                         return;
                     }
@@ -62,8 +63,13 @@ void gyroscope::update()
                     {
                         LOG(DEBUG) << "Rotation: " << sensors.zgyro * gyro_dur * 1e-6 * RAD_DEG_RATIO;
                         LOG(DEBUG) << "Total rotation: " << total_rotation * RAD_DEG_RATIO;
+                        LOG(DEBUG) << "Duration: " << gyro_dur;
+                        LOG(DEBUG) << "Rotation speed: " << sensors.zgyro;
                         total_rotation += sensors.zgyro * gyro_dur * 1e-6;
-                        distance_rotation = abs(goal_rotation) -  abs(total_rotation);
+                        LOG(DEBUG) << "Goal " << goal_rotation;
+                        distance_rotation = abs(goal_rotation)*RAD_DEG_RATIO -  abs(total_rotation)*RAD_DEG_RATIO;
+                        prevtime = sensors.time_usec;
+                        return;
                     }
 
                     prevtime = sensors.time_usec;

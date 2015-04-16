@@ -21,7 +21,7 @@ class Drive{
         uint8_t rightSpeed = 90;
 
         float speedMod = 1.0;
-        const float rotation_mod = (1.0 - 95.0/110.0);
+        const float rotation_mod = (1.0 - 90.0/110.0);
 
         uint8_t currentLeftSpeed= 90;
         uint8_t currentRightSpeed = 90;
@@ -29,21 +29,26 @@ class Drive{
         double encoder_pid_SetPoint,encoder_pid_Input,encoder_pid_Output;
         double encoder_consKp=3.0, encoder_consKi=5.0, encoder_consKd=0.0;
         double enc_rot_kp=3.0, enc_rot_ki=5.0, enc_rot_kd=0.0;
-        std::unique_ptr<PID> encoderPID;
+        std::unique_ptr<PID> encoderPID = nullptr;
+
+        double rotationPID_setpoint = 0.0,rotationPID_input = 0.0,rotationPID_output = 0.0;
+        double rotationPIDKp = 3.0, rotationPIDKi = 1.0, rotationPIDKd = 0.0;
+        std::unique_ptr<PID> rotationPID = nullptr;
+
         enum State{ DRIVING_MANUAL, DRIVING_DURATION, DRIVING_DISTANCE, ROTATING, STOPPED };
         State state = STOPPED;
 
-        Rotation_Direction rot_dir = LEFT;
+        std::unique_ptr<gyroscope> gyro = nullptr;
 
+        std::shared_ptr<Arduinocomm> serial = nullptr;
 
-        std::unique_ptr<gyroscope> gyro;
-
-        std::shared_ptr<Arduinocomm> serial;
-
-        std::function<void()> driveCompletedCallback;
+        std::function<void()> driveCompletedCallback = nullptr;
 
         void encoder_thread();
 
+        bool check_bounds();
+
+        void do_rotate();
     public:
         ~Drive();
         Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, const std::shared_ptr<Arduinocomm> serial);

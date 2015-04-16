@@ -17,6 +17,7 @@ Drive::Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigne
     encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,encoder_consKp,encoder_consKi,encoder_consKd,DIRECT,-10,0));
     encoder_pid_SetPoint = 0.0;
     encoderPID->SetMode(AUTOMATIC);
+
 }
 
 //Speed: 0-180, 90 = stop, 180 = max speed forward.
@@ -76,6 +77,10 @@ void Drive::rotate(unsigned int speed, float degrees, Rotation_Direction directi
 {
     if(state != STOPPED){return;}
 
+    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, rotationPIDKp, rotationPIDKi, rotationPIDKd, DIRECT, -20,0));
+    rotationPID_setpoint = 0.0;
+    rotationPID->SetMode(AUTOMATIC);
+
     rot_dir = direction;
 
     encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,encoder_consKp,encoder_consKi,encoder_consKd,DIRECT,-10,0));
@@ -84,24 +89,15 @@ void Drive::rotate(unsigned int speed, float degrees, Rotation_Direction directi
 
     driveCompletedCallback = callback;
 
-
     state = ROTATING;
     gyro->start(degrees);
 
-    if(rot_dir == RIGHT)
-    {
-        leftSpeed = speed;
-        rightSpeed = 180-speed;
-    }
-    else if(rot_dir == LEFT)
-    {
-        leftSpeed = 180-speed;
-        rightSpeed = speed;
-    }
+    leftSpeed = speed;
+    rightSpeed = speed;
 
     currentLeftSpeed = leftSpeed;
     currentRightSpeed = rightSpeed;
-    serial->drive(leftSpeed, rightSpeed);
+    do_rotate();
 }
 
 void Drive::update()
@@ -162,8 +158,8 @@ void Drive::update()
         //LOG(DEBUG) << "Left speed: " << lspeed;
         //LOG(DEBUG) << "Right speed: " << rspeed;
 
-        unsigned int tempspeedLeft = 0;
-        unsigned int tempspeedRight = 0;
+        unsigned int tempspeedLeft = 90;
+        unsigned int tempspeedRight = 90;
 
         if(rspeed < lspeed && rspeed > 0.0001)//Left wheel running faster then right wheel
         {
@@ -172,33 +168,16 @@ void Drive::update()
 
             //LOG(DEBUG) << "Pid output: " << (int)encoder_pid_Output;
 
-            if(leftSpeed<90)//Turning left
-            {
-                tempspeedLeft = leftSpeed - (int)encoder_pid_Output;
-                tempspeedRight = rightSpeed;
-            }
-            else//Turning right
-            {
-                tempspeedLeft = leftSpeed + (int)encoder_pid_Output;
-                tempspeedRight = rightSpeed;
-            }
+            tempspeedLeft = leftSpeed + (int)encoder_pid_Output;
+            tempspeedRight = rightSpeed;
+
         }else//Right wheel running faster then left wheel
         {
             encoder_pid_Input = lspeed - rspeed;
             encoderPID->Compute();
 
-            //LOG(DEBUG) << "Pid output: " << (int)encoder_pid_Output;
-
-            if(rightSpeed < 90)//Turning right
-            {
-                tempspeedRight = rightSpeed - (int)encoder_pid_Output;
-                tempspeedLeft = leftSpeed;
-            }
-            else//Turning left
-            {
-                tempspeedRight = rightSpeed + (int)encoder_pid_Output;
-                tempspeedLeft = leftSpeed;
-            }
+            tempspeedRight = rightSpeed + (int)encoder_pid_Output;
+            tempspeedLeft = leftSpeed;
         }
 
         //If new speed is different the old speed
@@ -207,16 +186,28 @@ void Drive::update()
         {
             currentLeftSpeed = tempspeedLeft;
             currentRightSpeed = tempspeedRight;
-            serial->drive(currentLeftSpeed, currentRightSpeed);
+
+            if(gyro->distance_rotation > 5.0)
+            {
+                do_rotate();
+            }
         }
 
         if(gyro->distance_rotation < 5.0)
         {
             //Modifier that will reduce rotation speed (110) from 110 down to 95 depending on how close the rotation is to completed
-            speedMod = 1.0 - (1.0 - gyro->distance_rotation/5.0) * rotation_mod;
+            //speedMod = 1.0 - (1.0 - gyro->distance_rotation/5.0) * rotation_mod;
 
-            currentLeftSpeed *= speedMod;
-            currentRightSpeed *= speedMod;
+            //currentLeftSpeed = leftSpeed * speedMod * speedMod;
+            //currentRightSpeed = rightSpeed * speedMod * speedMod;
+
+            if(currentLeftSpeed < 90){currentLeftSpeed = 90;}
+            if(currentRightSpeed < 90){currentRightSpeed = 90;}
+
+            LOG(DEBUG) << "SpeedMod " << speedMod;
+            LOG(DEBUG) << "Distance " << gyro->distance_rotation << " , left-speed: " << (int)currentLeftSpeed << " right-speed: "  << (int)currentRightSpeed;
+
+            do_rotate();
         }
         else
         {
@@ -229,6 +220,40 @@ void Drive::update()
             stop();
         }
     }
+}
+
+void Drive::do_rotate()
+{
+    if(!check_bounds()){return;}
+
+    if(rot_dir == LEFT)
+    {
+        serial->drive(180 - currentLeftSpeed, currentRightSpeed);
+    }
+    else if(rot_dir == RIGHT)
+    {
+        serial->drive(currentLeftSpeed, 180 - currentRightSpeed);
+    }
+}
+
+bool Drive::check_bounds()
+{
+    //If speeds are out of bounds
+    if(currentLeftSpeed < 90 || currentRightSpeed < 90 || currentLeftSpeed > leftSpeed || currentRightSpeed > rightSpeed)
+    {
+        LOG(DEBUG) << "Check bounds stopped";
+        LOG(DEBUG) << "Left speed: " << (int) leftSpeed;
+        LOG(DEBUG) << "Right speed: " << (int) rightSpeed;
+        LOG(DEBUG) << "Current Left speed: " << (int) currentLeftSpeed;
+        LOG(DEBUG) << "Current right speed: " << (int) currentRightSpeed;
+        currentLeftSpeed = 90;
+        currentRightSpeed = 90;
+        leftSpeed = 90;
+        rightSpeed = 90;
+        stop();
+        return false;
+    }
+    return true;
 }
 
 void Drive::stop()

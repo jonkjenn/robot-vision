@@ -2,6 +2,7 @@
 #include "controller.hpp"
 #include "drive.h"
 #define ELPP_CUSTOM_COUT std::cerr
+#include <cstdlib>
 
 using namespace std;
 
@@ -10,6 +11,9 @@ void drive_complete();
 
 unsigned int step = 0;
 bool stop = false;
+
+float angle = 0;
+Rotation_Direction dir = LEFT;
 
 unique_ptr<Controller> c;
 shared_ptr<Drive> driver;
@@ -27,6 +31,12 @@ int main(int argc, char** argv)
         {
             stop = true;
             break;
+        }
+
+        if(args[i].compare("--angle") == 0)
+        {
+            angle = atof(args[++i].c_str());
+            dir = (angle>0?RIGHT:LEFT);
         }
     }
 
@@ -48,7 +58,7 @@ void loop()
         case 0:
             LOG(DEBUG) << "Sending drive";
             //driver->driveDuration(110,3000, []{drive_complete();});
-            //driver->rotate(110,90,Rotation_Direction::LEFT,[]{drive_complete();});
+            driver->rotate(110,angle,dir,[]{drive_complete();});
             step++;
             break;
         case 2:
