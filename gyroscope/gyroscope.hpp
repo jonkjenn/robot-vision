@@ -16,6 +16,7 @@ class gyroscope{
 
         float total_rotation = 0;
         float goal_rotation = 0;
+        float distance_rotation = 0;
     private:
         int packet_drops = 0;
         uint32_t prevtime = 0;

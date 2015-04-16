@@ -205,15 +205,24 @@ void Drive::update()
         if((currentLeftSpeed != tempspeedLeft && currentRightSpeed == tempspeedRight) 
                 || (currentRightSpeed != tempspeedRight && currentLeftSpeed == tempspeedLeft))
         {
+            currentLeftSpeed = tempspeedLeft;
+            currentRightSpeed = tempspeedRight;
             serial->drive(currentLeftSpeed, currentRightSpeed);
         }
 
-        if((abs(gyro->total_rotation) - abs(gyro->goal_rotation)) < 5.0)
+        if(gyro->distance_rotation < 5.0)
         {
-            leftSpeed 
-            currentLeftSpeed *= 0.9;
-            currentRightSpeed *= 0.9;
+            //Modifier that will reduce rotation speed (110) from 110 down to 95 depending on how close the rotation is to completed
+            speedMod = 1.0 - (1.0 - gyro->distance_rotation/5.0) * rotation_mod;
+
+            currentLeftSpeed *= speedMod;
+            currentRightSpeed *= speedMod;
         }
+        else
+        {
+            speedMod = 1.0;
+        }
+
         if(abs(gyro->total_rotation) >= abs(gyro->goal_rotation))
         {
             if(driveCompletedCallback){driveCompletedCallback();}

@@ -63,6 +63,7 @@ void gyroscope::update()
                         LOG(DEBUG) << "Rotation: " << sensors.zgyro * gyro_dur * 1e-6 * RAD_DEG_RATIO;
                         LOG(DEBUG) << "Total rotation: " << total_rotation * RAD_DEG_RATIO;
                         total_rotation += sensors.zgyro * gyro_dur * 1e-6;
+                        distance_rotation = abs(goal_rotation) -  abs(total_rotation);
                     }
 
                     prevtime = sensors.time_usec;

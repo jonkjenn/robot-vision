@@ -20,6 +20,9 @@ class Drive{
         uint8_t leftSpeed= 90;
         uint8_t rightSpeed = 90;
 
+        float speedMod = 1.0;
+        const float rotation_mod = (1.0 - 95.0/110.0);
+
         uint8_t currentLeftSpeed= 90;
         uint8_t currentRightSpeed = 90;
 
