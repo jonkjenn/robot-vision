@@ -29,7 +29,7 @@ class Controller{
         void configure_logger(const bool show_debug);
         void loop();
         std::unique_ptr<Vision> vision;
-        std::shared_ptr<Arduinocomm> arduino;
+        Arduinocomm *arduino;
         std::unique_ptr<gyroscope> gyro;
         void setup_vision(const bool show_video);
         void setup_vision(std::string &file, const bool show_video);

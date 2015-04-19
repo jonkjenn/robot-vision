@@ -38,7 +38,7 @@
 #include <chrono>
 #include <vector>
 #include <iostream>
-#define LOG(DEBUG) cout
+#include "utility.hpp"
 
 using namespace std;
 using namespace std::chrono;

@@ -1,11 +1,12 @@
 #ifndef UTILITY_GUARD
 #define UTILITY_GUARD
 #include <atomic>
-#define LOG(DEBUG) cout << endl; cout
+#define LOG(DEBUG) cout
 void delayMicroseconds(unsigned int ms);
 unsigned long micros();
 const float  PI=3.14159265358979f;
 void atomic_add_float(std::atomic<float> &atom, float bar);
+void reset_micros();
 
 template<typename T>
 T middle_of_3(T a, T b, T c)

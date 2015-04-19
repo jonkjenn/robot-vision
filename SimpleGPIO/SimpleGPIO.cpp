@@ -134,6 +134,39 @@ int gpio_set_value(unsigned int gpio, PIN_VALUE value)
 	return 0;
 }
 
+int gpio_start_read(unsigned int gpio)
+{
+	char buf[MAX_BUF];
+	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
+	return open(buf, O_RDONLY, S_IRWXO);
+}
+
+void gpio_stop_read(int fd)
+{
+	close(fd);
+}
+
+int gpio_get_value(unsigned int *value, int fd)
+{
+	char ch;
+        lseek(fd, 0, SEEK_SET);
+
+	if (fd < 0) {
+            perror("gpio/get-value");
+            return fd;
+	}
+
+	read(fd, &ch, 1);
+
+	if (ch != '0') {
+		*value = 1;
+	} else {
+		*value = 0;
+	}
+
+	return 0;
+}
+
 /****************************************************************
  * gpio_get_value
  ****************************************************************/

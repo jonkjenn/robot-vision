@@ -63,8 +63,11 @@ int gpio_unexport(unsigned int gpio);
 int gpio_set_dir(unsigned int gpio, PIN_DIRECTION out_flag);
 int gpio_set_value(unsigned int gpio, PIN_VALUE value);
 int gpio_get_value(unsigned int gpio, unsigned int *value);
+int gpio_get_value(unsigned int *value, int fd);
 int gpio_set_edge(unsigned int gpio, char *edge);
 int gpio_fd_open(unsigned int gpio);
 int gpio_fd_close(int fd);
+int gpio_start_read(unsigned int gpio);
+void gpio_stop_read(int fd);
 
 #endif /* SIMPLEGPIO_H_ */

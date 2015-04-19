@@ -10,17 +10,20 @@ void Encoder::setup(unsigned char pinA, unsigned char pinB) {
     gpio_set_dir(_pinA, INPUT_PIN);
     gpio_get_value(_pinA, &encAoutprev);
 
+    fd1 = gpio_start_read(_pinA);
+
     gpio_export(_pinB);
     gpio_set_dir(_pinB, INPUT_PIN);
     gpio_get_value(_pinB, &encBoutprev);
+    fd2 = gpio_start_read(_pinB);
 
     prevTime = micros();
 }
 
 void Encoder::update() {
 
-    if(gpio_get_value(_pinA, &encAout) < 0){return;}
-    if(gpio_get_value(_pinB, &encBout) < 0){return;}
+    if(gpio_get_value(&encAout,fd1) < 0){return;}
+    if(gpio_get_value(&encBout,fd2) < 0){return;}
 
 //    lock_guard<mutex> lock(encodermutex);
 
@@ -31,6 +34,7 @@ void Encoder::update() {
         fDist++;
         updateSpeeds();
         //LOG(DEBUG) << (int)_pinA << " fDist: " << fDist;
+               //LOG(DEBUG) << (int)_pinB << " Forward" <<endl;
     }
     else if((encBout == encBoutprev && encAout != encAoutprev && encAout == encBout)
             || (encBoutprev == encAoutprev && encBout != encBoutprev))
@@ -39,7 +43,7 @@ void Encoder::update() {
         bDist++;
         updateSpeeds();
         //Serial.println("Backward");
-        //       LOG(DEBUG) << (int)_pinA << " Backward";
+               //LOG(DEBUG) << (int)_pinA << " Backward" << endl;
     }
     else
     {
@@ -83,7 +87,6 @@ void Encoder::updateSpeeds()
     }
 }
 
-
 //m/s
 float  Encoder::getSpeed()
 {
@@ -120,6 +123,8 @@ void Encoder::reset()
 
 Encoder::~Encoder()
 {
+    gpio_stop_read(fd1);
+    gpio_stop_read(fd2);
     gpio_unexport(_pinA);
     gpio_unexport(_pinB);
 }

@@ -38,13 +38,12 @@ void gyroscope::update()
     int count = mSerial->available();
     int read = mSerial->read(gyro_temp,count);
     int i=0;
-    cout << "read: " <<read << endl;
     while(i<read)
     {
         // Try to get a new message
         if(mavlink_parse_char(MAVLINK_COMM_0, gyro_temp[i], &msg, &status)) {
             // Handle message
-            cout << "GYRO msg: " << (int)msg.msgid << endl;
+            //cout << "GYRO msg: " << (int)msg.msgid << endl;
 
             switch(msg.msgid)
             {

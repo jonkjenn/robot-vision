@@ -68,7 +68,7 @@ void loop()
     switch(step)
     {
         case 0:
-            LOG(DEBUG) << "Case 0";
+            cout << "case 0" << endl;
             driver->driveDistance(speed, args_dist,[]{drive_complete();});
             step++;
             step = 3;

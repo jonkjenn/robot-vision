@@ -16,8 +16,8 @@ class PID
   #define REVERSE  1
 
   //commonly used functions **************************************************************************
-    PID(double*, double*, double*,        // * constructor.  links the PID to the Input, Output, and 
-        double, double, double, int, int, int);     //   Setpoint.  Initial tuning parameters are also set here
+    PID(int*, int*, int*,        // * constructor.  links the PID to the Input, Output, and 
+        int, int, int, int, int, int);     //   Setpoint.  Initial tuning parameters are also set here
 	
     void SetMode(int Mode);               // * sets PID to either Manual (0) or Auto (non-0)
 
@@ -26,15 +26,15 @@ class PID
                                           //   calculation frequency can be set using SetMode
                                           //   SetSampleTime respectively
 
-    void SetOutputLimits(double, double); //clamps the output to a specific range. 0-255 by default, but
+    void SetOutputLimits(int, int); //clamps the output to a specific range. 0-255 by default, but
 										  //it's likely the user will want to change this depending on
 										  //the application
 	
 
 
   //available but not commonly used functions ********************************************************
-    void SetTunings(double, double,       // * While most users will set the tunings once in the 
-                    double);         	  //   constructor, this function gives the user the option
+    void SetTunings(int, int,       // * While most users will set the tunings once in the 
+                    int);         	  //   constructor, this function gives the user the option
                                           //   of changing tunings during runtime for Adaptive control
 	void SetControllerDirection(int);	  // * Sets the Direction, or "Action" of the controller. DIRECT
 										  //   means the output will increase when error is positive. REVERSE
@@ -46,39 +46,39 @@ class PID
 										  
 										  
   //Display functions ****************************************************************
-	double GetKp();						  // These functions query the pid for interal values.
-	double GetKi();						  //  they were created mainly for the pid front-end,
-	double GetKd();						  // where it's important to know what is actually 
+	int GetKp();						  // These functions query the pid for interal values.
+	int GetKi();						  //  they were created mainly for the pid front-end,
+	int GetKd();						  // where it's important to know what is actually 
 	int GetMode();						  //  inside the PID.
 	int GetDirection();					  //
 
   private:
 	void Initialize();
 	
-	double dispKp;				// * we'll hold on to the tuning parameters in user-entered 
-	double dispKi;				//   format for display purposes
-	double dispKd;				//
+	int dispKp;				// * we'll hold on to the tuning parameters in user-entered 
+	int dispKi;				//   format for display purposes
+	int dispKd;				//
     
-	double kp;                  // * (P)roportional Tuning Parameter
-    double ki;                  // * (I)ntegral Tuning Parameter
-    double kd;                  // * (D)erivative Tuning Parameter
+	int kp;                  // * (P)roportional Tuning Parameter
+    int ki;                  // * (I)ntegral Tuning Parameter
+    int kd;                  // * (D)erivative Tuning Parameter
 
 	int controllerDirection;
 
-    double *myInput;              // * Pointers to the Input, Output, and Setpoint variables
-    double *myOutput;             //   This creates a hard link between the variables and the 
-    double *mySetpoint;           //   PID, freeing the user from having to constantly tell us
+    int *myInput;              // * Pointers to the Input, Output, and Setpoint variables
+    int *myOutput;             //   This creates a hard link between the variables and the 
+    int *mySetpoint;           //   PID, freeing the user from having to constantly tell us
                                   //   what these values are.  with pointers we'll just know.
 			  
-    double *myWeigth;
+    int *myWeigth;
 	unsigned long lastTime;
-	double ITerm, lastInput;
+	int ITerm, lastInput;
 
 	unsigned long SampleTime;
-	double outMin, outMax;
+	int outMin, outMax;
 	bool inAuto;
         unsigned long timeChange;
-        double input,output,dInput,error;
+        int input,output,dInput,error;
 };
 #endif
 

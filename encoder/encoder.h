@@ -44,6 +44,9 @@ class Encoder{
 
         std::mutex encodermutex;
 
+        int fd1 = 0;
+        int fd2 = 0;
+
     public:
         ~Encoder();
         void setup(unsigned char pinA, unsigned char pinB);

@@ -4,16 +4,22 @@
 
 using namespace std;
 using namespace std::chrono;
+unsigned long _micros = 0;
 
 void delayMicroseconds(unsigned int ms)
 {
     microseconds dura(ms);
     this_thread::sleep_for(dura);
 }
+
+void reset_micros()
+{
+    _micros = duration_cast<microseconds>(high_resolution_clock::now().time_since_epoch()).count();
+}
+
 unsigned long micros()
 {
-    auto dur =  high_resolution_clock::now().time_since_epoch();
-    return duration_cast<microseconds>(dur).count();
+    return _micros;
 }
 
 

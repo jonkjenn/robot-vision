@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Drive::Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, const shared_ptr<Arduinocomm> arduino_serial)
+Drive::Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, Arduinocomm *arduino_serial)
 {
     serial = arduino_serial;
 
@@ -74,6 +74,7 @@ void Drive::driveDistance(unsigned int speed, unsigned long distance, function<v
 
     driveCompletedCallback = callback;
 
+
     encoderRight.reset();
     encoderLeft.reset();
 
@@ -83,15 +84,17 @@ void Drive::driveDistance(unsigned int speed, unsigned long distance, function<v
     maxLeftSpeed = speed;
     maxRightSpeed = speed;
 
-    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, 150, rotationPIDKi, rotationPIDKd, DIRECT, 90-speed,0));
-    rotationPID_setpoint = 0.0;
+    printf("step1\n");
+    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, 1, rotationPIDKi, rotationPIDKd, DIRECT, 90-speed,0));
+    rotationPID_setpoint = 0;
     rotationPID->SetMode(AUTOMATIC);
 
+    printf("step2\n");
     gyro->start(0);
 
-    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,(speed-90)*4,encoder_consKi,encoder_consKd,DIRECT,-10,speed-100));
+    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,1,0,0,DIRECT,-10,speed-100));
 
-    encoder_pid_SetPoint = 0.0;
+    encoder_pid_SetPoint = 0;
     encoderPID->SetMode(AUTOMATIC);
 
     serial->drive(speed,speed);
@@ -149,14 +152,20 @@ void Drive::rotate(unsigned int speed, float degrees, Rotation_Direction directi
     do_rotate();
 }
 
+unsigned long pt = 0;
 float prevdist = 0.0;
+int test = 0;
 void Drive::update()
 {
+    test++;
     encoderRight.update();
     encoderLeft.update();
-    //gyro->update();
+    gyro->update();
     //ping->update();
     //start = micros();
+    //
+    if(micros() - pt < 1000){return;}
+    pt = micros();
 
     float dist = ping->get_distance();
     if(dist != prevdist)
@@ -233,21 +242,28 @@ void Drive::update()
             }*/
 
             //Keeping straight with gyro
-            rotationPID_input = abs(gyro->get_total_rotation());
+            rotationPID_input = (int)(abs(gyro->get_total_rotation()) * 100.0);
+            LOG(DEBUG) << "input: " << (int)(abs(gyro->get_total_rotation()) * 100.0) << endl;
             rotationPID->Compute();
+            LOG(DEBUG) << "output: " << encoder_pid_Output << endl;
 
             //LOG(DEBUG) << "rotation output: " << gyro->get_total_rotation() << endl;
             //LOG(DEBUG) << "gyrypid output: " << rotationPID_output << endl;
 
-            float target_speed = 0.25;
-            if(encoderLeft.getDistance() < 300000)//50 cm
+            float target_speed = 0.15;
+            if(encoderLeft.getDistance() < 100000)//50 cm
             {
-                encoder_pid_Input = encoderLeft.getSpeed() - target_speed;
+                encoder_pid_Input = (int)((encoderLeft.getSpeed() - target_speed)*1000.0);//mm/s
                 encoderPID->Compute();
+                //LOG(DEBUG) << "speed: " <<  encoderLeft.getSpeed() << endl;
+                //LOG(DEBUG) << "output: " << (int)encoder_pid_Output << endl;
+                //
                 //LOG(DEBUG) << "Distance : " << encoderLeft.getDistance();
                 //LOG(DEBUG) << "EncoderPID out " << encoder_pid_Output;
+                //
                 currentLeftSpeed = leftSpeed + encoder_pid_Output;
                 currentRightSpeed =  rightSpeed + encoder_pid_Output;
+
                 //LOG(DEBUG) << "Current left speed: " << (int)currentLeftSpeed;
             }
             else
@@ -398,6 +414,9 @@ void Drive::do_drive()
     prevLeftSpeed = currentLeftSpeed;
 
     if(!check_bounds()){return;}
+
+    //LOG(DEBUG) << "Left: " << (int)currentLeftSpeed << endl;
+    //LOG(DEBUG) << "Right: " << (int)currentRightSpeed << endl;
 
     serial->drive(currentLeftSpeed, currentRightSpeed);
 }

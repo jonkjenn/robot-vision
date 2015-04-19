@@ -87,7 +87,7 @@ Controller::Controller(vector<string> &args, function<void()> callback)
 
     if(use_serial)
     {
-        arduino = std::shared_ptr<Arduinocomm>(new Arduinocomm("/dev/ttyTHS0",115200));
+        arduino = new Arduinocomm("/dev/ttyTHS0",115200);
     }
 
     driver = std::shared_ptr<Drive>(new Drive(161,160,163,164,arduino));
@@ -180,6 +180,7 @@ void Controller::loop()
 
         while(true)
         {
+            reset_micros();
             if(quit_robot){return;}
             clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
 
@@ -222,17 +223,17 @@ void Controller::loop()
                 vision->update();
             }
 
-            LOG(DEBUG) << "arduino";
+            //LOG(DEBUG) << "arduino";
             arduino->update();
             if(arduino->packet_ready)
             {
                 parsepacket();
             }
-            LOG(DEBUG) << "arduino done";
+            //LOG(DEBUG) << "arduino done";
 
-            LOG(DEBUG) << "callback";
+            //LOG(DEBUG) << "callback";
             callback();
-            LOG(DEBUG) << "callback done";
+            //LOG(DEBUG) << "callback done";
 
             //&LOG(DEBUG) << "complete";
         }
