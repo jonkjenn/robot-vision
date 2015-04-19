@@ -6,7 +6,7 @@ using namespace serial;
 
 Arduinocomm::Arduinocomm(string device, const unsigned int speed)
 {
-    mSerial = unique_ptr<Serial>(new Serial(device,speed,Timeout::simpleTimeout(100)));
+    mSerial = unique_ptr<Serial>(new Serial(device,speed,Timeout::simpleTimeout(1)));
     /*serialstream.SetBaudRate(SerialStreamBuf::BAUD_115200);
     serialstream.SetCharSize(SerialStreamBuf::CHAR_SIZE_8);
     serialstream.SetNumOfStopBits(1);

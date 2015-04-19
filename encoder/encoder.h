@@ -1,10 +1,11 @@
 
 #ifndef BACHELOR_ENCODER
 #define BACHELOR_ENCODER
-#include "easylogging++.h"
 #include "utility.hpp"
 #include <cstdint>
 #include "SimpleGPIO.h"
+#include <mutex>
+#include <iostream>
 
 
 class Encoder{
@@ -29,7 +30,7 @@ class Encoder{
         const char debug = 1;
 
         const float WHEEL_SIZE = 0.124;
-        const float encoder_tick_distance  = (PI*WHEEL_SIZE)/(64.0*18.75)*1000.0*1000.0;//uMeter
+        const float encoder_tick_distance  = ((PI*WHEEL_SIZE)/(64.0*18.75))*1000.0*1000.0;//uMeter
         //const float encoder_tick_distance  = (PI*WHEEL_SIZE)/(64.0*18.75);//Meter
 
         uint32_t prevTime;
@@ -39,13 +40,15 @@ class Encoder{
         float prevspeed;
         float prevprevspeed;
 
-        float updateSpeed();
+        void updateSpeeds();
+
+        std::mutex encodermutex;
 
     public:
         ~Encoder();
         void setup(unsigned char pinA, unsigned char pinB);
         void update();
-        uint32_t getDistance();
+        uint64_t getDistance();
         float getSpeed();
         void reset();
 };

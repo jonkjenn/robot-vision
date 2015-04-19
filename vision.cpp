@@ -54,11 +54,11 @@ Vision::Vision(vector<string> &args)
         }
     }
 
-    LOG(DEBUG) << "Cuda: " << cuda;
+    LOG(DEBUG) << "Cuda: " << cuda << endl;
 
     if(camera)
     {
-        LOG(DEBUG) << "Loading camera " << camera;
+        LOG(DEBUG) << "Loading camera " << camera << endl;
         input_type = Type::CAMERA;
         cap = unique_ptr<VideoCapture>(new VideoCapture(camera_id));
         cap->set(CV_CAP_PROP_FRAME_WIDTH,898);
@@ -70,7 +70,7 @@ Vision::Vision(vector<string> &args)
     }
     else if(ps4)
     {
-        LOG(DEBUG) << "Loading PS4 camera";
+        LOG(DEBUG) << "Loading PS4 camera" << endl;
         input_type = Type::PS4;
         ps4cam = unique_ptr<ps4driver>(new ps4driver());
         frame_count = -1;
@@ -78,7 +78,7 @@ Vision::Vision(vector<string> &args)
     }
     else
     {
-        LOG(DEBUG) << "Loading file";
+        LOG(DEBUG) << "Loading file" << endl;
         input_type = Type::FILE;
         cap = unique_ptr<VideoCapture>(new VideoCapture(file));
         frame_count = cap->get(CV_CAP_PROP_FRAME_COUNT);
@@ -91,7 +91,7 @@ void Vision::setup()
 {
     if(!ps4 && !cap->isOpened())
     {
-        LOG(ERROR) << "Could not open video/camera";
+        LOG(ERROR) << "Could not open video/camera" << endl;
         return;
     }
 

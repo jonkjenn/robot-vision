@@ -1,7 +1,5 @@
-#include "easylogging++.h"
 #include "controller.hpp"
 #include "drive.h"
-#define ELPP_CUSTOM_COUT std::cerr
 #include <cstdlib>
 
 using namespace std;
@@ -13,6 +11,8 @@ unsigned int step = 0;
 bool stop = false;
 
 float angle = 0;
+uint8_t speed = 110;
+unsigned int args_dist = 1000;
 Rotation_Direction dir = LEFT;
 
 unique_ptr<Controller> c;
@@ -38,6 +38,18 @@ int main(int argc, char** argv)
             angle = atof(args[++i].c_str());
             dir = (angle>0?RIGHT:LEFT);
         }
+
+        if(args[i].compare("--speed") == 0)
+        {
+            speed = atoi(args[++i].c_str());
+        }
+
+        if(args[i].compare("--distance") == 0)
+        {
+            args_dist = atoi(args[++i].c_str());
+        }
+
+
     }
 
     c->start();
@@ -56,14 +68,18 @@ void loop()
     switch(step)
     {
         case 0:
-            LOG(DEBUG) << "Sending drive";
-            //driver->driveDuration(110,3000, []{drive_complete();});
-            driver->rotate(110,angle,dir,[]{drive_complete();});
+            LOG(DEBUG) << "Case 0";
+            driver->driveDistance(speed, args_dist,[]{drive_complete();});
             step++;
+            step = 3;
             break;
         case 2:
-            //driver->rotateLeft(110,90,[]{drive_complete();});
+            LOG(DEBUG) << "Case 2";
+            driver->rotate(110,180,LEFT,[]{drive_complete();});
             step++;
+            break;
+        case 4:
+            c->quit_robot = true;
             break;
     }
 }

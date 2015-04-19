@@ -1,9 +1,10 @@
 #include "controller.hpp"
-INITIALIZE_EASYLOGGINGPP
 
 using namespace std;
 
 unsigned int serial_delay = 0;
+
+
 
 void stack_prefault(void){
     unsigned char dummy[MAX_SAFE_STACK];
@@ -99,6 +100,7 @@ void Controller::start()
 
 void Controller::configure_logger(const bool show_debug)
 {
+    /*
     el::Configurations c;
     c.setToDefault();
     c.parseFromText("*GLOBAL:\n ENABLED = false"); //Disable logging for the default logger setting
@@ -110,7 +112,7 @@ void Controller::configure_logger(const bool show_debug)
         el::Loggers::reconfigureAllLoggers(c); //Configure the silent default logger
     }
 
-    LOG(INFO) << "Configured logger";
+    LOG(INFO) << "Configured logger";*/
 }
 
 void Controller::configure_pins()
@@ -131,19 +133,19 @@ void Controller::parsepacket()
         switch(arduino->packet_buffer[0])
         {
             case Arduinocomm::OK:
-                LOG(DEBUG) << "Got OK";
                 if(waiting_ok)
                 {
                     waiting_ok = false;
                 }
                 else
                 {
-                    LOG(DEBUG) << "OK when not waiting for OK";
+                    LOG(DEBUG) << "OK when not waiting for OK" << endl;
                 }
             case Arduinocomm::DRIVE_COMPLETED:
-                LOG(DEBUG) << "Got drive completed";
+                break;
             case Arduinocomm::DEBUG:
-                LOG(DEBUG) << "From Arduino : " << (int)arduino->packet_buffer[1];
+                LOG(DEBUG) << "From Arduino : " << (int)arduino->packet_buffer[1] << endl;
+                break;
             break;
         }
     }
@@ -178,9 +180,9 @@ void Controller::loop()
 
         while(true)
         {
+            if(quit_robot){return;}
             clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
 
-            //LOG(DEBUG) << "driver";
             driver->update();
 
             //LOG(DEBUG) << "vision";
@@ -189,14 +191,12 @@ void Controller::loop()
                 vision->update();
             }
 
-            //LOG(DEBUG) << "arduino";
             arduino->update();
             if(arduino->packet_ready)
             {
                 parsepacket();
             }
 
-            //LOG(DEBUG) << "callback";
             callback();
 
             //&LOG(DEBUG) << "complete";
@@ -212,24 +212,29 @@ void Controller::loop()
     {
         while(true)
         {
-            if(use_serial && serial_delay > 1000)
+            if(quit_robot){return;}
+
+            driver->update();
+
+            //LOG(DEBUG) << "vision";
+            if(cam)
             {
-                arduino->update();
-                if(arduino->packet_ready)
-                {
-                    parsepacket();
-                }
-                //delayMicroseconds(1000000);
-                //LOG(DEBUG) << "Arduino available " << arduino->available();
-                //
-                //vision->update();
+                vision->update();
             }
-            else
+
+            LOG(DEBUG) << "arduino";
+            arduino->update();
+            if(arduino->packet_ready)
             {
-                serial_delay++;
+                parsepacket();
             }
-            vision->update();
-            //delayMicroseconds(50);
+            LOG(DEBUG) << "arduino done";
+
+            LOG(DEBUG) << "callback";
+            callback();
+            LOG(DEBUG) << "callback done";
+
+            //&LOG(DEBUG) << "complete";
         }
     }
 

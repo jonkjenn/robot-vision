@@ -1,5 +1,7 @@
+#ifndef BACHELOR_CONTROLLER
+#define BACHELOR_CONTROLLER
+
 #include "vision.hpp"
-#include "easylogging++.h"
 #include "utility.hpp"
 #include "QTRSensors-JetsonTk1/QTRSensors.h"
 #include <memory>
@@ -42,5 +44,7 @@ class Controller{
         void start();
         std::shared_ptr<Drive> driver;
         Controller(std::vector<std::string> &args, std::function<void()> callback);
+        bool quit_robot = false;
 };
 
+#endif

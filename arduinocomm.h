@@ -6,8 +6,10 @@
 #include "Arduino.h"
 #else
 #include <memory>
-#include "easylogging++.h"
+
+#include <iostream>
 #include "serial/serial.h"
+#include "utility.hpp"
 #endif
 
 class Arduinocomm{

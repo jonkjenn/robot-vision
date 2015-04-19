@@ -1,7 +1,4 @@
 #include <frameplayer.hpp>
-#include <string>
-#include <opencv2/gpu/gpu.hpp>
-#include "easylogging++.h"
 
 using namespace cv;
 using namespace std;

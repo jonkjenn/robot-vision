@@ -37,7 +37,8 @@
 #include <ctime>
 #include <chrono>
 #include <vector>
-#include "easylogging++.h"
+#include <iostream>
+#define LOG(DEBUG) cout
 
 using namespace std;
 using namespace std::chrono;

@@ -77,6 +77,8 @@ class PID
 	unsigned long SampleTime;
 	double outMin, outMax;
 	bool inAuto;
+        unsigned long timeChange;
+        double input,output,dInput,error;
 };
 #endif
 

@@ -1,12 +1,15 @@
 #ifndef BACHELOR_DRIVE
 #define BACHELOR_DRIVE
 
-#include "easylogging++.h"
 #include "encoder.h"
 #include "PID_v1.h"
 #include "gyroscope.hpp"
 #include <memory>
 #include "arduinocomm.h"
+#include <thread>
+#include "ping.hpp"
+#include <iostream>
+#include "utility.hpp"
 
 enum Rotation_Direction{ LEFT,RIGHT};
 class Drive{
@@ -17,6 +20,8 @@ class Drive{
         unsigned long _distance = 0;
         Encoder encoderRight;
         Encoder encoderLeft;
+        uint8_t maxLeftSpeed = 90;
+        uint8_t maxRightSpeed = 90;
         uint8_t leftSpeed= 90;
         uint8_t rightSpeed = 90;
 
@@ -26,19 +31,24 @@ class Drive{
         uint8_t currentLeftSpeed= 90;
         uint8_t currentRightSpeed = 90;
 
+        uint8_t prevLeftSpeed = 90;
+        uint8_t prevRightSpeed = 90;
+
         double encoder_pid_SetPoint,encoder_pid_Input,encoder_pid_Output;
-        double encoder_consKp=3.0, encoder_consKi=5.0, encoder_consKd=0.0;
+        double encoder_consKp=0.00025, encoder_consKi=0.0, encoder_consKd=0.0;
         double enc_rot_kp=3.0, enc_rot_ki=5.0, enc_rot_kd=0.0;
         std::unique_ptr<PID> encoderPID = nullptr;
 
+        Rotation_Direction rot_dir = LEFT;
         double rotationPID_setpoint = 0.0,rotationPID_input = 0.0,rotationPID_output = 0.0;
-        double rotationPIDKp = 3.0, rotationPIDKi = 1.0, rotationPIDKd = 0.0;
+        double rotationPIDKp = 50.0, rotationPIDKi = 1.0, rotationPIDKd = 0.0;
         std::unique_ptr<PID> rotationPID = nullptr;
 
         enum State{ DRIVING_MANUAL, DRIVING_DURATION, DRIVING_DISTANCE, ROTATING, STOPPED };
         State state = STOPPED;
 
-        std::unique_ptr<gyroscope> gyro = nullptr;
+        gyroscope *gyro = NULL;
+        Ping *ping = NULL;
 
         std::shared_ptr<Arduinocomm> serial = nullptr;
 
@@ -48,7 +58,9 @@ class Drive{
 
         bool check_bounds();
 
+        void do_drive();
         void do_rotate();
+        void update_encoder(Encoder &encoderR, Encoder &encoderL, gyroscope &gyro, Ping &ping);
     public:
         ~Drive();
         Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, const std::shared_ptr<Arduinocomm> serial);

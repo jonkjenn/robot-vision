@@ -5,11 +5,12 @@ using namespace serial;
 
 gyroscope::gyroscope(const string &device, uint32_t speed)
 {
-    mSerial = unique_ptr<Serial>(new Serial(device,speed,Timeout::simpleTimeout(100)));
+    mSerial = unique_ptr<Serial>(new Serial(device,speed,Timeout::simpleTimeout(1)));
 }
 
 void gyroscope::start(float degrees)
 {
+    //lock_guard<mutex> lock(gyromutex);
     goal_rotation = degrees * DEG_RAD_RATIO;
     total_rotation = 0;
     distance_rotation = abs(goal_rotation)*RAD_DEG_RATIO -  abs(total_rotation)*RAD_DEG_RATIO;
@@ -27,8 +28,6 @@ void gyroscope::start(float degrees)
  * their value by calling the appropriate functions.
  */
 
-uint8_t gyro_temp;
-uint32_t gyro_dur;
 void gyroscope::update()
 {
     mavlink_message_t msg;
@@ -36,15 +35,16 @@ void gyroscope::update()
 
     // COMMUNICATION THROUGH EXTERNAL UART PORT (XBee serial)
     //
-    int count = 0;
-    while(mSerial->available())
+    int count = mSerial->available();
+    int read = mSerial->read(gyro_temp,count);
+    int i=0;
+    cout << "read: " <<read << endl;
+    while(i<read)
     {
-        count++;
-        mSerial->read(&gyro_temp,1);
         // Try to get a new message
-        if(mavlink_parse_char(MAVLINK_COMM_0, gyro_temp, &msg, &status)) {
+        if(mavlink_parse_char(MAVLINK_COMM_0, gyro_temp[i], &msg, &status)) {
             // Handle message
-            //LOG(DEBUG) << "GYRO msg: " << msg.msgid;
+            cout << "GYRO msg: " << (int)msg.msgid << endl;
 
             switch(msg.msgid)
             {
@@ -61,12 +61,18 @@ void gyroscope::update()
 
                     if(((sensors.fields_updated & 0x20) >> 5) == 1)
                     {
-                        LOG(DEBUG) << "Rotation: " << sensors.zgyro * gyro_dur * 1e-6 * RAD_DEG_RATIO;
+                        //lock_guard<mutex> lock(gyromutex);
+                        current_rotation = sensors.zgyro;
+                        /*LOG(DEBUG) << "Rotation: " << sensors.zgyro * gyro_dur * 1e-6 * RAD_DEG_RATIO;
                         LOG(DEBUG) << "Total rotation: " << total_rotation * RAD_DEG_RATIO;
                         LOG(DEBUG) << "Duration: " << gyro_dur;
+                        LOG(DEBUG) << "time_usec: " << sensors.time_usec;
+                        LOG(DEBUG) << "prevtime: " << prevtime;
                         LOG(DEBUG) << "Rotation speed: " << sensors.zgyro;
+                        LOG(DEBUG) << "Goal " << goal_rotation;*/
+
                         total_rotation += sensors.zgyro * gyro_dur * 1e-6;
-                        LOG(DEBUG) << "Goal " << goal_rotation;
+                        //total_rotation += sensors.zgyro * gyro_dur * 1e-6;
                         distance_rotation = abs(goal_rotation)*RAD_DEG_RATIO -  abs(total_rotation)*RAD_DEG_RATIO;
                         prevtime = sensors.time_usec;
                         return;
@@ -92,8 +98,35 @@ void gyroscope::update()
         }
 
         // And get the next one
+        i++;
     }
+
+    gyro_temp.clear();
 
     // Update global packet drops counter
     packet_drops += status.packet_rx_drop_count;
+}
+
+float gyroscope::get_current_rotation()
+{
+    //lock_guard<mutex> lock(gyromutex);
+    return current_rotation;
+}
+
+float gyroscope::get_total_rotation()
+{
+    //lock_guard<mutex> lock(gyromutex);
+    return total_rotation;
+}
+
+float gyroscope::get_distance_rotation()
+{
+    //lock_guard<mutex> lock(gyromutex);
+    return distance_rotation;
+}
+
+gyroscope::~gyroscope()
+{
+    mSerial->close();
+    mSerial = nullptr;
 }

@@ -7,7 +7,6 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "unistd.h"
 #include <chrono>
-#include "easylogging++.h"
 #include "utility.hpp"
 
 class ps4driver{

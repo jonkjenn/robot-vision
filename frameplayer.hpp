@@ -1,9 +1,13 @@
-#include <opencv2/opencv.hpp>
-#include <opencv2/gpu/gpu.hpp>
-
 //Header guard
 #ifndef PLAYER_H
 #define PLAYER_H
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/gpu/gpu.hpp>
+#include <string>
+#include <iostream>
+#include "utility.hpp"
+
 
 class Frameplayer{
     private:

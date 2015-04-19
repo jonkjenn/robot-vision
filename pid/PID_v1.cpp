@@ -43,20 +43,19 @@ bool PID::Compute()
 {
    if(!inAuto) return false;
    //unsigned long now = millis();
-   unsigned long now = micros();
-   unsigned long timeChange = (now - lastTime);
+   timeChange = (micros() - lastTime);
    if(timeChange>=SampleTime)
    {
       /*Compute all the working error variables*/
-	  double input = *myInput;
-      double error = *mySetpoint - input;
+      input = *myInput;
+      error = *mySetpoint - input;
       ITerm+= (ki * error);
       if(ITerm > outMax) ITerm= outMax;
       else if(ITerm < outMin) ITerm= outMin;
-      double dInput = (input - lastInput);
+      dInput = (input - lastInput);
  
       /*Compute PID Output*/
-      double output = kp * error + ITerm- kd * dInput ;
+      output = kp * error + ITerm- kd * dInput ;
       
 	  if(output > outMax) output = outMax;
       else if(output < outMin) output = outMin;
@@ -64,7 +63,7 @@ bool PID::Compute()
 	  
       /*Remember some variables for next time*/
       lastInput = input;
-      lastTime = now;
+      lastTime = micros();
 	  return true;
    }
    else return false;

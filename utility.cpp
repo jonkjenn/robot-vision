@@ -16,21 +16,10 @@ unsigned long micros()
     return duration_cast<microseconds>(dur).count();
 }
 
-float middle_of_3(float a, float b, float c)
-{
-    float middle;
 
-    if ((a <= b) && (a <= c))
-    {
-        middle = (b <= c) ? b : c;
-    }
-    else if ((b <= a) && (b <= c))
-    {
-        middle = (a <= c) ? a : c;
-    }
-    else
-    {
-        middle = (a <= b) ? a : b;
-    }
-    return middle;
+//Be careful using this, I belive this can loop indefinitely if multiple threads are WRITING to the variables
+void atomic_add_float(atomic<float> &atom, float bar) {
+      auto current = atom.load();
+        while (!atom.compare_exchange_weak(current, current + bar))
+                ;
 }

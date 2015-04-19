@@ -1,4 +1,5 @@
 #include "encoder.h"
+using namespace std;
 
 void Encoder::setup(unsigned char pinA, unsigned char pinB) {
 
@@ -21,26 +22,30 @@ void Encoder::update() {
     if(gpio_get_value(_pinA, &encAout) < 0){return;}
     if(gpio_get_value(_pinB, &encBout) < 0){return;}
 
+//    lock_guard<mutex> lock(encodermutex);
+
     if((encAout == encAoutprev && encBout != encBoutprev && encBout == encAout)
             || (encAoutprev == encBoutprev && encAout != encAoutprev))
     {
         direction = 1;
         fDist++;
-//        LOG(DEBUG) << (int)_pinA << " Forward";
+        updateSpeeds();
+        //LOG(DEBUG) << (int)_pinA << " fDist: " << fDist;
     }
     else if((encBout == encBoutprev && encAout != encAoutprev && encAout == encBout)
             || (encBoutprev == encAoutprev && encBout != encBoutprev))
     {
         direction = -1;
         bDist++;
+        updateSpeeds();
         //Serial.println("Backward");
- //       LOG(DEBUG) << (int)_pinA << " Backward";
+        //       LOG(DEBUG) << (int)_pinA << " Backward";
     }
     else
     {
         if(!(encAout == encAoutprev && encBout == encBoutprev))
         {
-            LOG(DEBUG) << (int)_pinA << " WTF unknown encoder value, you're to slow?";
+            LOG(DEBUG) << (int)_pinA << " WTF unknown encoder value, you're to slow?" <<endl;
         }
         //Serial.println("Not moving");
     }
@@ -50,39 +55,47 @@ void Encoder::update() {
 
     counter++;
 
-     /*
-      *
-      * uMeter / uSeconds = m/s
-      *
-      * */
-    prevprevspeed = prevspeed;
-    prevspeed = speed;
-    speed = encoder_tick_distance/(micros()-prevTime);
-    prevTime = micros();
+    /*
+     *
+     * uMeter / uSeconds = m/s
+     *
+     * */
 
     /*Serial.print(encAout);
-    Serial.print(" ");
-    Serial.print(encBout);
-    Serial.println("");*/
+      Serial.print(" ");
+      Serial.print(encBout);
+      Serial.println("");*/
     //Serial.print("12: " + String(d12) + " 13: " + String(d13) + "\n");
 
-/*    if(debug && counter%500==0)
-    {  //Serial.print("Direction : " + String(dir) + " Val: " +String((res[0] <<2)|res[1]) + " A: " + String(encAout) + " B: " + String(encBout)+ "\n");
-        Serial.print("Distance forward: " + String(fDist/64.0/18.75 * PI * 0.124) + " backward: " + String(bDist/64.0/18.75 * PI * 0.124) + "\n");
-    }*/
+    /*    if(debug && counter%500==0)
+          {  //Serial.print("Direction : " + String(dir) + " Val: " +String((res[0] <<2)|res[1]) + " A: " + String(encAout) + " B: " + String(encBout)+ "\n");
+          Serial.print("Distance forward: " + String(fDist/64.0/18.75 * PI * 0.124) + " backward: " + String(bDist/64.0/18.75 * PI * 0.124) + "\n");
+          }*/
+}
+
+void Encoder::updateSpeeds()
+{
+    if(micros() - prevTime > 0){
+        prevprevspeed = prevspeed;
+        prevspeed = speed;
+        speed = encoder_tick_distance/(micros()-prevTime);
+        prevTime = micros();
+    }
 }
 
 
 //m/s
 float  Encoder::getSpeed()
-     {
-         return middle_of_3(speed,prevspeed,prevprevspeed);
-     }
+{
+    //lock_guard<mutex> lock(encodermutex);
+    return middle_of_3(speed,prevspeed,prevprevspeed);
+}
 
 //Returns distance in micrometer
-uint32_t Encoder::getDistance()
+uint64_t Encoder::getDistance()
 {
-    uint32_t val = 0;
+    //lock_guard<mutex> lock(encodermutex);
+    uint64_t val = 0;
     if(fDist>=bDist)
     {
         //val = fDist/64.0/18.75 * PI * WHEEL_SIZE;
@@ -99,6 +112,7 @@ uint32_t Encoder::getDistance()
 
 void Encoder::reset()
 {
+    //lock_guard<mutex> lock(encodermutex);
     prevTime = micros();
     fDist = 0;
     bDist = 0;
