@@ -17,7 +17,7 @@ class Arduinocomm{
         static const uint8_t START_DATA = 0x80;
         static const uint8_t END_DATA = 0xFF;
 
-        std::unique_ptr<serial::Serial> mSerial;
+        std::unique_ptr<serial::Serial, void(*)(serial::Serial*)> mSerial {nullptr,nullptr};
         void writebyte(uint8_t);
         void writeuint32(uint32_t);
         uint8_t readbyte(unsigned int position);

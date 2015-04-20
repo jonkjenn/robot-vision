@@ -37,7 +37,7 @@ void readPin(int pin)
     unsigned int val = 0;
     gpio_export(pin);
     gpio_set_dir(pin, INPUT_PIN);
-    gpio_get_value(pin, &val);
+    //gpio_get_value(pin, &val);
     gpio_unexport(pin);
     if(val != prevval){
         LOG(DEBUG) << "READPIN: " << val;
@@ -115,15 +115,6 @@ void Controller::configure_logger(const bool show_debug)
     LOG(INFO) << "Configured logger";*/
 }
 
-void Controller::configure_pins()
-{
-    vector<unsigned char> pins = {160, 161, 162, 163};
-    QTRSensorsRC q(pins, 164);
-    LOG(INFO) << "Calibrating";
-    q.calibrate();
-    LOG(INFO) << "Calibrated done";
-}
-
 void Controller::parsepacket()
 {
     LOG(DEBUG) << "Parsing packet: " << (int)arduino->packet_buffer[0] << " size:" << (int)arduino->packet_size;
@@ -178,13 +169,18 @@ void Controller::loop()
         clock_gettime(CLOCK_MONOTONIC, &t);
         t.tv_sec++;
 
+        uint64_t pt = micros();
+
         while(true)
         {
-            reset_micros();
+            //reset_micros();
             if(quit_robot){return;}
-            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
+            //clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
 
+
+            pt = nanos();
             driver->update();
+            cout << "Driver: " << nanos() - pt << endl;
 
             //LOG(DEBUG) << "vision";
             if(cam)
@@ -202,11 +198,11 @@ void Controller::loop()
 
             //&LOG(DEBUG) << "complete";
 
-            t.tv_nsec += interval;
+            /*t.tv_nsec += interval;
             while(t.tv_nsec >= NSEC_PER_SEC){
                 t.tv_nsec -= NSEC_PER_SEC;
                 t.tv_sec++;
-            }
+            }*/
         }
     }
     else

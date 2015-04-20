@@ -1,6 +1,5 @@
 #include "controller.hpp"
 #include "drive.h"
-#include <cstdlib>
 
 using namespace std;
 
@@ -80,6 +79,7 @@ void loop()
             break;
         case 4:
             c->quit_robot = true;
+            LOG(DEBUG) << "Stopping" <<endl;
             break;
     }
 }

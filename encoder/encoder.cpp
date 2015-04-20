@@ -8,21 +8,21 @@ void Encoder::setup(unsigned char pinA, unsigned char pinB) {
 
     gpio_export(_pinA);
     gpio_set_dir(_pinA, INPUT_PIN);
-    gpio_get_value(_pinA, &encAoutprev);
-
     fd1 = gpio_start_read(_pinA);
+    gpio_get_value(&encAoutprev, fd1);
+
 
     gpio_export(_pinB);
     gpio_set_dir(_pinB, INPUT_PIN);
-    gpio_get_value(_pinB, &encBoutprev);
     fd2 = gpio_start_read(_pinB);
+    gpio_get_value(&encBoutprev, fd2);
 
     prevTime = micros();
 }
 
 void Encoder::update() {
 
-    if(gpio_get_value(&encAout,fd1) < 0){return;}
+    if(gpio_get_value(&encAout,fd1) < 0){cout << "return"<<endl;return;}
     if(gpio_get_value(&encBout,fd2) < 0){return;}
 
 //    lock_guard<mutex> lock(encodermutex);
@@ -57,8 +57,6 @@ void Encoder::update() {
     encAoutprev = encAout;
     encBoutprev = encBout;
 
-    counter++;
-
     /*
      *
      * uMeter / uSeconds = m/s
@@ -79,11 +77,22 @@ void Encoder::update() {
 
 void Encoder::updateSpeeds()
 {
-    if(micros() - prevTime > 0){
-        prevprevspeed = prevspeed;
-        prevspeed = speed;
-        speed = encoder_tick_distance/(micros()-prevTime);
-        prevTime = micros();
+    time = micros();
+    prevprevspeed = prevspeed;
+    prevspeed = speed;
+    if(time == prevTime){return;}
+    speed = encoder_tick_distance/(time-prevTime);
+    prevTime = time;
+
+    if(fDist>=bDist)
+    {
+        //val = fDist/64.0/18.75 * PI * WHEEL_SIZE;
+        distance = fDist*encoder_tick_distance;
+    }
+    else
+    {
+        //val = -bDist/64.0/18.75 * PI * WHEEL_SIZE;
+        distance = bDist*encoder_tick_distance;
     }
 }
 
@@ -98,19 +107,7 @@ float  Encoder::getSpeed()
 uint64_t Encoder::getDistance()
 {
     //lock_guard<mutex> lock(encodermutex);
-    uint64_t val = 0;
-    if(fDist>=bDist)
-    {
-        //val = fDist/64.0/18.75 * PI * WHEEL_SIZE;
-        val = fDist*encoder_tick_distance;
-    }
-    else
-    {
-        //val = -bDist/64.0/18.75 * PI * WHEEL_SIZE;
-        val = bDist*encoder_tick_distance;
-    }
-
-    return val;
+    return distance;
 }
 
 void Encoder::reset()

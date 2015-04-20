@@ -6,7 +6,6 @@
 #include "mavlink.h"
 #include "utility.hpp"
 #include <cmath>
-#include <mutex>
 #include <iostream>
 
 class gyroscope{
@@ -22,7 +21,6 @@ class gyroscope{
         float get_total_rotation();
         float get_distance_rotation();
 
-        std::mutex gyromutex;
     private:
         float current_rotation{0};
         float total_rotation{0};
@@ -36,6 +34,6 @@ class gyroscope{
         bool reset = false;
         std::vector<uint8_t> gyro_temp{};
 
-        std::unique_ptr<serial::Serial> mSerial;
+        std::unique_ptr<serial::Serial, void(*)(serial::Serial*)> mSerial {nullptr,nullptr};//should not do this
 };
 #endif

@@ -42,6 +42,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <iostream>
+#include "utility.hpp"
+using namespace std;
 
 /****************************************************************
  * gpio_export
@@ -112,6 +115,31 @@ int gpio_set_dir(unsigned int gpio, PIN_DIRECTION out_flag)
 /****************************************************************
  * gpio_set_value
  ****************************************************************/
+int gpio_set_value(PIN_VALUE value, int fd)
+{
+	/*char buf[MAX_BUF];
+
+	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
+
+	fd = open(buf, O_WRONLY);
+	if (fd < 0) {
+		perror("gpio/set-value");
+		return fd;
+	}*/
+
+        lseek(fd, 0, SEEK_SET);
+
+	if (value==LOW)
+		write(fd, "0", 2);
+	else
+		write(fd, "1", 2);
+
+	return 0;
+}
+
+/****************************************************************
+ * gpio_set_value
+ ****************************************************************/
 int gpio_set_value(unsigned int gpio, PIN_VALUE value)
 {
 	int fd;
@@ -134,6 +162,18 @@ int gpio_set_value(unsigned int gpio, PIN_VALUE value)
 	return 0;
 }
 
+int gpio_start_readwrite(unsigned int gpio)
+{
+	char buf[MAX_BUF];
+	snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
+	return open(buf, O_RDWR, S_IRWXO);
+}
+
+void gpio_stop_readwrite(int fd)
+{
+	close(fd);
+}
+
 int gpio_start_read(unsigned int gpio)
 {
 	char buf[MAX_BUF];
@@ -146,31 +186,28 @@ void gpio_stop_read(int fd)
 	close(fd);
 }
 
-int gpio_get_value(unsigned int *value, int fd)
+uint64_t gpi_t = 0;
+int gpio_get_value(uint8_t *value, int fd)
 {
-	char ch;
+        //gpi_t = nanos();
         lseek(fd, 0, SEEK_SET);
+        //cout << "seek: " << nanos() - gpi_t << endl;
 
 	if (fd < 0) {
             perror("gpio/get-value");
             return fd;
 	}
 
-	read(fd, &ch, 1);
+	read(fd, value, 1);
 
-	if (ch != '0') {
-		*value = 1;
-	} else {
-		*value = 0;
-	}
-
+        //cout << "seek and read: " << nanos() - gpi_t << endl;
 	return 0;
 }
 
 /****************************************************************
  * gpio_get_value
  ****************************************************************/
-int gpio_get_value(unsigned int gpio, unsigned int *value)
+/*int gpio_get_value(unsigned int gpio, unsigned int *value)
 {
 	int fd;
 	char buf[MAX_BUF];
@@ -194,7 +231,7 @@ int gpio_get_value(unsigned int gpio, unsigned int *value)
 
 	close(fd);
 	return 0;
-}
+}*/
 
 
 /****************************************************************

@@ -5,7 +5,8 @@ using namespace serial;
 
 gyroscope::gyroscope(const string &device, uint32_t speed)
 {
-    mSerial = unique_ptr<Serial>(new Serial(device,speed,Timeout::simpleTimeout(1)));
+    auto deleter = [&](Serial* s){s->close();delete(s);};
+    mSerial = unique_ptr<Serial,decltype(deleter)>(new Serial(device,speed,Timeout::simpleTimeout(1)),deleter);
 }
 
 void gyroscope::start(float degrees)
@@ -27,7 +28,8 @@ void gyroscope::start(float degrees)
  * This function decodes packets on the protocol level and also handles
  * their value by calling the appropriate functions.
  */
-
+uint64_t g_t = 0;
+uint64_t sum = 0;
 void gyroscope::update()
 {
     mavlink_message_t msg;
@@ -35,8 +37,10 @@ void gyroscope::update()
 
     // COMMUNICATION THROUGH EXTERNAL UART PORT (XBee serial)
     //
+    g_t = nanos();
     int count = mSerial->available();
     int read = mSerial->read(gyro_temp,count);
+    cout << "105 :   " << nanos() - g_t <<endl;
     int i=0;
     while(i<read)
     {
@@ -48,11 +52,13 @@ void gyroscope::update()
             switch(msg.msgid)
             {
                 case 105:
+
                     mavlink_highres_imu_t sensors;
                     mavlink_msg_highres_imu_decode(&msg, &sensors);
 
                     if(prevtime == 0){prevtime = sensors.time_usec;break;}
                     if(abs(sensors.zgyro) < 0.005){
+                        cout << "105 :   " << nanos() - g_t <<endl;
                         return;
                     }
 
@@ -78,6 +84,7 @@ void gyroscope::update()
                     }
 
                     prevtime = sensors.time_usec;
+
 
                     break;
 

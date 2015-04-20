@@ -54,6 +54,7 @@ enum PIN_VALUE{
 	LOW=0,
 	HIGH=1
 };
+#include <cstdint>
 
 /****************************************************************
  * gpio_export
@@ -62,11 +63,13 @@ int gpio_export(unsigned int gpio);
 int gpio_unexport(unsigned int gpio);
 int gpio_set_dir(unsigned int gpio, PIN_DIRECTION out_flag);
 int gpio_set_value(unsigned int gpio, PIN_VALUE value);
-int gpio_get_value(unsigned int gpio, unsigned int *value);
-int gpio_get_value(unsigned int *value, int fd);
+int gpio_set_value(PIN_VALUE value, int fd);
+int gpio_get_value(uint8_t *value, int fd);
 int gpio_set_edge(unsigned int gpio, char *edge);
 int gpio_fd_open(unsigned int gpio);
 int gpio_fd_close(int fd);
+int gpio_start_readwrite(unsigned int gpio);
+void gpio_stop_readwrite(int fd);
 int gpio_start_read(unsigned int gpio);
 void gpio_stop_read(int fd);
 

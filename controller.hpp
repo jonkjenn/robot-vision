@@ -3,7 +3,6 @@
 
 #include "vision.hpp"
 #include "utility.hpp"
-#include "QTRSensors-JetsonTk1/QTRSensors.h"
 #include <memory>
 #include <time.h>
 #include <sched.h>

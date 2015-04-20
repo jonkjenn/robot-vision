@@ -7,7 +7,8 @@ using namespace serial;
 Arduinocomm::Arduinocomm(string device, const unsigned int speed)
 {
     cout << "Starting serial" <<endl;
-    mSerial = unique_ptr<Serial>(new Serial(device,speed,Timeout::simpleTimeout(10)));
+    auto deleter = [&](Serial* s){s->close();delete(s);};
+    mSerial = unique_ptr<Serial, decltype(deleter)>(new Serial(device,speed,Timeout::simpleTimeout(10)),deleter);
     /*serialstream.SetBaudRate(SerialStreamBuf::BAUD_115200);
     serialstream.SetCharSize(SerialStreamBuf::CHAR_SIZE_8);
     serialstream.SetNumOfStopBits(1);
@@ -114,7 +115,6 @@ void Arduinocomm::writecommand(uint8_t byte)
 {
     mSerial->write(&byte,1);
     //LOG(DEBUG) << "writecommand" << (unsigned int) byte;
-    mSerial->flush();
 }
 
 //Writes 1 byte as 2 bytes, converting from 8-bit to 7-bit packing.
@@ -125,7 +125,6 @@ void Arduinocomm::writebyte(uint8_t byte)
     bytes[1] = (byte & 0x80) >> 7;
     int written = mSerial->write(bytes,2);
     //LOG(DEBUG) << "Writebyte: " << (unsigned int)bytes[0] << ", " << (unsigned int)bytes[1];
-    mSerial->flush();
 }
 
 void Arduinocomm::writeuint32(uint32_t value)

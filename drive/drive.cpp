@@ -152,26 +152,36 @@ void Drive::rotate(unsigned int speed, float degrees, Rotation_Direction directi
     do_rotate();
 }
 
-unsigned long pt = 0;
+uint64_t ptime = 0;
 float prevdist = 0.0;
-int test = 0;
 void Drive::update()
 {
-    test++;
+    ptime = nanos();
     encoderRight.update();
     encoderLeft.update();
-    gyro->update();
-    //ping->update();
-    //start = micros();
-    //
-    if(micros() - pt < 1000){return;}
-    pt = micros();
+    cout << "Encoders: " << nanos() - ptime << endl;
 
+
+    ptime = nanos();
+    gyro->update();
+    cout << "Gyro: " << nanos() - ptime << endl;
+
+    ptime = nanos();
+    ping->update();
+    cout << "Ping: " << nanos() - ptime << endl;
+    //start = micros();
+    ///
+    //LOG(DEBUG) << "Duration: " << micros() - ptime << endl;
+    //ptime = micros();
     float dist = ping->get_distance();
-    if(dist != prevdist)
+    if(false && state != STOPPED && dist > 0 && dist < 0.5)
+    //if(dist != prevdist)
     {
-        //LOG(DEBUG) << "Ping distance: " << ping->get_distance();
+        //LOG(DEBUG) << "Ping distance: " << ping->get_distance() << endl;
+        LOG(DEBUG) << "Ping stop" << endl;
         prevdist = dist;
+        stop();
+        return;
     }
     if(state == DRIVING_DURATION)
     {
@@ -180,8 +190,8 @@ void Drive::update()
             //Serial.println("Stopping");
             stop();
             _duration = 0;
-
             if(driveCompletedCallback){driveCompletedCallback();}
+            return;
         }
     }else if(state == DRIVING_DISTANCE)
     {
@@ -243,9 +253,9 @@ void Drive::update()
 
             //Keeping straight with gyro
             rotationPID_input = (int)(abs(gyro->get_total_rotation()) * 100.0);
-            LOG(DEBUG) << "input: " << (int)(abs(gyro->get_total_rotation()) * 100.0) << endl;
+            //LOG(DEBUG) << "input: " << (int)(abs(gyro->get_total_rotation()) * 100.0) << endl;
             rotationPID->Compute();
-            LOG(DEBUG) << "output: " << encoder_pid_Output << endl;
+            //LOG(DEBUG) << "output: " << encoder_pid_Output << endl;
 
             //LOG(DEBUG) << "rotation output: " << gyro->get_total_rotation() << endl;
             //LOG(DEBUG) << "gyrypid output: " << rotationPID_output << endl;
@@ -253,10 +263,11 @@ void Drive::update()
             float target_speed = 0.15;
             if(encoderLeft.getDistance() < 100000)//50 cm
             {
-                encoder_pid_Input = (int)((encoderLeft.getSpeed() - target_speed)*1000.0);//mm/s
+                encoder_pid_Input = (int)((encoderLeft.getSpeed() - target_speed)*100.0);//mm/s
                 encoderPID->Compute();
-                //LOG(DEBUG) << "speed: " <<  encoderLeft.getSpeed() << endl;
-                //LOG(DEBUG) << "output: " << (int)encoder_pid_Output << endl;
+                LOG(DEBUG) << "input: " <<(int)((encoderLeft.getSpeed() - target_speed)*1000.0);//mm/s (int)encoder_pid_Output << endl;
+                LOG(DEBUG) << "speed: " <<  encoderLeft.getSpeed() << endl;
+                LOG(DEBUG) << "output: " << (int)encoder_pid_Output << endl;
                 //
                 //LOG(DEBUG) << "Distance : " << encoderLeft.getDistance();
                 //LOG(DEBUG) << "EncoderPID out " << encoder_pid_Output;
@@ -268,6 +279,7 @@ void Drive::update()
             }
             else
             {
+                LOG(DEBUG) << "Driving faster " << endl;
                 currentLeftSpeed = maxLeftSpeed;
                 currentRightSpeed = maxRightSpeed;
             }
@@ -286,9 +298,11 @@ void Drive::update()
             if(currentLeftSpeed < 90){currentLeftSpeed = 90;}
             if(currentRightSpeed < 90){currentRightSpeed = 90;}
 
-            //LOG(DEBUG) << "Current left speed: " << (int)currentLeftSpeed;
+            //LOG(DEBUG) << "Current left speed: " << (int)currentLeftSpeed << endl;
 
+            ptime = nanos();
             do_drive();
+            cout << "Do_driver: " << nanos() - ptime << endl;
 
             //ST2.write(rightSpeed + encoder_pid_Output);
             //
@@ -415,8 +429,8 @@ void Drive::do_drive()
 
     if(!check_bounds()){return;}
 
-    //LOG(DEBUG) << "Left: " << (int)currentLeftSpeed << endl;
-    //LOG(DEBUG) << "Right: " << (int)currentRightSpeed << endl;
+    LOG(DEBUG) << "Left: " << (int)currentLeftSpeed << endl;
+    LOG(DEBUG) << "Right: " << (int)currentRightSpeed << endl;
 
     serial->drive(currentLeftSpeed, currentRightSpeed);
 }

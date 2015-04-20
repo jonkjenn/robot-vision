@@ -6,6 +6,12 @@ Ping::Ping(unsigned char PIN)
 {
     _PIN = PIN;
     gpio_export(_PIN);
+    ping_gpio = gpio_start_readwrite(_PIN);
+}
+
+Ping::~Ping()
+{
+    gpio_stop_readwrite(ping_gpio);
 }
 
 void Ping::update()
@@ -16,51 +22,52 @@ void Ping::update()
             //LOG(DEBUG) << "Step 0";
             if(prevTime != 0 || ( micros() - prevTime > 200))
             {
-                //LOG(DEBUG) << "Step 0 if";
+                //LOG(DEBUG) << "Step 0 if" << endl;
                 /*gpio_set_dir(_PIN, INPUT_PIN);
                 gpio_get_value(_PIN, &input);*/
                 gpio_set_dir(_PIN, OUTPUT_PIN);
-                gpio_set_value(_PIN, HIGH);
+                gpio_set_value(HIGH,ping_gpio);
                 prevTime = micros();
+                delayMicroseconds(15);
                 step++;
             }
-            break;
-        case 1:
             //LOG(DEBUG) << "Step 1";
-            if(micros()-prevTime > pulse_out_delay)
+            //if(micros()-prevTime > pulse_out_delay)
             {
-                //LOG(DEBUG) << "Step 1 if";
+                //LOG(DEBUG) << "Step 1 if" << endl;
                 gpio_set_dir(_PIN, OUTPUT_PIN);
-                gpio_set_value(_PIN, LOW);
+                gpio_set_value(LOW,ping_gpio);
                 gpio_set_dir(_PIN, INPUT_PIN);
 
+                prevTime = micros();
                 step++;
             }
             break;
         case 2:
             //LOG(DEBUG) << "Step 2";
-            gpio_set_dir(_PIN, INPUT_PIN);
-            gpio_get_value(_PIN, &input);
+            gpio_get_value(&input, ping_gpio);
             if(input)
             {
-                //LOG(DEBUG) << "Step 2 if";
+                //LOG(DEBUG) << "Step 2 if" <<endl;
+                //LOG(DEBUG) << "Time : " << micros()-prevTime << endl;
                 prevTime = micros();
                 step++;
             }
             else
             {
-                //LOG(DEBUG) << "BUG";
+                //gpio_stop_read(ping_gpio);
+                //LOG(DEBUG) << "BUG"<<endl;
                 step = 0;
             }
             break;
         case 3:
-            //LOG(DEBUG) << "Step 3 if";
-            unsigned int val;
-            gpio_set_dir(_PIN, INPUT_PIN);
-            gpio_get_value(_PIN, &val);
+            //LOG(DEBUG) << "Step 3 if" << endl;
+            gpio_get_value(&val, ping_gpio);
             if(val != input)
             {
-                //LOG(DEBUG) << "Step 3 if";
+                //gpio_stop_read(ping_gpio);
+
+                //LOG(DEBUG) << "Step 3 if" <<endl;
                 //lock_guard<mutex> lock(pingmutex);
                 prevprevduration = prevduration;
                 prevduration = duration;

@@ -4,11 +4,12 @@
 
 #include "utility.hpp"
 #include "SimpleGPIO.h"
-#include <mutex>
+#include <iostream>
 
 class Ping{
     public:
         Ping(unsigned char PIN);
+        ~Ping();
         void update();
         float get_distance();
     private:
@@ -18,9 +19,11 @@ class Ping{
         uint64_t prevprevduration = 0;
         uint64_t prevduration = 0;
         uint64_t duration = 0;
-        const uint8_t pulse_out_delay = 10;
+        const uint8_t pulse_out_delay = 1;
         const float speed_of_sound_25c_us = 346.3;
-        unsigned int input = 0;
-        std::mutex pingmutex;
+        uint8_t input = 0;
+        int ping_gpio = 0;
+        uint8_t val;
+
 };
 #endif
