@@ -200,6 +200,11 @@ int gpio_get_value(uint8_t *value, int fd)
 
 	read(fd, value, 1);
 
+        if(*value == 49){*value = 1;}
+        else
+        {
+            *value = 0;
+        }
         //cout << "seek and read: " << nanos() - gpi_t << endl;
 	return 0;
 }

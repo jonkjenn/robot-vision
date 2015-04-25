@@ -40,7 +40,7 @@ void gyroscope::update()
     g_t = nanos();
     int count = mSerial->available();
     int read = mSerial->read(gyro_temp,count);
-    cout << "105 :   " << nanos() - g_t <<endl;
+    //cout << "105 :   " << nanos() - g_t <<endl;
     int i=0;
     while(i<read)
     {
@@ -58,7 +58,7 @@ void gyroscope::update()
 
                     if(prevtime == 0){prevtime = sensors.time_usec;break;}
                     if(abs(sensors.zgyro) < 0.005){
-                        cout << "105 :   " << nanos() - g_t <<endl;
+                        //cout << "105 :   " << nanos() - g_t <<endl;
                         return;
                     }
 

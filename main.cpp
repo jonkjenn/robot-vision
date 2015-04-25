@@ -70,11 +70,10 @@ void loop()
             cout << "case 0" << endl;
             driver->driveDistance(speed, args_dist,[]{drive_complete();});
             step++;
-            step = 3;
             break;
         case 2:
             LOG(DEBUG) << "Case 2";
-            driver->rotate(110,180,LEFT,[]{drive_complete();});
+            //driver->rotate(110,180,LEFT,[]{drive_complete();});
             step++;
             break;
         case 4:

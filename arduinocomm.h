@@ -2,15 +2,10 @@
 #ifndef ARDUINOCOMM_H
 #define ARDUINOCOMM_H
 
-#ifdef __AVR_ATmega328P__
-#include "Arduino.h"
-#else
 #include <memory>
-
 #include <iostream>
 #include "serial/serial.h"
 #include "utility.hpp"
-#endif
 
 class Arduinocomm{
     private:
@@ -37,11 +32,17 @@ class Arduinocomm{
 
         void handlepacket(uint8_t (&packet)[MAX_BUFFER], uint8_t);
 
+        //uint8_t CRC8(const uint8_t *data, uint8_t len, uint8_t start);
+        uint8_t CRC8(std::vector<uint8_t> &data, uint8_t len, uint8_t start);
+        uint8_t CRC8(const uint8_t *data, uint8_t len, uint8_t start);
+
+        std::vector<uint8_t> bytes;
+
     public:
         void update();
         Arduinocomm(std::string device, const unsigned int speed);
         /*void driveDuration(uint8_t, uint32_t);
-        void driveDistance(uint8_t, uint32_t);*/
+          void driveDistance(uint8_t, uint32_t);*/
         void drive(uint8_t,uint8_t);
         void writeok();
         //void writeDriveCompleted();
@@ -54,7 +55,8 @@ class Arduinocomm{
         bool packet_ready = false;
 
         uint32_t read_uint32(uint8_t (&packet)[MAX_BUFFER],unsigned int);
-        uint16_t read_uint16(uint8_t (&packet)[MAX_BUFFER],unsigned int);
+        //uint16_t read_uint16(uint8_t (&packet)[MAX_BUFFER],unsigned int);
+        uint16_t read_uint16(unsigned int position);
         //
         //Packet definitions
         static const uint8_t OK = 0x01;//Acknowledge packet
@@ -62,6 +64,7 @@ class Arduinocomm{
         static const uint8_t DEBUG = 0x03;
         static const uint8_t DRIVE_DISTANCE = 0x04;//Drive straight for duration
         static const uint8_t DRIVE_COMPLETED = 0x05;//Drive straight for duration
+        static const uint8_t LINE_POSITION = 0x06;//Position of robot on line
 
 };
 

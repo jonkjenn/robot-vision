@@ -41,7 +41,7 @@ class Drive{
 
         Rotation_Direction rot_dir = LEFT;
         int rotationPID_setpoint = 0,rotationPID_input = 0,rotationPID_output = 0;
-        int rotationPIDKp = 50, rotationPIDKi = 0, rotationPIDKd = 0;
+        int rotationPIDKp = 1, rotationPIDKi = 0, rotationPIDKd = 0;
         std::unique_ptr<PID> rotationPID = nullptr;
 
         enum State{ DRIVING_MANUAL, DRIVING_DURATION, DRIVING_DISTANCE, ROTATING, STOPPED };
@@ -61,6 +61,8 @@ class Drive{
         void do_drive();
         void do_rotate();
         void update_encoder(Encoder &encoderR, Encoder &encoderL, gyroscope &gyro, Ping &ping);
+        bool wait_stop = false;
+        uint64_t stop_timer = 0;
     public:
         ~Drive();
         Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, Arduinocomm *serial);
@@ -70,6 +72,7 @@ class Drive{
         void drive(unsigned int power1, unsigned int power2);
         void update();
         void stop();
+        void confirm_stop();
         uint32_t getDistance();
 };
 #endif

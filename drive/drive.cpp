@@ -159,26 +159,27 @@ void Drive::update()
     ptime = nanos();
     encoderRight.update();
     encoderLeft.update();
-    cout << "Encoders: " << nanos() - ptime << endl;
+    //cout << "Encoders: " << nanos() - ptime << endl;
 
 
     ptime = nanos();
     gyro->update();
-    cout << "Gyro: " << nanos() - ptime << endl;
+    //cout << "Gyro: " << nanos() - ptime << endl;
 
     ptime = nanos();
     ping->update();
-    cout << "Ping: " << nanos() - ptime << endl;
+    //cout << "Ping: " << nanos() - ptime << endl;
     //start = micros();
     ///
     //LOG(DEBUG) << "Duration: " << micros() - ptime << endl;
     //ptime = micros();
     float dist = ping->get_distance();
-    if(false && state != STOPPED && dist > 0 && dist < 0.5)
+    //LOG(DEBUG) << "Ping distance: " << ping->get_distance() << endl;
+    if(state != STOPPED && dist > 0 && dist < 0.5)
     //if(dist != prevdist)
     {
-        //LOG(DEBUG) << "Ping distance: " << ping->get_distance() << endl;
-        LOG(DEBUG) << "Ping stop" << endl;
+        LOG(DEBUG) << "Ping distance: " << ping->get_distance() << endl;
+        //LOG(DEBUG) << "Ping stop" << endl;
         prevdist = dist;
         stop();
         return;
@@ -190,7 +191,6 @@ void Drive::update()
             //Serial.println("Stopping");
             stop();
             _duration = 0;
-            if(driveCompletedCallback){driveCompletedCallback();}
             return;
         }
     }else if(state == DRIVING_DISTANCE)
@@ -205,69 +205,23 @@ void Drive::update()
             stop();
             _distance = 0;
 
-            if(driveCompletedCallback){driveCompletedCallback();}
             return;
         }
         else
         {
-            //encoder_pid_Input = encoderRight.getSpeed() - encoderLeft.getSpeed();
-            /*LOG(DEBUG) << "pid input: " << encoder_pid_Input;
-            LOG(DEBUG) << "Left distance";
-            LOG(DEBUG) << encoderLeft.getDistance();
-            LOG(DEBUG) << "Right distance";
-            LOG(DEBUG) << encoderRight.getDistance();
-            LOG(DEBUG) << "Encoder pid: " << encoder_pid_Output;*/
-
-            //LOG(DEBUG) << "Speed: " << (encoderRight.getSpeed() + encoderLeft.getSpeed())/2.0;
-
-            //Keeping straight with encoder
-            
-            /*
-            if(encoderLeft.getDistance() < encoderRight.getDistance())
-            {
-                encoder_pid_Input = (double)encoderRight.getDistance() - (double)encoderLeft.getDistance();
-                encoderPID->Compute();
-                if(currentRightSpeed != rightSpeed + (int)encoder_pid_Output)
-                {
-                    //LOG(DEBUG) << "Distance: " << encoderLeft.getDistance();
-                    currentRightSpeed = rightSpeed + (int)encoder_pid_Output;
-                    currentLeftSpeed = leftSpeed;
-
-                    //LOG(DEBUG) << "Speeds: " << (int)rightSpeed << " , " << (int)currentLeftSpeed << " ," << (int)currentRightSpeed;
-                }
-            }
-            else
-            {
-                encoder_pid_Input = (double)encoderLeft.getDistance() - (double)encoderRight.getDistance();
-                encoderPID->Compute();
-                if(currentLeftSpeed != leftSpeed + (int)encoder_pid_Output)
-                {
-                    //LOG(DEBUG) << "Distance: " << encoderLeft.getDistance();
-                    currentLeftSpeed = leftSpeed + (int)encoder_pid_Output;
-                    currentRightSpeed = rightSpeed;
-
-
-                    LOG(DEBUG) << "Speeds: " << (int)rightSpeed << " , " << (int)currentLeftSpeed << " ," << (int)currentRightSpeed;
-                }
-            }*/
 
             //Keeping straight with gyro
             rotationPID_input = (int)(abs(gyro->get_total_rotation()) * 100.0);
-            //LOG(DEBUG) << "input: " << (int)(abs(gyro->get_total_rotation()) * 100.0) << endl;
             rotationPID->Compute();
-            //LOG(DEBUG) << "output: " << encoder_pid_Output << endl;
-
-            //LOG(DEBUG) << "rotation output: " << gyro->get_total_rotation() << endl;
-            //LOG(DEBUG) << "gyrypid output: " << rotationPID_output << endl;
 
             float target_speed = 0.15;
             if(encoderLeft.getDistance() < 100000)//50 cm
             {
                 encoder_pid_Input = (int)((encoderLeft.getSpeed() - target_speed)*100.0);//mm/s
                 encoderPID->Compute();
-                LOG(DEBUG) << "input: " <<(int)((encoderLeft.getSpeed() - target_speed)*1000.0);//mm/s (int)encoder_pid_Output << endl;
+                /*LOG(DEBUG) << "input: " <<(int)((encoderLeft.getSpeed() - target_speed)*1000.0);//mm/s (int)encoder_pid_Output << endl;
                 LOG(DEBUG) << "speed: " <<  encoderLeft.getSpeed() << endl;
-                LOG(DEBUG) << "output: " << (int)encoder_pid_Output << endl;
+                LOG(DEBUG) << "output: " << (int)encoder_pid_Output << endl;*/
                 //
                 //LOG(DEBUG) << "Distance : " << encoderLeft.getDistance();
                 //LOG(DEBUG) << "EncoderPID out " << encoder_pid_Output;
@@ -302,7 +256,7 @@ void Drive::update()
 
             ptime = nanos();
             do_drive();
-            cout << "Do_driver: " << nanos() - ptime << endl;
+            //cout << "Do_driver: " << nanos() - ptime << endl;
 
             //ST2.write(rightSpeed + encoder_pid_Output);
             //
@@ -320,7 +274,7 @@ void Drive::update()
     }
     else if(state == ROTATING)
     {
-        float target_speed = 1.0;
+        float target_speed = 0.8;
 
         LOG(DEBUG) << "Distance rotation: " << gyro->get_distance_rotation() << endl;
         LOG(DEBUG) << "Current rotation: " << gyro->get_current_rotation() << endl;
@@ -334,14 +288,18 @@ void Drive::update()
             target_speed = 0.5;
         }
 
-        rotationPID_input = abs(gyro->get_current_rotation()) - target_speed;
+        rotationPID_input = (abs(gyro->get_current_rotation())  - target_speed)* 1000;
+        LOG(DEBUG) << "pidinput: " << rotationPID_input << endl;
         rotationPID->Compute();
 
         currentLeftSpeed = leftSpeed + rotationPID_output;
         currentRightSpeed = rightSpeed + rotationPID_output;
 
-        //LOG(DEBUG) << "current left: " << (int)currentLeftSpeed << endl;
-        //LOG(DEBUG) << "current right: " << (int)currentRightSpeed << endl;
+        LOG(DEBUG) << "pidout: " << rotationPID_output << endl;
+
+        LOG(DEBUG) << "current left: " << (int)currentLeftSpeed << endl;
+        LOG(DEBUG) << "current right: " << (int)currentRightSpeed << endl;
+        LOG(DEBUG) << "target speed: " << target_speed << endl;
 
         do_rotate();
         
@@ -372,49 +330,12 @@ void Drive::update()
 
             tempspeedRight = rightSpeed + (int)encoder_pid_Output;
             tempspeedLeft = leftSpeed;
-        }
-
-        //If new speed is different the old speed
-        if((currentLeftSpeed != tempspeedLeft && currentRightSpeed == tempspeedRight) 
-                || (currentRightSpeed != tempspeedRight && currentLeftSpeed == tempspeedLeft))
-        {
-            currentLeftSpeed = tempspeedLeft;
-            currentRightSpeed = tempspeedRight;
-
-            if(gyro->distance_rotation > 5.0)
-            {
-                do_rotate();
-            }
-        }
-
-        if(gyro->distance_rotation < 5.0)
-        {
-            //Modifier that will reduce rotation speed (110) from 110 down to 95 depending on how close the rotation is to completed
-            //speedMod = 1.0 - (1.0 - gyro->distance_rotation/5.0) * rotation_mod;
-
-            //currentLeftSpeed = leftSpeed * speedMod * speedMod;
-            //currentRightSpeed = rightSpeed * speedMod * speedMod;
-
-            if(currentLeftSpeed < 90){currentLeftSpeed = 90;}
-            if(currentRightSpeed < 90){currentRightSpeed = 90;}
-
-            LOG(DEBUG) << "SpeedMod " << speedMod;
-            LOG(DEBUG) << "Distance " << gyro->distance_rotation << " , left-speed: " << (int)currentLeftSpeed << " right-speed: "  << (int)currentRightSpeed;
-
-            do_rotate();
-        }
-        else
-        {
-            speedMod = 1.0;
-        }
-        */
+        }*/
 
         //if(abs(abs(gyro->total_rotation) - abs(gyro->goal_rotation)) < 0.0194)
         if(gyro->get_distance_rotation() < 2.0)
         {
             LOG(DEBUG) << "Rotation complete\n";
-            if(driveCompletedCallback){driveCompletedCallback();}
-            gyro = nullptr;
             stop();
         }
     }
@@ -437,7 +358,11 @@ void Drive::do_drive()
 
 void Drive::do_rotate()
 {
-    if(currentRightSpeed == prevRightSpeed && currentLeftSpeed == prevLeftSpeed){return;}
+    if(currentRightSpeed == prevRightSpeed && currentLeftSpeed == prevLeftSpeed){
+        cout << "SAME" << endl;
+        return;}
+
+    cout << "Rotating" << endl;
 
     prevRightSpeed = currentRightSpeed;
     prevLeftSpeed = currentLeftSpeed;
@@ -476,12 +401,31 @@ bool Drive::check_bounds()
 
 void Drive::stop()
 {
-    LOG(DEBUG) << "STOP";
-    encoderRight.reset();
-    encoderLeft.reset();
+    if(!wait_stop || micros() - stop_timer > 5000)
+    {
+        LOG(DEBUG) << "STOP" << endl;
+        wait_stop = true;
+        stop_timer = micros();
 
-    serial->drive(stopPower,stopPower);
-    state = STOPPED;
+        serial->drive(stopPower,stopPower);
+    }
+    else
+    {
+        LOG(DEBUG) << "Waiting for stop" << endl;
+    }
+}
+
+void Drive::confirm_stop()
+{
+    if(wait_stop)
+    {
+        LOG(DEBUG) << "Confirmed stop" << endl;
+        encoderRight.reset();
+        encoderLeft.reset();
+        wait_stop = false;
+        state = STOPPED;
+        if(driveCompletedCallback){driveCompletedCallback();}
+    }
 }
 
 uint32_t Drive::getDistance()

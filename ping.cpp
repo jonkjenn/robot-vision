@@ -46,9 +46,10 @@ void Ping::update()
         case 2:
             //LOG(DEBUG) << "Step 2";
             gpio_get_value(&input, ping_gpio);
-            if(input)
+            //LOG(DEBUG) << "Step 2, input: "<< (int)input <<endl;
+            if(input > 0)
             {
-                //LOG(DEBUG) << "Step 2 if" <<endl;
+                //LOG(DEBUG) << "Step 2 if, input: "<< (int)input <<endl;
                 //LOG(DEBUG) << "Time : " << micros()-prevTime << endl;
                 prevTime = micros();
                 step++;
@@ -61,8 +62,8 @@ void Ping::update()
             }
             break;
         case 3:
-            //LOG(DEBUG) << "Step 3 if" << endl;
             gpio_get_value(&val, ping_gpio);
+            //LOG(DEBUG) << "Step 3 val: "<< (int)val << endl;
             if(val != input)
             {
                 //gpio_stop_read(ping_gpio);
