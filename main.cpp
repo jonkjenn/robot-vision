@@ -17,6 +17,8 @@ Rotation_Direction dir = LEFT;
 unique_ptr<Controller> c;
 shared_ptr<Drive> driver;
 
+uint64_t start_time = 0;
+
 int main(int argc, char** argv)
 {
     vector<string> args(argv, argv+argc);
@@ -51,6 +53,8 @@ int main(int argc, char** argv)
 
     }
 
+    start_time = micros();
+
     c->start();
 
     return 0;
@@ -58,6 +62,7 @@ int main(int argc, char** argv)
 
 void loop()
 {
+    if(micros() - start_time < 100000){return;}
     if(stop)
     {
         driver->stop();
@@ -68,8 +73,10 @@ void loop()
     {
         case 0:
             cout << "case 0" << endl;
-            driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            driver->rotate(110,180,LEFT,[]{drive_complete();});
             step++;
+            step = 3;
             break;
         case 2:
             LOG(DEBUG) << "Case 2";

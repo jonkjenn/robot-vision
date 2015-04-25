@@ -124,19 +124,19 @@ void Controller::parsepacket()
         switch(arduino->packet_buffer[0])
         {
             case Arduinocomm::OK:
-                LOG(DEGBU) << "Got OK" << endl;
+                //LOG(DEGBU) << "Got OK" << endl;
                 driver->confirm_stop();
-                if(waiting_ok)
+                /*if(waiting_ok)
                 {
                     waiting_ok = false;
                 }
                 else
                 {
                     LOG(DEBUG) << "OK when not waiting for OK" << endl;
-                }
+                }*/
                 break;
             case Arduinocomm::LINE_POSITION:
-                //LOG(DEBUG) << "Position: " << (int)arduino->read_uint16(1) <<endl;
+                LOG(DEBUG) << "Position: " << (int)arduino->read_uint16(1) <<endl;
                 break;
             case Arduinocomm::DRIVE_COMPLETED:
                 break;
@@ -186,7 +186,7 @@ void Controller::loop()
 
             pt = nanos();
             driver->update();
-            //cout << "Driver: " << nanos() - pt << endl;
+            cout << "Driver: " << nanos() - pt << endl;
 
             //LOG(DEBUG) << "vision";
             if(cam)
@@ -194,7 +194,9 @@ void Controller::loop()
                 vision->update();
             }
 
+            pt = nanos();
             arduino->update();
+            cout << "arduino update: " << nanos() - pt << endl;
             if(arduino->packet_ready)
             {
                 parsepacket();

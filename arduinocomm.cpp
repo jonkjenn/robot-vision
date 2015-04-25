@@ -8,7 +8,7 @@ Arduinocomm::Arduinocomm(string device, const unsigned int speed)
 {
     cout << "Starting serial" <<endl;
     auto deleter = [&](Serial* s){s->close();delete(s);};
-    mSerial = unique_ptr<Serial, decltype(deleter)>(new Serial(device,speed,Timeout::simpleTimeout(10)),deleter);
+    mSerial = unique_ptr<Serial, decltype(deleter)>(new Serial(device,speed,Timeout::simpleTimeout(1)),deleter);
     /*serialstream.SetBaudRate(SerialStreamBuf::BAUD_115200);
       serialstream.SetCharSize(SerialStreamBuf::CHAR_SIZE_8);
       serialstream.SetNumOfStopBits(1);
@@ -17,20 +17,27 @@ Arduinocomm::Arduinocomm(string device, const unsigned int speed)
       serialstream.Open("/dev/ttyACM0");*/
 }
 
+uint64_t ac_t = 0;
 void Arduinocomm::update()
 {
     if(input_position >= input_size){
         input_position = 0; 
         input_size = 0;
         //LOG(DEBUG) << "Checking for data, available: " << mSerial->available();
-        if(mSerial->available() > 0)
-        {
-            unsigned int ret = mSerial->read((uint8_t *)input_buffer,MAX_BUFFER);
 
-            if(ret>0){input_size = ret;process();}
-        }
+        unsigned int ret = mSerial->read((uint8_t *)input_buffer,MAX_BUFFER);
+        //LOG(DEBUG) << "ret: " << ret << endl;
+        //LOG(DEBUG) << "avail: " << nanos() - ac_t << endl;
+
+        if(ret <= 0){return;}
+
+        if(ret>0){input_size = ret;process();}
+        //LOG(DEBUG) << "process " << nanos - ac_t << endl;
+        //LOG(DEBUG) << "after avail: " << nanos() - ac_t << endl;
     }
-    else{process();}
+    else{
+        process();
+    }
 }
 
 void Arduinocomm::process()

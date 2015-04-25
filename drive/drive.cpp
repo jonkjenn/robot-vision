@@ -175,7 +175,7 @@ void Drive::update()
     //ptime = micros();
     float dist = ping->get_distance();
     //LOG(DEBUG) << "Ping distance: " << ping->get_distance() << endl;
-    if(state != STOPPED && dist > 0 && dist < 0.5)
+    if(state != STOPPED  && state != ROTATING && dist > 0 && dist < 0.5)
     //if(dist != prevdist)
     {
         LOG(DEBUG) << "Ping distance: " << ping->get_distance() << endl;
@@ -288,7 +288,7 @@ void Drive::update()
             target_speed = 0.5;
         }
 
-        rotationPID_input = (abs(gyro->get_current_rotation())  - target_speed)* 1000;
+        rotationPID_input = (abs(gyro->get_current_rotation())  - target_speed)* 100;
         LOG(DEBUG) << "pidinput: " << rotationPID_input << endl;
         rotationPID->Compute();
 
@@ -300,6 +300,7 @@ void Drive::update()
         LOG(DEBUG) << "current left: " << (int)currentLeftSpeed << endl;
         LOG(DEBUG) << "current right: " << (int)currentRightSpeed << endl;
         LOG(DEBUG) << "target speed: " << target_speed << endl;
+        LOG(DEBUG) << "current speed: " << gyro->get_current_rotation() << endl;
 
         do_rotate();
         
@@ -350,8 +351,8 @@ void Drive::do_drive()
 
     if(!check_bounds()){return;}
 
-    LOG(DEBUG) << "Left: " << (int)currentLeftSpeed << endl;
-    LOG(DEBUG) << "Right: " << (int)currentRightSpeed << endl;
+    /*LOG(DEBUG) << "Left: " << (int)currentLeftSpeed << endl;
+    LOG(DEBUG) << "Right: " << (int)currentRightSpeed << endl;*/
 
     serial->drive(currentLeftSpeed, currentRightSpeed);
 }

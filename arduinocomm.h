@@ -16,7 +16,7 @@ class Arduinocomm{
         void writebyte(uint8_t);
         void writeuint32(uint32_t);
         uint8_t readbyte(unsigned int position);
-        static const uint16_t MAX_BUFFER = 255;
+        static const size_t MAX_BUFFER = 255;
         uint8_t input_buffer[MAX_BUFFER];
         uint8_t temp_buffer[MAX_BUFFER];
         uint8_t output_buffer[MAX_BUFFER];

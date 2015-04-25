@@ -18,6 +18,7 @@
 #include <termios.h>
 #include <sys/param.h>
 #include <pthread.h>
+#include <iostream>
 
 #if defined(__linux__)
 # include <linux/serial.h>
@@ -102,6 +103,15 @@ timespec_from_ms (const uint32_t millis)
   timespec time;
   time.tv_sec = millis / 1e3;
   time.tv_nsec = (millis - (time.tv_sec * 1e3)) * 1e6;
+  return time;
+}
+
+timespec
+timespec_from_ns (const uint64_t nanos)
+{
+  timespec time;
+  time.tv_sec = nanos / 1e9;
+  time.tv_nsec = (nanos - (time.tv_sec * 1e9));
   return time;
 }
 
@@ -495,7 +505,8 @@ Serial::SerialImpl::waitReadable (uint32_t timeout)
   fd_set readfds;
   FD_ZERO (&readfds);
   FD_SET (fd_, &readfds);
-  timespec timeout_ts (timespec_from_ms (timeout));
+  //timespec timeout_ts (timespec_from_ms (timeout));
+  timespec timeout_ts (timespec_from_ns (1000));
   int r = pselect (fd_ + 1, &readfds, NULL, NULL, &timeout_ts, NULL);
 
   if (r < 0) {
@@ -536,19 +547,27 @@ Serial::SerialImpl::read (uint8_t *buf, size_t size)
   size_t bytes_read = 0;
 
   // Calculate total timeout in milliseconds t_c + (t_m * N)
-  long total_timeout_ms = timeout_.read_timeout_constant;
+  /*long total_timeout_ms = timeout_.read_timeout_constant;
   total_timeout_ms += timeout_.read_timeout_multiplier * static_cast<long> (size);
-  MillisecondTimer total_timeout(total_timeout_ms);
+  MillisecondTimer total_timeout(total_timeout_ms);*/
+
 
   // Pre-fill buffer with available bytes
   {
     ssize_t bytes_read_now = ::read (fd_, buf, size);
     if (bytes_read_now > 0) {
-      bytes_read = bytes_read_now;
+      return bytes_read_now;
     }
   }
+    if (waitReadable(1)) {
+      ssize_t bytes_read_now =
+        ::read (fd_, buf, size);
+      //std::cout << "size: " << size << std::endl;
+      return bytes_read_now;
+    }
+  return bytes_read;
 
-  while (bytes_read < size) {
+  /*while (bytes_read < size) {
     int64_t timeout_remaining_ms = total_timeout.remaining();
     if (timeout_remaining_ms <= 0) {
       // Timed out
@@ -600,12 +619,13 @@ Serial::SerialImpl::read (uint8_t *buf, size_t size)
       }
     }
   }
-  return bytes_read;
+  return bytes_read;*/
 }
 
 size_t
 Serial::SerialImpl::write (const uint8_t *data, size_t length)
 {
+    std::cout << "Writing now. " << std::endl;
   if (is_open_ == false) {
     throw PortNotOpenedException ("Serial::write");
   }
@@ -613,17 +633,18 @@ Serial::SerialImpl::write (const uint8_t *data, size_t length)
   size_t bytes_written = 0;
 
   // Calculate total timeout in milliseconds t_c + (t_m * N)
-  long total_timeout_ms = timeout_.write_timeout_constant;
+  /*long total_timeout_ms = timeout_.write_timeout_constant;
   total_timeout_ms += timeout_.write_timeout_multiplier * static_cast<long> (length);
-  MillisecondTimer total_timeout(total_timeout_ms);
+  MillisecondTimer total_timeout(total_timeout_ms);*/
 
   while (bytes_written < length) {
-    int64_t timeout_remaining_ms = total_timeout.remaining();
+    /*int64_t timeout_remaining_ms = total_timeout.remaining();
     if (timeout_remaining_ms <= 0) {
       // Timed out
       break;
-    }
-    timespec timeout(timespec_from_ms(timeout_remaining_ms));
+    }*/
+    //timespec timeout(timespec_from_ms(timeout_remaining_ms));
+    timespec timeout(timespec_from_ns(1000));
 
     FD_ZERO (&writefds);
     FD_SET (fd_, &writefds);
@@ -634,6 +655,7 @@ Serial::SerialImpl::write (const uint8_t *data, size_t length)
     // Figure out what happened by looking at select's response 'r'
     /** Error **/
     if (r < 0) {
+    //std::cout << "pselect error : " << r << std::endl;
       // Select was interrupted, try again
       if (errno == EINTR) {
         continue;
@@ -643,6 +665,7 @@ Serial::SerialImpl::write (const uint8_t *data, size_t length)
     }
     /** Timeout **/
     if (r == 0) {
+        //std::cout << "pselect timeou : " << r << std::endl;
       break;
     }
     /** Port ready to write **/
@@ -652,6 +675,7 @@ Serial::SerialImpl::write (const uint8_t *data, size_t length)
         // This will write some
         ssize_t bytes_written_now =
           ::write (fd_, data + bytes_written, length - bytes_written);
+        //std::cout << "Written : " << bytes_written_now << std::endl;
         // write should always return some data as select reported it was
         // ready to write when we get to this point.
         if (bytes_written_now < 1) {
