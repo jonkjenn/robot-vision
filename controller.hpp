@@ -12,6 +12,7 @@
 #include "SimpleGPIO/SimpleGPIO.h"
 #include "gyroscope.hpp"
 #include "drive.h"
+#include "bachelor-line.h"
 #include <functional>
 #include <unistd.h>
 
@@ -30,6 +31,7 @@ class Controller{
         std::unique_ptr<Vision> vision;
         Arduinocomm *arduino;
         std::unique_ptr<gyroscope> gyro;
+        std::unique_ptr<LineFollower> line_follower;
         void setup_vision(const bool show_video);
         void setup_vision(std::string &file, const bool show_video);
         void parsepacket();

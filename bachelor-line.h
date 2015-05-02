@@ -1,13 +1,8 @@
-#include "QTRSensors.h"
 #include "PID_v1.h"
-#include "Arduino.h"
-#include "Servo.h"
 #include <stdio.h>
 #include "drive.h"
 
 int16_t GetMedian(int16_t *daArray,int size);
-
-namespace bachelor{
 
 class LineFollower{
 
@@ -43,22 +38,22 @@ class LineFollower{
 #define TIMEOUT       2500  // waits for 2500 microseconds for sensor outputs to go low
 
         // sensors 0 through 7 are connected to digital pins 3 through 10, respectively
-        QTRSensors *qtrrc;
+//        QTRSensors *qtrrc;
         uint16_t sensorValues[NUM_SENSORS];
-        Servo ST1,ST2;//ST1 left motor, ST2 right motor
+        //Servo ST1,ST2;//ST1 left motor, ST2 right motor
 
         //unsigned int preCalibratedMin[] = {800, 588, 488, 532, 536, 536, 580, 812};
         uint16_t preCalibratedMin[8] = {750, 550, 500, 500, 450, 400, 400, 450};
         uint16_t preCalibratedMax[8] = {2500,2500,2500,2500,2500,2500,2500,2500};
 
-        double out_pid_SetPoint,out_pid_Input,out_pid_Output;
-        double out_consKp=1.0, out_consKi=0.0, out_consKd=0.0, out_pid_weight = 1.0;
-        double inn_pid_SetPoint,inn_pid_Input,inn_pid_Output;
-        double inn_consKp=2.0, inn_consKi=0.0, inn_consKd=0.0, inn_pid_weight = 1.0;
+        float out_pid_SetPoint,out_pid_Input,out_pid_Output;
+        float out_consKp=1.0, out_consKi=0.0, out_consKd=0.0, out_pid_weight = 1.0;
+        float inn_pid_SetPoint,inn_pid_Input,inn_pid_Output;
+        float inn_consKp=2.0, inn_consKi=0.0, inn_consKd=0.0, inn_pid_weight = 1.0;
         PID *outerPID;
         PID *innerPID;
 
-        unsigned int maxPower = 160;
+        unsigned int maxPower = 110;
         unsigned int stopPower = 90;//stand still
         unsigned int minPower = 20;
         unsigned int power_range = maxPower - minPower;
@@ -70,7 +65,7 @@ class LineFollower{
 
         unsigned int previous_update = 0;
 
-        Drive *_driver;
+        std::shared_ptr<Drive> _driver = nullptr;
 
         const uint8_t debug = 1;
         int result_ready = -1;
@@ -89,6 +84,8 @@ class LineFollower{
         int16_t delta_dist_center = 0;
         uint32_t diff= 0;
 
+        bool enabled = true;
+
         int16_t sum_delta_dist = 0;
 
         uint8_t stopcount = 0;
@@ -99,8 +96,7 @@ class LineFollower{
         int16_t part_tmp[4] = {0,0,0,0};
 
         public:
-            void update();
-            void setup(Drive *driver);
+            ~LineFollower();
+            void update(unsigned int);
+            void setup(std::shared_ptr<Drive> driver);
 };
-
-}

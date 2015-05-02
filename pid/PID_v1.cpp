@@ -7,14 +7,18 @@
 
 #include "PID_v1.h"
 #include "stdio.h"
+#include <iostream>
+using namespace std;
 
 /*Constructor (...)*********************************************************
  *    The parameters specified here are those for for which we can't set up 
  *    reliable defaults, so we need to have the user set them.
  ***************************************************************************/
-PID::PID(int* Input, int* Output, int* Setpoint,
-        int Kp, int Ki, int Kd, int ControllerDirection, int limitLow, int limitHigh)
+PID::PID(float* Input, float* Output, float* Setpoint,
+        float Kp, float Ki, float Kd, float ControllerDirection, float limitLow, float limitHigh)
 {
+    //cout << "low: " << limitLow << endl;
+    //cout << "high: " << limitHigh << endl;
 	
     myOutput = Output;
     myInput = Input;
@@ -23,6 +27,9 @@ PID::PID(int* Input, int* Output, int* Setpoint,
 	
 	PID::SetOutputLimits(limitLow, limitHigh);				//default output limit corresponds to 
 												//the arduino pwm limits
+  /*cout << "output :" << output << endl;
+  cout << "outmax : " << outMax << endl; 
+  cout << "outmin : " << outMin << endl; */
 
     SampleTime = 1;							//default Controller Sample Time is 0.1 seconds
 
@@ -50,14 +57,21 @@ bool PID::Compute()
       /*Compute all the working error variables*/
       input = *myInput;
       error = *mySetpoint - input;
+      /*cout << "error: " << error << endl;
+      cout << "kp: " << kp << endl;
+      cout << "ki: " << ki << endl;
+      cout << "kd: " << kd << endl;*/
       ITerm+= (ki * error);
+      //cout << "iterm: " << ITerm << endl;
       if(ITerm > outMax) ITerm= outMax;
       else if(ITerm < outMin) ITerm= outMin;
       dInput = (input - lastInput);
  
       /*Compute PID Output*/
       output = kp * error + ITerm- kd * dInput ;
-      
+      /*cout << "output :" << output << endl;
+      cout << "outmax : " << outMax << endl; 
+      cout << "outmin : " << outMin << endl; */
 	  if(output > outMax) output = outMax;
       else if(output < outMin) output = outMin;
 	  *myOutput = output;
@@ -76,7 +90,7 @@ bool PID::Compute()
  * it's called automatically from the constructor, but tunings can also
  * be adjusted on the fly during normal operation
  ******************************************************************************/ 
-void PID::SetTunings(int Kp, int Ki, int Kd)
+void PID::SetTunings(float Kp, float Ki, float Kd)
 {
    if (Kp<0 || Ki<0 || Kd<0) return;
  
@@ -118,7 +132,7 @@ void PID::SetSampleTime(int NewSampleTime)
  *  want to clamp it from 0-125.  who knows.  at any rate, that can all be done
  *  here.
  **************************************************************************/
-void PID::SetOutputLimits(int Min, int Max)
+void PID::SetOutputLimits(float Min, float Max)
 {
    if(Min >= Max) return;
    outMin = Min;
@@ -144,7 +158,7 @@ void PID::SetMode(int Mode)
     bool newAuto = (Mode == AUTOMATIC);
     if(newAuto == !inAuto)
     {  /*we just went from manual to auto*/
-        PID::Initialize();
+        //PID::Initialize();
     }
     inAuto = newAuto;
 }
@@ -155,6 +169,7 @@ void PID::SetMode(int Mode)
  ******************************************************************************/ 
 void PID::Initialize()
 {
+    //cout << "init: " << endl;
    ITerm = *myOutput;
    lastInput = *myInput;
    if(ITerm > outMax) ITerm = outMax;
@@ -183,9 +198,9 @@ void PID::SetControllerDirection(int Direction)
  * functions query the internal state of the PID.  they're here for display 
  * purposes.  this are the functions the PID Front-end uses for example
  ******************************************************************************/
-int PID::GetKp(){ return  dispKp; }
-int PID::GetKi(){ return  dispKi;}
-int PID::GetKd(){ return  dispKd;}
+float PID::GetKp(){ return  dispKp; }
+float PID::GetKi(){ return  dispKi;}
+float PID::GetKd(){ return  dispKd;}
 int PID::GetMode(){ return  inAuto ? AUTOMATIC : MANUAL;}
 int PID::GetDirection(){ return controllerDirection;}
 

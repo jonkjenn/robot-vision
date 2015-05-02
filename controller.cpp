@@ -91,6 +91,11 @@ Controller::Controller(vector<string> &args, function<void()> callback)
     }
 
     driver = std::shared_ptr<Drive>(new Drive(161,160,163,164,arduino));
+
+    line_follower = std::unique_ptr<LineFollower>(new LineFollower());
+    line_follower->setup(driver);
+
+    delayMicroseconds(1e6);//Let serial connections start up
 }
 
 void Controller::start()
@@ -115,6 +120,7 @@ void Controller::configure_logger(const bool show_debug)
     LOG(INFO) << "Configured logger";*/
 }
 
+uint64_t prevpos = 0;
 void Controller::parsepacket()
 {
     //LOG(DEBUG) << "Parsing packet: " << (int)arduino->packet_buffer[0] << " size:" << (int)arduino->packet_size << endl;
@@ -136,7 +142,14 @@ void Controller::parsepacket()
                 }*/
                 break;
             case Arduinocomm::LINE_POSITION:
-                LOG(DEBUG) << "Position: " << (int)arduino->read_uint16(1) <<endl;
+                {
+                    //LOG(DEBUG) << "Packet: " << (int)arduino->packet_buffer[0] << " "<< (int)arduino->packet_buffer[1] << " " << (int)arduino->packet_buffer[2] << endl;
+                    unsigned int pos = arduino->read_uint16(1);
+                    //LOG(DEBUG) << "Position: " << pos << endl;
+                    //LOG(DEBUG) << "Duration:"  << nanos() - prevpos << endl;
+                    prevpos = nanos();
+                    line_follower->update(pos);
+                }
                 break;
             case Arduinocomm::DRIVE_COMPLETED:
                 break;
@@ -186,7 +199,7 @@ void Controller::loop()
 
             pt = nanos();
             driver->update();
-            cout << "Driver: " << nanos() - pt << endl;
+            //cout << "Driver: " << nanos() - pt << endl;
 
             //LOG(DEBUG) << "vision";
             if(cam)
@@ -196,21 +209,13 @@ void Controller::loop()
 
             pt = nanos();
             arduino->update();
-            cout << "arduino update: " << nanos() - pt << endl;
+            //cout << "arduino update: " << nanos() - pt << endl;
             if(arduino->packet_ready)
             {
                 parsepacket();
             }
 
             callback();
-
-            //&LOG(DEBUG) << "complete";
-
-            /*t.tv_nsec += interval;
-            while(t.tv_nsec >= NSEC_PER_SEC){
-                t.tv_nsec -= NSEC_PER_SEC;
-                t.tv_sec++;
-            }*/
         }
     }
     else

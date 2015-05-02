@@ -32,7 +32,8 @@ class gyroscope{
         const float DEG_RAD_RATIO = 0.01745;
         const float RAD_DEG_RATIO = 57.2957;
         bool reset = false;
-        std::vector<uint8_t> gyro_temp{};
+        //std::vector<uint8_t> gyro_temp{};
+        uint8_t gyro_temp[256];
 
         std::unique_ptr<serial::Serial, void(*)(serial::Serial*)> mSerial {nullptr,nullptr};//should not do this
 };

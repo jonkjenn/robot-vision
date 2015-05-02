@@ -43,8 +43,13 @@ void Arduinocomm::update()
 void Arduinocomm::process()
 {
     uint8_t val;uint8_t crc ;uint8_t pb_pos = 0;
+    int count = 0;
     while(input_position < input_size)
     {
+        count++;
+        if(count > 100){return;}
+
+        //LOG(DEBUG) << "Stuck?" << endl;
         val = input_buffer[input_position];
         if(val > 127)//Command
         {
@@ -179,6 +184,7 @@ void Arduinocomm::drive(uint8_t left, uint8_t right)
     writebyte(CRC8(bytes,bytes.size(),1));
     writecommand(END_DATA);
     mSerial->write(bytes.data(),bytes.size());
+    mSerial->flush();
     bytes.clear();
 }
 

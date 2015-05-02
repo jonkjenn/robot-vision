@@ -1,5 +1,6 @@
 #include "controller.hpp"
 #include "drive.h"
+#include <csignal>
 
 using namespace std;
 
@@ -19,8 +20,20 @@ shared_ptr<Drive> driver;
 
 uint64_t start_time = 0;
 
+void my_handler(int s){
+    stop = true;
+}
+
 int main(int argc, char** argv)
 {
+    struct sigaction sigIntHandler;
+
+    sigIntHandler.sa_handler = my_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+
+    sigaction(SIGINT, &sigIntHandler, NULL);
+
     vector<string> args(argv, argv+argc);
     c = unique_ptr<Controller>(new Controller(args, []{loop();}));
     driver = c->driver;
@@ -49,8 +62,6 @@ int main(int argc, char** argv)
         {
             args_dist = atoi(args[++i].c_str());
         }
-
-
     }
 
     start_time = micros();
@@ -66,24 +77,32 @@ void loop()
     if(stop)
     {
         driver->stop();
-        exit(0);
+        c->quit_robot = true;
+        return;
     }
 
     switch(step)
     {
         case 0:
             cout << "case 0" << endl;
-            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
-            driver->rotate(110,180,LEFT,[]{drive_complete();});
+            ///driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            //driver->rotate(110,-180,LEFT,[]{drive_complete();});
             step++;
-            step = 3;
             break;
         case 2:
             LOG(DEBUG) << "Case 2";
-            //driver->rotate(110,180,LEFT,[]{drive_complete();});
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            //driver->rotate(120,-10,LEFT,[]{drive_complete();});
             step++;
+            step = -1;
             break;
         case 4:
+            LOG(DEBUG) << "Case 2";
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            //driver->rotate(110,-90,LEFT,[]{drive_complete();});
+            step++;
+            break;
+        case 6:
             c->quit_robot = true;
             LOG(DEBUG) << "Stopping" <<endl;
             break;

@@ -39,7 +39,7 @@ void gyroscope::update()
     //
     g_t = nanos();
     //int count = mSerial->available();
-    int read = mSerial->read(gyro_temp,4);
+    int read = mSerial->read(gyro_temp,256);
     //cout << "105 :   " << nanos() - g_t <<endl;
     int i=0;
     while(i<read)
@@ -107,8 +107,6 @@ void gyroscope::update()
         // And get the next one
         i++;
     }
-
-    gyro_temp.clear();
 
     // Update global packet drops counter
     packet_drops += status.packet_rx_drop_count;

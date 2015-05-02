@@ -85,14 +85,14 @@ void Drive::driveDistance(unsigned int speed, unsigned long distance, function<v
     maxRightSpeed = speed;
 
     printf("step1\n");
-    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, 1, rotationPIDKi, rotationPIDKd, DIRECT, 90-speed,0));
+    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, 1, 0, 0, DIRECT, 90.0-speed,5));
     rotationPID_setpoint = 0;
     rotationPID->SetMode(AUTOMATIC);
 
     printf("step2\n");
     gyro->start(0);
 
-    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,1,0,0,DIRECT,-10,speed-100));
+    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,1,0,0,DIRECT,-10,speed-100.0));
 
     encoder_pid_SetPoint = 0;
     encoderPID->SetMode(AUTOMATIC);
@@ -108,12 +108,24 @@ void Drive::driveDistance(unsigned int speed, unsigned long distance, function<v
     currentRightSpeed = rightSpeed;
 }
 
-void Drive::drive(unsigned int power1, unsigned int power2)
+bool Drive::driveManual()
 {
-    if(state == DRIVING_MANUAL || state == STOPPED){
+    if(state == STOPPED)
+    {
         state = DRIVING_MANUAL;
-        serial->drive(power1,power2);
+        return true;
     }
+    return false;
+}
+
+bool Drive::drive(unsigned int left, unsigned int right)
+{
+    if(state == DRIVING_MANUAL){
+        state = DRIVING_MANUAL;
+        serial->drive(left,right);
+        return true;
+    }
+    return false;
 }
 
 //Speed from 90-180, automatically calculates the reverse speed
@@ -123,7 +135,9 @@ void Drive::rotate(unsigned int speed, float degrees, Rotation_Direction directi
 
     LOG(DEBUG) << "Starting rotating\n";
 
-    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, rotationPIDKp, rotationPIDKi, rotationPIDKd, DIRECT, -20,0));
+    uint8_t max_extra_speed = 20;
+
+    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, rotationPIDKp, rotationPIDKi, rotationPIDKd, DIRECT, -20,max_extra_speed));
     rotationPID_setpoint = 0.0;
     rotationPID->SetMode(AUTOMATIC);
 
@@ -138,8 +152,8 @@ void Drive::rotate(unsigned int speed, float degrees, Rotation_Direction directi
     state = ROTATING;
     gyro->start(degrees);
 
-    maxLeftSpeed = speed;
-    maxRightSpeed = speed;
+    maxLeftSpeed = speed + max_extra_speed;
+    maxRightSpeed = speed + max_extra_speed;
 
     prevRightSpeed = 90;
     prevLeftSpeed = 90;
@@ -212,7 +226,10 @@ void Drive::update()
 
             //Keeping straight with gyro
             rotationPID_input = (int)(abs(gyro->get_total_rotation()) * 100.0);
+            //LOG(DEBUG) << "total rotation: " << gyro->get_total_rotation() << endl;
+            //LOG(DEBUG) << "input: " << rotationPID_input << endl;
             rotationPID->Compute();
+            //LOG(DEBUG) << "output: " << rotationPID_output << endl;
 
             float target_speed = 0.15;
             if(encoderLeft.getDistance() < 100000)//50 cm
@@ -233,18 +250,20 @@ void Drive::update()
             }
             else
             {
-                LOG(DEBUG) << "Driving faster " << endl;
+                //LOG(DEBUG) << "Driving faster " << endl;
                 currentLeftSpeed = maxLeftSpeed;
                 currentRightSpeed = maxRightSpeed;
             }
 
-            if(gyro->get_total_rotation() > 0.05)//If rotated towards right, then turn towards left
+            if(gyro->get_total_rotation() > 0.01)//If rotated towards right, then turn towards left
             {
+                //LOG(DEBUG) << "Turning right" << endl;
                 currentLeftSpeed = currentLeftSpeed + (int)rotationPID_output;
                 currentRightSpeed = currentRightSpeed;
             }
-            else if(gyro->get_total_rotation() < 0.05) //if rotated towards left, then turn towards right
+            else if(gyro->get_total_rotation() < 0.01) //if rotated towards left, then turn towards right
             {
+                //LOG(DEBUG) << "Turning left" << endl;
                 currentRightSpeed = currentRightSpeed + (int)rotationPID_output;
                 currentLeftSpeed = currentLeftSpeed;
             }
@@ -276,8 +295,8 @@ void Drive::update()
     {
         float target_speed = 0.8;
 
-        LOG(DEBUG) << "Distance rotation: " << gyro->get_distance_rotation() << endl;
-        LOG(DEBUG) << "Current rotation: " << gyro->get_current_rotation() << endl;
+        /*LOG(DEBUG) << "Distance rotation: " << gyro->get_distance_rotation() << endl;
+        LOG(DEBUG) << "Current rotation: " << gyro->get_current_rotation() << endl;*/
 
         if(gyro->get_distance_rotation() < 5.0)
         {
@@ -289,18 +308,18 @@ void Drive::update()
         }
 
         rotationPID_input = (abs(gyro->get_current_rotation())  - target_speed)* 100;
-        LOG(DEBUG) << "pidinput: " << rotationPID_input << endl;
+        //LOG(DEBUG) << "pidinput: " << rotationPID_input << endl;
         rotationPID->Compute();
 
         currentLeftSpeed = leftSpeed + rotationPID_output;
         currentRightSpeed = rightSpeed + rotationPID_output;
 
-        LOG(DEBUG) << "pidout: " << rotationPID_output << endl;
+        //LOG(DEBUG) << "pidout: " << rotationPID_output << endl;
 
-        LOG(DEBUG) << "current left: " << (int)currentLeftSpeed << endl;
-        LOG(DEBUG) << "current right: " << (int)currentRightSpeed << endl;
-        LOG(DEBUG) << "target speed: " << target_speed << endl;
-        LOG(DEBUG) << "current speed: " << gyro->get_current_rotation() << endl;
+        //LOG(DEBUG) << "current left: " << (int)currentLeftSpeed << endl;
+        //LOG(DEBUG) << "current right: " << (int)currentRightSpeed << endl;
+        //LOG(DEBUG) << "target speed: " << target_speed << endl;
+        //LOG(DEBUG) << "current speed: " << gyro->get_current_rotation() << endl;
 
         do_rotate();
         

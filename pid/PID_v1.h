@@ -16,8 +16,8 @@ class PID
   #define REVERSE  1
 
   //commonly used functions **************************************************************************
-    PID(int*, int*, int*,        // * constructor.  links the PID to the Input, Output, and 
-        int, int, int, int, int, int);     //   Setpoint.  Initial tuning parameters are also set here
+    PID(float*, float*, float*,        // * constructor.  links the PID to the Input, Output, and 
+        float, float, float, float, float, float);     //   Setpoint.  Initial tuning parameters are also set here
 	
     void SetMode(int Mode);               // * sets PID to either Manual (0) or Auto (non-0)
 
@@ -26,15 +26,15 @@ class PID
                                           //   calculation frequency can be set using SetMode
                                           //   SetSampleTime respectively
 
-    void SetOutputLimits(int, int); //clamps the output to a specific range. 0-255 by default, but
+    void SetOutputLimits(float, float); //clamps the output to a specific range. 0-255 by default, but
 										  //it's likely the user will want to change this depending on
 										  //the application
 	
 
 
   //available but not commonly used functions ********************************************************
-    void SetTunings(int, int,       // * While most users will set the tunings once in the 
-                    int);         	  //   constructor, this function gives the user the option
+    void SetTunings(float, float,       // * While most users will set the tunings once in the 
+                    float);         	  //   constructor, this function gives the user the option
                                           //   of changing tunings during runtime for Adaptive control
 	void SetControllerDirection(int);	  // * Sets the Direction, or "Action" of the controller. DIRECT
 										  //   means the output will increase when error is positive. REVERSE
@@ -46,39 +46,39 @@ class PID
 										  
 										  
   //Display functions ****************************************************************
-	int GetKp();						  // These functions query the pid for interal values.
-	int GetKi();						  //  they were created mainly for the pid front-end,
-	int GetKd();						  // where it's important to know what is actually 
+	float GetKp();						  // These functions query the pid for interal values.
+	float GetKi();						  //  they were created mainly for the pid front-end,
+	float GetKd();						  // where it's important to know what is actually 
 	int GetMode();						  //  inside the PID.
 	int GetDirection();					  //
 
   private:
 	void Initialize();
 	
-	int dispKp;				// * we'll hold on to the tuning parameters in user-entered 
-	int dispKi;				//   format for display purposes
-	int dispKd;				//
+	float dispKp;				// * we'll hold on to the tuning parameters in user-entered 
+	float dispKi;				//   format for display purposes
+	float dispKd;				//
     
-	int kp;                  // * (P)roportional Tuning Parameter
-    int ki;                  // * (I)ntegral Tuning Parameter
-    int kd;                  // * (D)erivative Tuning Parameter
+	float kp;                  // * (P)roportional Tuning Parameter
+        float ki;                  // * (I)ntegral Tuning Parameter
+        float kd;                  // * (D)erivative Tuning Parameter
 
 	int controllerDirection;
 
-    int *myInput;              // * Pointers to the Input, Output, and Setpoint variables
-    int *myOutput;             //   This creates a hard link between the variables and the 
-    int *mySetpoint;           //   PID, freeing the user from having to constantly tell us
+        float *myInput;              // * Pointers to the Input, Output, and Setpoint variables
+        float *myOutput;             //   This creates a hard link between the variables and the 
+        float *mySetpoint;           //   PID, freeing the user from having to constantly tell us
                                   //   what these values are.  with pointers we'll just know.
 			  
-    int *myWeigth;
+        int *myWeigth;
 	unsigned long lastTime;
-	int ITerm, lastInput;
+	float ITerm, lastInput;
 
 	unsigned long SampleTime;
-	int outMin, outMax;
+	float outMin, outMax;
 	bool inAuto;
         unsigned long timeChange;
-        int input,output,dInput,error;
+        float input,output,dInput,error;
 };
 #endif
 

@@ -34,14 +34,14 @@ class Drive{
         uint8_t prevLeftSpeed = 90;
         uint8_t prevRightSpeed = 90;
 
-        int encoder_pid_SetPoint = 0,encoder_pid_Input = 0,encoder_pid_Output = 0;
-        int encoder_consKp=1, encoder_consKi=0, encoder_consKd=0;
-        int enc_rot_kp=3, enc_rot_ki=5, enc_rot_kd=0;
+        float encoder_pid_SetPoint = 0,encoder_pid_Input = 0,encoder_pid_Output = 0;
+        float encoder_consKp=1, encoder_consKi=0, encoder_consKd=0;
+        float enc_rot_kp=3, enc_rot_ki=5, enc_rot_kd=0;
         std::unique_ptr<PID> encoderPID = nullptr;
 
         Rotation_Direction rot_dir = LEFT;
-        int rotationPID_setpoint = 0,rotationPID_input = 0,rotationPID_output = 0;
-        int rotationPIDKp = 1, rotationPIDKi = 0, rotationPIDKd = 0;
+        float rotationPID_setpoint = 0,rotationPID_input = 0,rotationPID_output = 0;
+        float rotationPIDKp = 0.25, rotationPIDKi = 0, rotationPIDKd = 0;
         std::unique_ptr<PID> rotationPID = nullptr;
 
         enum State{ DRIVING_MANUAL, DRIVING_DURATION, DRIVING_DISTANCE, ROTATING, STOPPED };
@@ -69,7 +69,8 @@ class Drive{
         void driveDuration(unsigned int speed, unsigned long duration, std::function<void()> callback);
         void driveDistance(unsigned int speed, unsigned long distance, std::function<void()> callback);
         void rotate(unsigned int speed, float degrees,Rotation_Direction direction, std::function<void()> callback);
-        void drive(unsigned int power1, unsigned int power2);
+        bool drive(unsigned int power1, unsigned int power2);
+        bool driveManual();
         void update();
         void stop();
         void confirm_stop();
