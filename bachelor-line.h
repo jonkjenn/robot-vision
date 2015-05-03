@@ -55,8 +55,11 @@ class LineFollower{
 
         unsigned int maxPower = 110;
         unsigned int stopPower = 90;//stand still
-        unsigned int minPower = 20;
+        unsigned int minPower = 70;
         unsigned int power_range = maxPower - minPower;
+
+        unsigned int prevLeftPower = 90;
+        unsigned int prevRightPower = 90;
 
         void do_turn(int direction);
 
@@ -66,6 +69,19 @@ class LineFollower{
         unsigned int previous_update = 0;
 
         std::shared_ptr<Drive> _driver = nullptr;
+
+        uint64_t prev_time = 0;
+        uint64_t duration = 0;
+
+        uint64_t distance = 0;
+        uint64_t prev_distance_time = 0;
+        uint64_t prev_distance = 0;
+        int prev_distance_dist_center = 0;
+        float prev_angle = 0;
+
+        uint8_t dist_count = 0;
+
+        uint64_t avg_distance = 0;
 
         const uint8_t debug = 1;
         int result_ready = -1;
@@ -82,6 +98,7 @@ class LineFollower{
         int16_t dist_center = 0;
         int16_t prev_dist_center = 0;
         int16_t delta_dist_center = 0;
+        int16_t delta_position = 0;
         uint32_t diff= 0;
 
         bool enabled = true;
@@ -92,8 +109,9 @@ class LineFollower{
 
         int leftright = 0;
 
-        int16_t prev_delta[4] = {0,0,0,0};
-        int16_t part_tmp[4] = {0,0,0,0};
+        int16_t prev_dist[5] = {0,0,0,0};
+        int16_t prev_delta[5] = {0,0,0,0};
+        int16_t part_tmp[5] = {0,0,0,0};
 
         public:
             ~LineFollower();

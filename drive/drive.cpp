@@ -121,7 +121,13 @@ bool Drive::driveManual()
 bool Drive::drive(unsigned int left, unsigned int right)
 {
     if(state == DRIVING_MANUAL){
-        state = DRIVING_MANUAL;
+        if(left == prevLeftSpeed && right == prevRightSpeed)
+        {
+            return true;
+        }
+
+        prevLeftSpeed = left;
+        prevRightSpeed = right;
         serial->drive(left,right);
         return true;
     }
@@ -170,6 +176,11 @@ uint64_t ptime = 0;
 float prevdist = 0.0;
 void Drive::update()
 {
+    if(state == WAITING_FOR_STOP)
+    {
+        stop();
+        return;
+    }
     ptime = nanos();
     encoderRight.update();
     encoderLeft.update();
@@ -189,7 +200,7 @@ void Drive::update()
     //ptime = micros();
     float dist = ping->get_distance();
     //LOG(DEBUG) << "Ping distance: " << ping->get_distance() << endl;
-    if(state != STOPPED  && state != ROTATING && dist > 0 && dist < 0.5)
+    if(enable_ping_stop && state != STOPPED  && state != ROTATING && dist > 0 && dist < 0.5)
     //if(dist != prevdist)
     {
         LOG(DEBUG) << "Ping distance: " << ping->get_distance() << endl;
@@ -421,8 +432,9 @@ bool Drive::check_bounds()
 
 void Drive::stop()
 {
-    if(!wait_stop || micros() - stop_timer > 5000)
+    if(state != WAITING_FOR_STOP || micros() - stop_timer > 5000)
     {
+        state = WAITING_FOR_STOP;
         LOG(DEBUG) << "STOP" << endl;
         wait_stop = true;
         stop_timer = micros();
@@ -437,7 +449,7 @@ void Drive::stop()
 
 void Drive::confirm_stop()
 {
-    if(wait_stop)
+    if(state == WAITING_FOR_STOP)
     {
         LOG(DEBUG) << "Confirmed stop" << endl;
         encoderRight.reset();
@@ -450,7 +462,13 @@ void Drive::confirm_stop()
 
 uint32_t Drive::getDistance()
 {
-    return (encoderRight.getDistance() + encoderLeft.getDistance());
+    LOG(DEBUG) << "encR: " << encoderRight.getDistance() << " encL: " << encoderLeft.getDistance() << endl;
+    return (float)(encoderRight.getDistance() + encoderLeft.getDistance())/2.0;
+}
+
+void Drive::set_distance_sensor_stop(bool value)
+{
+    enable_ping_stop = false;
 }
 
 Drive::~Drive()

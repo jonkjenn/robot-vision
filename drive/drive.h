@@ -44,11 +44,13 @@ class Drive{
         float rotationPIDKp = 0.25, rotationPIDKi = 0, rotationPIDKd = 0;
         std::unique_ptr<PID> rotationPID = nullptr;
 
-        enum State{ DRIVING_MANUAL, DRIVING_DURATION, DRIVING_DISTANCE, ROTATING, STOPPED };
+        enum State{ DRIVING_MANUAL, DRIVING_DURATION, DRIVING_DISTANCE, ROTATING,WAITING_FOR_STOP,  STOPPED };
         State state = STOPPED;
 
         gyroscope *gyro = NULL;
         Ping *ping = NULL;
+
+        bool enable_ping_stop = true;
 
         Arduinocomm *serial = nullptr;
 
@@ -70,6 +72,7 @@ class Drive{
         void driveDistance(unsigned int speed, unsigned long distance, std::function<void()> callback);
         void rotate(unsigned int speed, float degrees,Rotation_Direction direction, std::function<void()> callback);
         bool drive(unsigned int power1, unsigned int power2);
+        void set_distance_sensor_stop(bool value);
         bool driveManual();
         void update();
         void stop();
