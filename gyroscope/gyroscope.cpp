@@ -68,7 +68,7 @@ void gyroscope::update()
                     {
                         //lock_guard<mutex> lock(gyromutex);
                         current_rotation = sensors.zgyro;
-                        LOG(DEBUG) << "Current rot: " << current_rotation << endl;;
+                        //LOG(DEBUG) << "Current rot: " << current_rotation << endl;;
                         /*LOG(DEBUG) << "Rotation: " << sensors.zgyro * gyro_dur * 1e-6 * RAD_DEG_RATIO;
                         LOG(DEBUG) << "Total rotation: " << total_rotation * RAD_DEG_RATIO;
                         LOG(DEBUG) << "Duration: " << gyro_dur;

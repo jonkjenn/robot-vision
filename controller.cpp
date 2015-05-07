@@ -92,10 +92,13 @@ Controller::Controller(vector<string> &args, function<void()> callback)
 
     driver = std::shared_ptr<Drive>(new Drive(161,160,163,164,arduino));
 
-    line_follower = std::unique_ptr<LineFollower>(new LineFollower());
+    line_follower = std::shared_ptr<LineFollower>(new LineFollower());
     line_follower->setup(driver);
 
     delayMicroseconds(1e6);//Let serial connections start up
+    driver->drive(90,90);
+    driver->drive(90,90);
+    driver->drive(90,90);
 }
 
 void Controller::start()
@@ -120,7 +123,6 @@ void Controller::configure_logger(const bool show_debug)
     LOG(INFO) << "Configured logger";*/
 }
 
-uint64_t prevpos = 0;
 void Controller::parsepacket()
 {
     //LOG(DEBUG) << "Parsing packet: " << (int)arduino->packet_buffer[0] << " size:" << (int)arduino->packet_size << endl;
@@ -147,8 +149,11 @@ void Controller::parsepacket()
                     unsigned int pos = arduino->read_uint16(1);
                     //LOG(DEBUG) << "Position: " << pos << endl;
                     //LOG(DEBUG) << "Duration:"  << nanos() - prevpos << endl;
-                    prevpos = nanos();
-                    line_follower->update(pos);
+                    LOG(DEBUG) << "Line packet: enabled: " << line_follower->enabled() << endl;
+                    if(line_follower->enabled())
+                    {
+                        line_follower->update(pos);
+                    }
                 }
                 break;
             case Arduinocomm::DRIVE_COMPLETED:
@@ -247,5 +252,4 @@ void Controller::loop()
             //&LOG(DEBUG) << "complete";
         }
     }
-
 }

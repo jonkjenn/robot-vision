@@ -44,7 +44,7 @@ class Drive{
         float rotationPIDKp = 0.25, rotationPIDKi = 0, rotationPIDKd = 0;
         std::unique_ptr<PID> rotationPID = nullptr;
 
-        enum State{ DRIVING_MANUAL, DRIVING_DURATION, DRIVING_DISTANCE, ROTATING,WAITING_FOR_STOP,  STOPPED };
+        enum State{ DRIVING_MANUAL, DRIVING_STRAIGHT , DRIVING_DURATION, DRIVING_DISTANCE, ROTATING,WAITING_FOR_STOP,  STOPPED };
         State state = STOPPED;
 
         gyroscope *gyro = NULL;
@@ -65,11 +65,13 @@ class Drive{
         void update_encoder(Encoder &encoderR, Encoder &encoderL, gyroscope &gyro, Ping &ping);
         bool wait_stop = false;
         uint64_t stop_timer = 0;
+        bool _reverse = false;
+        bool _use_ramping = false;
     public:
         ~Drive();
         Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, Arduinocomm *serial);
         void driveDuration(unsigned int speed, unsigned long duration, std::function<void()> callback);
-        void driveDistance(unsigned int speed, unsigned long distance, std::function<void()> callback);
+        void driveDistance(unsigned int speed, unsigned long distance, std::function<void()> callback, bool reverse = false, bool use_ramping = true,bool ignore_stop = false);
         void rotate(unsigned int speed, float degrees,Rotation_Direction direction, std::function<void()> callback);
         bool drive(unsigned int power1, unsigned int power2);
         void set_distance_sensor_stop(bool value);
@@ -78,5 +80,8 @@ class Drive{
         void stop();
         void confirm_stop();
         uint32_t getDistance();
+        void setup_driveStraight(unsigned int speed);
+        void driveStraight();
+        void ramp(float target_speed);
 };
 #endif

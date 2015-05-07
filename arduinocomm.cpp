@@ -176,7 +176,7 @@ void Arduinocomm::writeok()
 //Speed from 0 to 180, 90 = stop,  180 max forward
 void Arduinocomm::drive(uint8_t left, uint8_t right)
 {
-    LOG(DEBUG) << "Driving: " << (int)left << " " << (int)right << endl;
+    //LOG(DEBUG) << "Driving: " << (int)left << " " << (int)right << endl;
     writecommand(START_DATA);
     writebyte(DRIVE);
     writebyte(left);

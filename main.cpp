@@ -12,11 +12,12 @@ bool stop = false;
 
 float angle = 0;
 uint8_t speed = 110;
-unsigned int args_dist = 1000;
+unsigned int args_dist = 500;
 Rotation_Direction dir = LEFT;
 
 unique_ptr<Controller> c;
 shared_ptr<Drive> driver;
+shared_ptr<LineFollower> lineFollower;
 
 uint64_t start_time = 0;
 
@@ -37,6 +38,7 @@ int main(int argc, char** argv)
     vector<string> args(argv, argv+argc);
     c = unique_ptr<Controller>(new Controller(args, []{loop();}));
     driver = c->driver;
+    lineFollower = c->line_follower;
 
     string file;
     for(size_t i=0;i<args.size();i++)
@@ -85,14 +87,20 @@ void loop()
     {
         case 0:
             cout << "case 0" << endl;
+            driver->set_distance_sensor_stop(false);
+            driver->driveDistance(speed,args_dist,[]{drive_complete();},true);
+            //lineFollower->enable();
+            //
+            //driver->rotate(110,-90,LEFT,[]{drive_complete();});
             ///driver->driveDistance(speed, args_dist,[]{drive_complete();});
             //driver->rotate(110,-180,LEFT,[]{drive_complete();});
             step++;
             break;
         case 2:
             LOG(DEBUG) << "Case 2";
+            //driver->driveDistance(speed,args_dist,[]{drive_complete();});
+            //driver->driveDistance(110,500,[]{drive_complete();});
             //driver->driveDistance(speed, args_dist,[]{drive_complete();});
-            //driver->rotate(120,-10,LEFT,[]{drive_complete();});
             step++;
             step = -1;
             break;

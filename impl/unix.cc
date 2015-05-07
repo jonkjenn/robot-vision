@@ -625,7 +625,7 @@ Serial::SerialImpl::read (uint8_t *buf, size_t size)
 size_t
 Serial::SerialImpl::write (const uint8_t *data, size_t length)
 {
-    std::cout << "Writing now. " << std::endl;
+    //std::cout << "Writing now. " << std::endl;
   if (is_open_ == false) {
     throw PortNotOpenedException ("Serial::write");
   }

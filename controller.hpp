@@ -31,7 +31,6 @@ class Controller{
         std::unique_ptr<Vision> vision;
         Arduinocomm *arduino;
         std::unique_ptr<gyroscope> gyro;
-        std::unique_ptr<LineFollower> line_follower;
         void setup_vision(const bool show_video);
         void setup_vision(std::string &file, const bool show_video);
         void parsepacket();
@@ -44,6 +43,7 @@ class Controller{
     public:
         void start();
         std::shared_ptr<Drive> driver;
+        std::shared_ptr<LineFollower> line_follower;
         Controller(std::vector<std::string> &args, std::function<void()> callback);
         bool quit_robot = false;
 };

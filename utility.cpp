@@ -21,7 +21,7 @@ void reset_micros()
 uint64_t nanos()
 {
     clock_gettime(CLOCK_MONOTONIC, &tv_t);
-    return tv_t.tv_sec*1e12+tv_t.tv_nsec;
+    return tv_t.tv_sec*1e9+tv_t.tv_nsec;
     //return _micros;
 }
 
