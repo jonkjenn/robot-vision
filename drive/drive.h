@@ -55,6 +55,7 @@ class Drive{
         Arduinocomm *serial = nullptr;
 
         std::function<void()> driveCompletedCallback = nullptr;
+        std::function<void()> stopConfirmedCallback = nullptr;
 
         void encoder_thread();
 
@@ -70,18 +71,18 @@ class Drive{
     public:
         ~Drive();
         Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, Arduinocomm *serial);
-        void driveDuration(unsigned int speed, unsigned long duration, std::function<void()> callback);
-        void driveDistance(unsigned int speed, unsigned long distance, std::function<void()> callback, bool reverse = false, bool use_ramping = true,bool ignore_stop = false);
+        void driveDuration(unsigned int speed, unsigned long duration, std::function<void()> callback = nullptr);
+        void driveDistance(unsigned int speed, unsigned long distance, std::function<void()> callback = nullptr, bool reverse = false, bool use_ramping = true,bool ignore_stop = false);
         void rotate(unsigned int speed, float degrees,Rotation_Direction direction, std::function<void()> callback);
         bool drive(unsigned int power1, unsigned int power2);
         void set_distance_sensor_stop(bool value);
         bool driveManual();
         void update();
-        void stop();
+        void stop(std::function<void()> callback = nullptr);
         void confirm_stop();
         uint32_t getDistance();
-        void setup_driveStraight(unsigned int speed);
-        void driveStraight();
+        void setup_and_start_drive_straight(unsigned int speed);
+        void drive_straight();
         void ramp(float target_speed);
 };
 #endif

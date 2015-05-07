@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include "drive.h"
 #include <fstream>
+#include "utility.hpp"
+#include <memory>
 
-int16_t GetMedian(int16_t *daArray,int size);
-int getaverage(int16_t (&array)[20]);
-
+//Template for mocking
+template <class DriveClass>
 class LineFollower{
 
     private:
@@ -52,13 +53,14 @@ class LineFollower{
         float out_consKp=1.0, out_consKi=0.0, out_consKd=0.0, out_pid_weight = 1.0;
         float inn_pid_SetPoint,inn_pid_Input,inn_pid_Output;
         float inn_consKp=2.0, inn_consKi=0.0, inn_consKd=0.0, inn_pid_weight = 1.0;
-        PID *outerPID;
-        PID *innerPID;
 
-        unsigned int maxPower = 110;
-        unsigned int stopPower = 90;//stand still
-        unsigned int minPower = 70;
-        unsigned int power_range = maxPower - minPower;
+        std::unique_ptr<PID> outerPID = nullptr;
+        std::unique_ptr<PID> innerPID = nullptr;
+
+        uint8_t max_power = 110;
+        uint8_t min_power = 70;
+        const uint8_t stopPower = 90;//stand still
+        uint8_t power_range = max_power - min_power;
 
         unsigned int prevLeftPower = 90;
         unsigned int prevRightPower = 90;
@@ -70,7 +72,7 @@ class LineFollower{
 
         unsigned int previous_update = 0;
 
-        std::shared_ptr<Drive> _driver = nullptr;
+        std::shared_ptr<DriveClass> _driver = nullptr;
 
         uint64_t time = 0;
         uint64_t prev_time = 0;
@@ -109,7 +111,7 @@ class LineFollower{
 
         int16_t sum_delta_dist = 0;
 
-        uint8_t stopcount = 0;
+        unsigned int stopcount = 0;
 
         int leftright = 0;
 
@@ -118,11 +120,17 @@ class LineFollower{
         int16_t part_tmp[5] = {0};
         bool _enabled = false;
 
+        void turn_left(uint8_t);
+        void turn_right(uint8_t);
+        void setup_startposition(unsigned int position);
+        void drive_reverse();
+
     public:
-        ~LineFollower();
-        bool update(unsigned int);
-        void setup(std::shared_ptr<Drive> driver);
+        LineFollower(uint8_t max_power = 110, uint8_t min_power = 70);
+        void update(unsigned int);
+        void setup(std::shared_ptr<DriveClass> driver);
         bool enabled();
         void enable();
         void disable();
+
 };

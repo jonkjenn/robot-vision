@@ -92,7 +92,7 @@ Controller::Controller(vector<string> &args, function<void()> callback)
 
     driver = std::shared_ptr<Drive>(new Drive(161,160,163,164,arduino));
 
-    line_follower = std::shared_ptr<LineFollower>(new LineFollower());
+    line_follower = std::shared_ptr<LineFollower<Drive>>(new LineFollower<Drive>());
     line_follower->setup(driver);
 
     delayMicroseconds(1e6);//Let serial connections start up

@@ -15,9 +15,9 @@ uint8_t speed = 110;
 unsigned int args_dist = 500;
 Rotation_Direction dir = LEFT;
 
-unique_ptr<Controller> c;
-shared_ptr<Drive> driver;
-shared_ptr<LineFollower> lineFollower;
+unique_ptr<Controller> c = nullptr;
+shared_ptr<Drive> driver = nullptr;
+shared_ptr<LineFollower<Drive>> lineFollower = nullptr;
 
 uint64_t start_time = 0;
 

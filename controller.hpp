@@ -43,7 +43,7 @@ class Controller{
     public:
         void start();
         std::shared_ptr<Drive> driver;
-        std::shared_ptr<LineFollower> line_follower;
+        std::shared_ptr<LineFollower<Drive>> line_follower;
         Controller(std::vector<std::string> &args, std::function<void()> callback);
         bool quit_robot = false;
 };
