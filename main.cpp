@@ -21,6 +21,69 @@ shared_ptr<LineFollower<Drive>> lineFollower = nullptr;
 
 uint64_t start_time = 0;
 
+void loop()
+{
+    if(micros() - start_time < 100000){return;}
+    if(stop)
+    {
+        driver->stop();
+        c->quit_robot = true;
+        return;
+    }
+
+    switch(step)
+    {
+        case 0:
+            cout << "case 0" << endl;
+           
+            driver->set_distance_sensor_stop(false);//Skrur av ultralyd sensor stop
+            //driver->set_distance_sensor_stop(true);//Skrur påOC ultralyd sensor stop
+            //driver->driveDistance(speed,args_dist,[]{drive_complete();});//Kjører fremover
+            //driver->driveDistance(speed,args_dist,[]{drive_complete();},true);//Kjører bakover
+            if(angle < 0)
+            {
+                cout << "angle < 0" << endl;
+                driver->rotate(110,angle,LEFT,[]{drive_complete();});
+            }
+            else if(angle > 0)
+            {
+                cout << "angle > 0" << endl;
+                driver->rotate(110,angle,RIGHT,[]{drive_complete();});
+            }
+            else
+            {
+                driver->rotate(110,0,LEFT,[]{drive_complete();});
+            }
+            //lineFollower->enable();//Linjefølging
+
+
+            step++;
+            break;
+        case 2:
+            LOG(DEBUG) << "Case 2";
+            //driver->driveDistance(speed,args_dist,[]{drive_complete();});
+            //driver->driveDistance(110,500,[]{drive_complete();});
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+
+            driver->rotate(110,0,LEFT,[]{drive_complete();});
+            step++;
+            break;
+        case 4:
+            LOG(DEBUG) << "Case 2";
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            //driver->rotate(110,-90,LEFT,[]{drive_complete();});
+
+            driver->rotate(110,0,LEFT,[]{drive_complete();});
+            step++;
+            break;
+        case 6:
+            c->quit_robot = true;
+            LOG(DEBUG) << "Stopping" <<endl;
+            break;
+    }
+}
+
+
 void my_handler(int s){
     stop = true;
 }
@@ -71,50 +134,6 @@ int main(int argc, char** argv)
     c->start();
 
     return 0;
-}
-
-void loop()
-{
-    if(micros() - start_time < 100000){return;}
-    if(stop)
-    {
-        driver->stop();
-        c->quit_robot = true;
-        return;
-    }
-
-    switch(step)
-    {
-        case 0:
-            cout << "case 0" << endl;
-            driver->set_distance_sensor_stop(false);
-            driver->driveDistance(speed,args_dist,[]{drive_complete();},true);
-            //lineFollower->enable();
-            //
-            //driver->rotate(110,-90,LEFT,[]{drive_complete();});
-            ///driver->driveDistance(speed, args_dist,[]{drive_complete();});
-            //driver->rotate(110,-180,LEFT,[]{drive_complete();});
-            step++;
-            break;
-        case 2:
-            LOG(DEBUG) << "Case 2";
-            //driver->driveDistance(speed,args_dist,[]{drive_complete();});
-            //driver->driveDistance(110,500,[]{drive_complete();});
-            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
-            step++;
-            step = -1;
-            break;
-        case 4:
-            LOG(DEBUG) << "Case 2";
-            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
-            //driver->rotate(110,-90,LEFT,[]{drive_complete();});
-            step++;
-            break;
-        case 6:
-            c->quit_robot = true;
-            LOG(DEBUG) << "Stopping" <<endl;
-            break;
-    }
 }
 
 void drive_complete()

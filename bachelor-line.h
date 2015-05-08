@@ -5,6 +5,84 @@
 #include "utility.hpp"
 #include <memory>
 
+/*
+ * Limits the power so we avoid driving to fast and try to avoid stoppping while turning
+ */
+static uint8_t check_power(const uint8_t min_power, const uint8_t max_power, uint8_t power)
+{
+    uint8_t power_out = power;
+
+    if(power_out<90 && power_out >70){power_out = 70;}
+    else if(power_out < min_power) { power_out = min_power; }
+    else if(power_out > max_power) { power_out = max_power; }
+
+    return power_out;
+}
+
+static uint8_t scale_power(const uint8_t min_power,const uint8_t max_power, uint8_t power)
+{
+    //For scaling the motor power with how much we want to turn
+    float power_scaling = power/256.0;
+
+    return max_power - round(power_scaling*(max_power-min_power));
+}
+
+static bool check_line_not_found(unsigned int position, unsigned int &stopcount)
+{
+    if(position >= 7000 || position == 0)
+    {
+        if(stopcount>20)
+        {
+            return false;
+        }
+
+        stopcount++;
+        return true;
+    }
+    else
+    {
+        stopcount = 0;
+        return true;
+    }
+}
+
+static int getaverage(int16_t (&array)[20])
+{
+    int avg = 0;
+    for(int i=0;i<20;i++)
+    {
+        avg += array[i];
+    }
+    return avg/20;
+}
+
+static int16_t GetMedian(int16_t *daArray, int size) {
+    // Allocate an array of the same size and sort it.
+    int16_t* dpSorted = new int16_t[4];
+    for (int i = 0; i < size; ++i) {
+        dpSorted[i] = daArray[i];
+    }
+    for (int i = size - 1; i > 0; --i) {
+        for (int j = 0; j < i; ++j) {
+            if (dpSorted[j] > dpSorted[j+1]) {
+                int16_t dTemp = dpSorted[j];
+                dpSorted[j] = dpSorted[j+1];
+                dpSorted[j+1] = dTemp;
+            }
+        }
+    }
+
+    // Middle or average of middle values in the sorted array.
+    int16_t dMedian = 0;
+    if ((size % 2) == 0) {
+        dMedian = ((dpSorted[size/2] + dpSorted[(size/2) - 1])/2.0);
+    } else {
+        dMedian = dpSorted[size/2];
+    }
+    delete [] dpSorted;
+    return dMedian;
+}
+
 //Template for mocking
 template <class DriveClass>
 class LineFollower{
@@ -65,7 +143,33 @@ class LineFollower{
         unsigned int prevLeftPower = 90;
         unsigned int prevRightPower = 90;
 
-        void do_turn(int direction);
+        int dtest = 0;
+        int dtest_mod = 1;
+
+        std::ofstream csv;
+
+        //Turn within the limits of max_power and min_power
+        //Direction from -256 to 255, negativ right, positiv left
+        void do_turn(int direction)
+        {
+            if(!_enabled) {return;}
+
+            prev_direction = direction;
+
+            if(debug && dtest%dtest_mod == 0)
+            {
+                std::cout << "Direction: " << direction << std::endl;
+            }
+
+            if(direction < 0)
+            {
+                turn_right(abs(direction));
+            }
+            else
+            {
+                turn_left(direction);
+            }
+        }
 
         uint16_t previous_position = 0;
         uint16_t position = 0;
@@ -120,17 +224,158 @@ class LineFollower{
         int16_t part_tmp[5] = {0};
         bool _enabled = false;
 
-        void turn_left(uint8_t);
-        void turn_right(uint8_t);
-        void setup_startposition(unsigned int position);
-        void drive_reverse();
+        // We drive left wheel slower(power1), turning to the left
+        void turn_left(uint8_t power)
+        {
+            unsigned int power_left = check_power(min_power,max_power,scale_power(min_power,max_power,power));
+            unsigned int power_right = check_power(min_power,max_power,max_power);
+
+            if(debug && dtest%dtest_mod == 0)
+            {
+                std::cout << "Turn Left: " << power_left << std::endl;
+            }
+
+            prevLeftPower = power_left;
+            prevRightPower = power_right;
+
+            if(!_driver->drive(power_left,power_right))
+            {
+                disable();
+            }
+        }
+        //
+        // We drive right wheel(power2) slower, turning to the right
+        void turn_right(uint8_t power)
+        {
+
+            uint8_t power_left = check_power(min_power,max_power,max_power);
+            uint8_t power_right = check_power(min_power,max_power,scale_power(min_power,max_power,power));
+
+            if(debug && dtest%dtest_mod == 0)
+            {
+                std::cout << "Turn Right: " << power_right << std::endl;
+            }
+
+            prevLeftPower = power_left;
+            prevRightPower = power_right;
+
+            if(!_driver->drive(power_left,power_right))
+            {
+                disable();
+            }
+        }
+        void setup_startposition(unsigned int position)
+        {
+            collected_startpos = true;
+            prev_distance = _driver->getDistance();
+            prev_time = time;
+            prev_dist_center = position - ir_center;
+            dist_center = position - ir_center;
+            delta_dist_center = 0;
+            /*for(int i=0;i<20;i++)
+              {
+              prev_delta[i] = delta_dist_center;
+              prev_dist[i] = dist_center;
+              }*/
+        }
+        void drive_reverse()
+        {
+            _driver->driveDistance(110, 250, nullptr, true, false,true);
+        }
 
     public:
-        LineFollower(uint8_t max_power = 110, uint8_t min_power = 70);
-        void update(unsigned int);
-        void setup(std::shared_ptr<DriveClass> driver);
-        bool enabled();
-        void enable();
-        void disable();
+        LineFollower(uint8_t max_power = 110, uint8_t min_power = 70)
+        {
+            this->max_power = max_power;
+            this->min_power = min_power;
+        }
+
+        void update(unsigned int position)
+        {
+            time = micros();
+            duration = time - prev_time;
+            prev_time = time;
+            dtest++;
+
+            if(!collected_startpos){
+                setup_startposition(position);
+                _driver->drive(max_power,max_power);
+                return;
+            }
+
+            if(!check_line_not_found(position,stopcount)){
+                auto stop_callback = std::bind(&LineFollower::drive_reverse,this);
+                _driver->stop(stop_callback);
+                return;
+            }
+
+            distance = _driver->getDistance() - prev_distance;
+
+            dist_center = position - ir_center;
+
+            delta_dist_center = dist_center - prev_dist_center;
+
+            if(debug && dtest%dtest_mod == 0){
+                /*std::cout << "Position: " << position << std::endl;
+                  std::cout << "Median dist center: " << dist_center << std::endl;
+                  std::cout << "dist center: " << prev_dist[0] << std::endl;
+                  std::cout << "Delta dist center: " << delta_dist_center << std::endl;
+                  std::cout << "Distance : " << distance << std::endl;*/
+            }
+
+            out_pid_Input = dist_center;
+
+            outerPID->Compute();
+
+            inn_pid_SetPoint = out_pid_Output;
+            inn_pid_Input = delta_dist_center;
+
+            if(innerPID->Compute())
+            {
+                if(debug && dtest%dtest_mod == 0)
+                {
+                    //std::cout << "inner pid: " << inn_pid_Output << std::endl;
+                }
+                do_turn(inn_pid_Output);
+                //if(debug){Serial.println("PID output: " + String(pid_Output));}
+            }
+
+            //  1 time,         2 position,         3 dist_center,          4 avg dist center,    5 delta_dist_center,      6 median_delta_dist_center, 7 outer pid output, 8 inner pid output,         9 left power,  10 right power,                  11 distance                
+            csv << time << ";" << position << ";" << prev_dist[0] << ";" << dist_center << ";" << prev_delta[0] << ";" << delta_dist_center << ";" << out_pid_Output << ";" << inn_pid_Output << ";" << prevLeftPower << ";" << prevRightPower << ";"  << distance << std::endl;
+
+            prev_dist_center = dist_center;
+        }
+
+        void setup(std::shared_ptr<DriveClass> driver)
+        {
+            _driver = driver;
+
+            outerPID = std::unique_ptr<PID>(new PID(&out_pid_Input, &out_pid_Output, &out_pid_SetPoint,0.014,0,0,DIRECT,-50,50));
+            out_pid_SetPoint = 0.0;
+            outerPID->SetMode(AUTOMATIC);
+            innerPID = std::unique_ptr<PID>(new PID(&inn_pid_Input, &inn_pid_Output, &inn_pid_SetPoint,3.0,0,0,DIRECT,-256,255));
+            inn_pid_SetPoint = 0.0;
+            innerPID->SetMode(AUTOMATIC);
+
+            if(debug)
+            {
+                csv.open("data.csv");
+            }
+        }
+        bool enabled()
+        {
+            return _enabled;
+        }
+        void enable()
+        {
+            _driver->driveManual();
+            _driver->set_distance_sensor_stop(false);
+            _enabled = true;
+            _driver->drive(max_power,max_power);
+        }
+        void disable()
+        {
+            _enabled = false;
+        }
 
 };

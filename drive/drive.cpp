@@ -398,7 +398,7 @@ void Drive::do_drive()
 void Drive::do_rotate()
 {
     if(currentRightSpeed == prevRightSpeed && currentLeftSpeed == prevLeftSpeed){
-        cout << "SAME" << endl;
+        //cout << "SAME" << endl;
         return;}
 
     cout << "Rotating" << endl;

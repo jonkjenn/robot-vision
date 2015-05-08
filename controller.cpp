@@ -90,9 +90,9 @@ Controller::Controller(vector<string> &args, function<void()> callback)
         arduino = new Arduinocomm("/dev/ttyTHS0",115200);
     }
 
-    driver = std::shared_ptr<Drive>(new Drive(161,160,163,164,arduino));
+    driver = std::make_shared<Drive>(161,160,163,164,arduino);
 
-    line_follower = std::shared_ptr<LineFollower<Drive>>(new LineFollower<Drive>());
+    line_follower = std::make_shared<LineFollower<Drive>>();
     line_follower->setup(driver);
 
     delayMicroseconds(1e6);//Let serial connections start up
@@ -149,7 +149,7 @@ void Controller::parsepacket()
                     unsigned int pos = arduino->read_uint16(1);
                     //LOG(DEBUG) << "Position: " << pos << endl;
                     //LOG(DEBUG) << "Duration:"  << nanos() - prevpos << endl;
-                    LOG(DEBUG) << "Line packet: enabled: " << line_follower->enabled() << endl;
+                    //LOG(DEBUG) << "Line packet: enabled: " << line_follower->enabled() << endl;
                     if(line_follower->enabled())
                     {
                         line_follower->update(pos);
