@@ -52,7 +52,7 @@ bool PID::Compute()
    if(!inAuto) return false;
    //unsigned long now = millis();
    timeChange = (micros() - lastTime);
-   if(timeChange>=SampleTime)
+   //if(timeChange>=SampleTime)
    {
       /*Compute all the working error variables*/
       input = *myInput;
@@ -81,7 +81,8 @@ bool PID::Compute()
       lastTime = micros();
 	  return true;
    }
-   else return false;
+   return false;
+   //else return false;
 }
 
 
