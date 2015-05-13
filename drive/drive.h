@@ -10,6 +10,7 @@
 #include "ping.hpp"
 #include <iostream>
 #include "utility.hpp"
+#include <fstream>
 
 enum Rotation_Direction{ LEFT,RIGHT};
 class Drive{
@@ -35,9 +36,11 @@ class Drive{
         uint8_t prevRightSpeed = 90;
 
         float encoder_pid_SetPoint = 0,encoder_pid_Input = 0,encoder_pid_Output = 0;
+        float encoder_pid_SetPoint_2 = 0,encoder_pid_Input_2 = 0,encoder_pid_Output_2 = 0;
         float encoder_consKp=1, encoder_consKi=0, encoder_consKd=0;
         float enc_rot_kp=3, enc_rot_ki=5, enc_rot_kd=0;
         std::unique_ptr<PID> encoderPID = nullptr;
+        std::unique_ptr<PID> encoderPID_2 = nullptr;
 
         Rotation_Direction rot_dir = LEFT;
         float rotationPID_setpoint = 0,rotationPID_input = 0,rotationPID_output = 0;
@@ -63,11 +66,13 @@ class Drive{
 
         void do_drive();
         void do_rotate();
-        void update_encoder(Encoder &encoderR, Encoder &encoderL, gyroscope &gyro, Ping &ping);
+        void update_encoder(Encoder *encoderR, Encoder *encoderL);
         bool wait_stop = false;
         uint64_t stop_timer = 0;
         bool _reverse = false;
         bool _use_ramping = false;
+        std::ofstream csv;
+
     public:
         ~Drive();
         Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, Arduinocomm *serial);
@@ -83,6 +88,7 @@ class Drive{
         uint32_t getDistance();
         void setup_and_start_drive_straight(unsigned int speed);
         void drive_straight();
-        void ramp(float target_speed);
+        void modify_power_by_speed(int target_speed);
+        void modify_power_by_speed_rotate(int target_speed);
 };
 #endif

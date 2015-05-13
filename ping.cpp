@@ -73,6 +73,11 @@ void Ping::update()
                 prevprevduration = prevduration;
                 prevduration = duration;
                 duration = micros() - prevTime;                
+                if(prevprevduration == 0 && prevduration == 0)
+                {
+                    prevprevduration = duration;
+                    prevduration = duration;
+                }
                 step = 0;
                 prevTime = micros();
             }
@@ -84,5 +89,6 @@ void Ping::update()
 float Ping::get_distance()
 {
     //lock_guard<mutex> lock(pingmutex);
-    return (middle_of_3<uint64_t>(prevprevduration, prevduration, duration)/2000000.0)*speed_of_sound_25c_us;//Divide by 2000000 becauses its round-trip-time
+    //return (middle_of_3<uint64_t>(prevprevduration, prevduration, duration)/2000000.0)*speed_of_sound_25c_us;//Divide by 2000000 becauses its round-trip-time
+    return ((prevprevduration + prevduration + duration)/(3*2000000.0))*speed_of_sound_25c_us;//Divide by 2000000 becauses its round-trip-time
 }

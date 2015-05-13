@@ -6,18 +6,23 @@ using namespace std;
 
 void loop();
 void drive_complete();
+void main_stop();
 
-unsigned int step = 0;
+int step = -1;
 bool stop = false;
 
 float angle = 0;
 uint8_t speed = 110;
-unsigned int args_dist = 500;
+int args_dist = 500;
 Rotation_Direction dir = LEFT;
 
 unique_ptr<Controller> c = nullptr;
 shared_ptr<Drive> driver = nullptr;
 shared_ptr<LineFollower<Drive>> lineFollower = nullptr;
+
+enum do_what {FOLLOW_STEPS,DRIVE_DISTANCE,ROTATE};
+
+do_what what = FOLLOW_STEPS;
 
 uint64_t start_time = 0;
 
@@ -36,9 +41,9 @@ void loop()
         case 0:
             cout << "case 0" << endl;
            
-            driver->set_distance_sensor_stop(false);//Skrur av ultralyd sensor stop
-            //driver->set_distance_sensor_stop(true);//Skrur påOC ultralyd sensor stop
-            //driver->driveDistance(speed,args_dist,[]{drive_complete();});//Kjører fremover
+            //driver->set_distance_sensor_stop(false);//Skrur av ultralyd sensor stop
+            //driver->set_distance_sensor_stop(true);//Skrur på ultralyd sensor stop
+            driver->driveDistance(speed,args_dist,[]{drive_complete();});//Kjører fremover
             //driver->driveDistance(speed,args_dist,[]{drive_complete();},true);//Kjører bakover
             if(angle < 0)
             {
@@ -52,7 +57,7 @@ void loop()
             }
             else
             {
-                driver->rotate(110,0,LEFT,[]{drive_complete();});
+                //driver->rotate(110,0,LEFT,[]{drive_complete();});
             }
             //lineFollower->enable();//Linjefølging
 
@@ -99,9 +104,6 @@ int main(int argc, char** argv)
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     vector<string> args(argv, argv+argc);
-    c = unique_ptr<Controller>(new Controller(args, []{loop();}));
-    driver = c->driver;
-    lineFollower = c->line_follower;
 
     string file;
     for(size_t i=0;i<args.size();i++)
@@ -111,29 +113,63 @@ int main(int argc, char** argv)
             stop = true;
             break;
         }
-
-        if(args[i].compare("--angle") == 0)
+        else if(args[i].compare("--angle") == 0)
         {
             angle = atof(args[++i].c_str());
             dir = (angle>0?RIGHT:LEFT);
         }
-
-        if(args[i].compare("--speed") == 0)
+        else if(args[i].compare("--speed") == 0)
         {
             speed = atoi(args[++i].c_str());
         }
-
-        if(args[i].compare("--distance") == 0)
+        else if(args[i].compare("--distance") == 0)
         {
             args_dist = atoi(args[++i].c_str());
         }
+        else if(args[i].compare("--r") == 0)
+        {
+            what = ROTATE;
+        }
+        else if(args[i].compare("--d") == 0)
+        {
+            what = DRIVE_DISTANCE;
+        }
     }
 
+    if(what == FOLLOW_STEPS)
+    {
+        step = 0;
+    }
+
+    c = unique_ptr<Controller>(new Controller(args, []{loop();}));
+    driver = c->driver;
+    lineFollower = c->line_follower;
+
+
     start_time = micros();
+
+    if(what == DRIVE_DISTANCE)
+    {
+        bool reverse = false;
+        if(args_dist < 0)
+        {
+            reverse = true;
+        }
+        driver->driveDistance(speed,abs(args_dist),[]{main_stop();},reverse,true);
+    }
+    else if(what == ROTATE)
+    {
+        driver->rotate(110,angle,LEFT,[]{main_stop();});
+    }
 
     c->start();
 
     return 0;
+}
+
+void main_stop()
+{
+    c->quit_robot = true;
 }
 
 void drive_complete()

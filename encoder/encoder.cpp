@@ -17,10 +17,20 @@ void Encoder::setup(unsigned char pinA, unsigned char pinB) {
     fd2 = gpio_start_read(_pinB);
     gpio_get_value(&encBoutprev, fd2);
 
-    prevTime = micros();
+    prevTime = nanos();
+    //nano_time = nanos();
+    start_time = prevTime;
 }
 
+uint64_t avg_dur  =0;
+uint64_t enccount = 1;
+uint64_t avg_count = 1;
 void Encoder::update() {
+
+    //LOG(DEBUG) << "Nanos: " << nanos() - nano_time << endl;
+    //nano_time = nanos();
+    //
+    if(nanos() - prevTime < 100000){return;}
 
     if(gpio_get_value(&encAout,fd1) < 0){cout << "return"<<endl;return;}
     if(gpio_get_value(&encBout,fd2) < 0){return;}
@@ -49,10 +59,21 @@ void Encoder::update() {
     {
         if(!(encAout == encAoutprev && encBout == encBoutprev))
         {
-            LOG(DEBUG) << (int)_pinA << " WTF unknown encoder value, you're to slow?" <<endl;
+            //printf("duration: %" PRIu64 "\n", nanos() - prevTime);
+            //LOG(DEBUG) << (int)_pinA << " WTF unknown encoder value, you're to slow?" <<endl;
+
         }
         //Serial.println("Not moving");
     }
+
+    //if(encAout != encAoutprev){LOG(DEBUG) << (int)_pinA << " " << (int)encAout << "," << (int)encBout << endl;}
+    //if(encBout != encBoutprev){LOG(DEBUG) << (int)_pinA << " " << (int)encAout << "," << (int)encBout << endl;}
+
+    /*if(_pinA == 161)
+    {
+        printf("duration: %" PRIu64 "\n", nanos() - prevTime);
+        printf("%d %d %d\n",_pinA, encAout,encBout);
+    }*/
 
     encAoutprev = encAout;
     encBoutprev = encBout;
@@ -77,37 +98,37 @@ void Encoder::update() {
 
 void Encoder::updateSpeeds()
 {
-    time = micros();
-    prevprevspeed = prevspeed;
-    prevspeed = speed;
+    time = nanos();
+    //prevprevspeed = prevspeed;
+    //prevspeed = speed;
     if(time == prevTime){return;}
-    speed = encoder_tick_distance/(time-prevTime);
-    prevTime = time;
+    speed.store(encoder_tick_distance/(time-prevTime) * 1000 * 1000);
 
     if(fDist>=bDist)
     {
         //val = fDist/64.0/18.75 * PI * WHEEL_SIZE;
-        distance = fDist*encoder_tick_distance;
+        distance.store(fDist*encoder_tick_distance);
     }
     else
     {
         //val = -bDist/64.0/18.75 * PI * WHEEL_SIZE;
-        distance = bDist*encoder_tick_distance;
+        distance.store(bDist*encoder_tick_distance);
     }
+    prevTime = time;
 }
 
 //m/s
-float  Encoder::getSpeed()
+int Encoder::getSpeed()
 {
     //lock_guard<mutex> lock(encodermutex);
-    return middle_of_3(speed,prevspeed,prevprevspeed);
+    return speed.load();//middle_of_3<atomic<int>>(speed,prevspeed,prevprevspeed);
 }
 
 //Returns distance in micrometer
 uint64_t Encoder::getDistance()
 {
     //lock_guard<mutex> lock(encodermutex);
-    return distance;
+    return distance.load();
 }
 
 void Encoder::reset()

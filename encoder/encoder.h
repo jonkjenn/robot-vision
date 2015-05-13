@@ -5,6 +5,8 @@
 #include <cstdint>
 #include "SimpleGPIO.h"
 #include <iostream>
+#include <atomic>
+#include <cinttypes>
 
 
 class Encoder{
@@ -22,7 +24,7 @@ class Encoder{
         uint32_t fDist = 0;
         uint32_t bDist = 0;
 
-        uint64_t distance = 0;
+        std::atomic<uint64_t> distance;
 
         int counter = 0;
 
@@ -30,16 +32,19 @@ class Encoder{
 
         const char debug = 1;
 
-        const float WHEEL_SIZE = 0.124;
+        //const float WHEEL_SIZE = 0.124;
+        const float WHEEL_SIZE = 0.0982;
         const float encoder_tick_distance  = ((PI*WHEEL_SIZE)/(64.0*18.75))*1000.0*1000.0;//uMeter
         //const float encoder_tick_distance  = (PI*WHEEL_SIZE)/(64.0*18.75);//Meter
 
         uint64_t prevTime;
         uint64_t time;
+        uint64_t nano_time; 
+        uint64_t start_time;
 
-        float speed;
-        float prevspeed;
-        float prevprevspeed;
+        std::atomic<int> speed;
+        std::atomic<int> prevspeed;
+        std::atomic<int> prevprevspeed;
 
         void updateSpeeds();
 
@@ -51,7 +56,7 @@ class Encoder{
         void setup(unsigned char pinA, unsigned char pinB);
         void update();
         uint64_t getDistance();
-        float getSpeed();
+        int getSpeed();
         void reset();
 };
 

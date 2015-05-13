@@ -95,7 +95,7 @@ Controller::Controller(vector<string> &args, function<void()> callback)
     line_follower = std::make_shared<LineFollower<Drive>>();
     line_follower->setup(driver);
 
-    delayMicroseconds(1e6);//Let serial connections start up
+    delayMicroseconds(1e2);//Let serial connections start up
     driver->drive(90,90);
     driver->drive(90,90);
     driver->drive(90,90);
@@ -169,12 +169,11 @@ void Controller::parsepacket()
 
 void Controller::loop()
 {
-    bool preempt = preempt_check();
+    //bool preempt = preempt_check();
 
-    LOG(DEBUG) << "Preempt? " << preempt;
-    if(preempt)
+    if(true)
     {
-        struct sched_param param;
+        /*struct sched_param param;
         param.sched_priority = MY_PRIORITY;
         if(sched_setscheduler(0, SCHED_FIFO, &param) == -1){
             perror("sched_setscheduler failed");
@@ -191,7 +190,7 @@ void Controller::loop()
         struct timespec t;
         int interval = 50000;
         clock_gettime(CLOCK_MONOTONIC, &t);
-        t.tv_sec++;
+        t.tv_sec++;*/
 
         uint64_t pt = micros();
 
@@ -220,7 +219,7 @@ void Controller::loop()
                 parsepacket();
             }
 
-            callback();
+            if(callback){callback();}
         }
     }
     else
