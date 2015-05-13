@@ -57,8 +57,8 @@ void gyroscope::update()
                     mavlink_msg_highres_imu_decode(&msg, &sensors);
 
                     if(prevtime == 0){prevtime = sensors.time_usec;break;}
-                    if(abs(sensors.zgyro) < 0.005){
-                        //cout << "105 :   " << nanos() - g_t <<endl;
+                    if(abs(sensors.zgyro) < 0.01){
+                        //cout << "gyro:" << sensors.zgyro << endl;
                         return;
                     }
 

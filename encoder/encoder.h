@@ -42,6 +42,8 @@ class Encoder{
         uint64_t nano_time; 
         uint64_t start_time;
 
+        int speeds[10] = {0};
+
         std::atomic<int> speed;
         std::atomic<int> prevspeed;
         std::atomic<int> prevprevspeed;

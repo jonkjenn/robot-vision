@@ -102,7 +102,18 @@ void Encoder::updateSpeeds()
     //prevprevspeed = prevspeed;
     //prevspeed = speed;
     if(time == prevTime){return;}
-    speed.store(encoder_tick_distance/(time-prevTime) * 1000 * 1000);
+
+    int sumspeed = 0;
+
+    for(int i=9;i>0;i--)
+    {
+        speeds[i-1] = speeds[i];
+        sumspeed+= speeds[i];
+    }
+    sumspeed+= speeds[9];
+    speeds[9] = encoder_tick_distance/(time-prevTime) * 1000 * 1000;
+
+    speed.store(sumspeed/10);
 
     if(fDist>=bDist)
     {

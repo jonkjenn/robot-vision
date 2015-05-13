@@ -203,9 +203,9 @@ void Controller::loop()
 
             pt = nanos();
             driver->update();
-            //cout << "Driver: " << nanos() - pt << endl;
+            cout << "Driver: " << endl;
 
-            //LOG(DEBUG) << "vision";
+            LOG(DEBUG) << "vision" << endl;
             if(cam)
             {
                 vision->update();
