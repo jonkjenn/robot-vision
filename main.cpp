@@ -20,7 +20,7 @@ unique_ptr<Controller> c = nullptr;
 shared_ptr<Drive> driver = nullptr;
 shared_ptr<LineFollower<Drive>> lineFollower = nullptr;
 
-enum do_what {FOLLOW_STEPS,DRIVE_DISTANCE,ROTATE};
+enum do_what {FOLLOW_STEPS,DRIVE_DISTANCE,ROTATE,NOTHING};
 
 do_what what = FOLLOW_STEPS;
 
@@ -31,10 +31,15 @@ void loop()
     if(micros() - start_time < 100000){return;}
     if(stop)
     {
-        driver->stop();
+        if(what != NOTHING)
+        {
+            driver->stop();
+        }
         c->quit_robot = true;
         return;
     }
+
+    if(what == NOTHING){return;}
 
     switch(step)
     {
@@ -173,6 +178,10 @@ int main(int argc, char** argv)
         {
             what = DRIVE_DISTANCE;
         }
+        else if(args[i].compare("--donothing") == 0)
+        {
+            what  = NOTHING;
+        }
     }
 
     if(what == FOLLOW_STEPS)
@@ -183,7 +192,6 @@ int main(int argc, char** argv)
     c = unique_ptr<Controller>(new Controller(args, []{loop();}));
     driver = c->driver;
     lineFollower = c->line_follower;
-
 
     start_time = micros();
 

@@ -15,9 +15,11 @@
 #include <sched.h>
 #include <sys/mman.h>
 #include "ps4driver.hpp"
+#include <atomic>
 
 class Vision{
     private:
+        std::atomic<bool> quit;
         unsigned long previous_micros = 0;
         std::mutex camera_mutex;
         cv::Mat frame;
@@ -67,6 +69,7 @@ class Vision{
         Vision(std::vector<std::string> &args);
         void previous_frame();
         void update();
+        void stop();
 };
 
 #endif

@@ -88,17 +88,15 @@ Controller::Controller(vector<string> &args, function<void()> callback)
     if(use_serial)
     {
         arduino = new Arduinocomm("/dev/ttyTHS0",115200);
+        driver = std::make_shared<Drive>(161,160,163,164,arduino);
+        line_follower = std::make_shared<LineFollower<Drive>>();
+        line_follower->setup(driver);
+
+        delayMicroseconds(1e2);//Let serial connections start up
+        driver->drive(90,90);
+        driver->drive(90,90);
+        driver->drive(90,90);
     }
-
-    driver = std::make_shared<Drive>(161,160,163,164,arduino);
-
-    line_follower = std::make_shared<LineFollower<Drive>>();
-    line_follower->setup(driver);
-
-    delayMicroseconds(1e2);//Let serial connections start up
-    driver->drive(90,90);
-    driver->drive(90,90);
-    driver->drive(90,90);
 }
 
 void Controller::start()
@@ -197,26 +195,34 @@ void Controller::loop()
         while(true)
         {
             //reset_micros();
-            if(quit_robot){return;}
+            if(quit_robot){
+                vision->stop();
+                return;}
             //clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
 
-
             pt = nanos();
-            driver->update();
-            cout << "Driver: " << endl;
+            if(use_serial)
+            {
+                driver->update();
+                cout << "Driver: " << endl;
+            }
 
-            LOG(DEBUG) << "vision" << endl;
+            //LOG(DEBUG) << "vision" << endl;
             if(cam)
             {
                 vision->update();
             }
 
             pt = nanos();
-            arduino->update();
-            //cout << "arduino update: " << nanos() - pt << endl;
-            if(arduino->packet_ready)
+
+            if(use_serial)
             {
-                parsepacket();
+                arduino->update();
+                //cout << "arduino update: " << nanos() - pt << endl;
+                if(arduino->packet_ready)
+                {
+                    parsepacket();
+                }
             }
 
             if(callback){callback();}

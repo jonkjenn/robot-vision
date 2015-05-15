@@ -4,6 +4,10 @@ using namespace std;
 using namespace cv;
 using namespace cv::gpu;
 
+void update_camshift(Mat frame);
+void setup_camshift(Mat frame);
+bool camshift_init = false;
+
 Vision::Vision(vector<string> &args)
 {
     string file;
@@ -52,6 +56,8 @@ Vision::Vision(vector<string> &args)
             no_wait = true;
             continue;
         }
+
+        quit.store(false);
     }
 
     LOG(DEBUG) << "Cuda: " << cuda << endl;
@@ -63,7 +69,7 @@ Vision::Vision(vector<string> &args)
         cap = unique_ptr<VideoCapture>(new VideoCapture(camera_id));
         cap->set(CV_CAP_PROP_FRAME_WIDTH,898);
         cap->set(CV_CAP_PROP_FRAME_HEIGHT,200);
-        LOG(DEBUG) << "Setting fps";
+        LOG(DEBUG) << "Setting fps" << endl;
         cap->set(CV_CAP_PROP_FPS,240);
         frame_count = -1;
         play = true;
@@ -100,9 +106,9 @@ void Vision::setup()
         fps = cap->get(CV_CAP_PROP_FPS);
     }
 
-    LOG(DEBUG) << "Fps:" << fps;
+    LOG(DEBUG) << "Fps:" << fps << endl;
 
-    LOG(DEBUG) << "Cuda: " << cuda;
+    LOG(DEBUG) << "Cuda: " << cuda << endl;
 
     if(cuda)
     {
@@ -118,28 +124,28 @@ void Vision::setup()
         outputVideo.open("../out.mp4",CV_FOURCC('m','4','s','2'),30,s,true);
     }*/
 
-    size = Size(320,192);
+    size = Size(177,144);
     sub_rect = Rect(0,size.height-41,size.width,40);
 
     fp = Frameplayer{show_video, 9, size};
 
-    LOG(DEBUG) << "Frameplayer started";
+    LOG(DEBUG) << "Frameplayer started" << endl;
 
     if(input_type == Type::CAMERA)
     {
-        LOG(DEBUG) << "Starting camera thread";
+        LOG(DEBUG) << "Starting camera thread" << endl;
         thread capture_thread(&Vision::capture_frames,this, ref(frame));
         capture_thread.detach();
     }
     else if(input_type == Type::PS4)
     {
-        LOG(DEBUG) << "Starting PS4 thread";
+        LOG(DEBUG) << "Starting PS4 thread" << endl;
         thread capture_thread(&Vision::capture_ps4,this, ref(frame));
         capture_thread.detach();
     }
     else if(input_type == Type::FILE)
     {
-        LOG(DEBUG) << "Starting file thread";
+        LOG(DEBUG) << "Starting file thread" << endl;
         thread capture_thread(&Vision::capture_frames_file,this, ref(frame));
         capture_thread.detach();
     }
@@ -149,7 +155,7 @@ void Vision::setup()
 void Vision::configure_cuda()
 {
     cuda = gpu::getCudaEnabledDeviceCount()>0;
-    LOG(INFO) <<"Setting CUDA device";
+    LOG(INFO) <<"Setting CUDA device" << endl;
     if(!cuda){return;}
     gpu::setDevice(0);
     LOG(DEBUG) << "Cuda? " << cuda;
@@ -196,6 +202,9 @@ void Vision::capture_ps4(Mat &frame)
     while(true)
     {
         do{
+            //cout << "preloop" << endl;
+            if(quit.load()){return;}
+            //cout << "loop" << endl;
             ps4cam->update();
             buffer = ps4cam->getFrame();
         }while(buffer.empty());
@@ -209,6 +218,7 @@ void Vision::capture_ps4(Mat &frame)
 
 void Vision::update()
 {
+    //cout << "vision update" << endl;
     if(input_type == Type::FILE && index >= frame_count){play = false; handle_keys();return;}
     Mat buffer;
     auto loading_time = micros();
@@ -234,17 +244,24 @@ void Vision::update()
         if(buffer.empty()){return;}*/
     }
 
-    LOG(INFO) << "Loaded frame: " << (micros() - loading_time) << " microseconds";
+    //LOG(INFO) << "Loaded frame: " << (micros() - loading_time) << " microseconds";
     //LOG(INFO) << "Resized frame";
 
     if(cuda)
     {
-        process_frame_cuda(buffer);
+        //process_frame_cuda(buffer);
     }
     else
     {
-        process_frame(buffer);
+        //process_frame(buffer);
     }
+
+    if(!camshift_init)
+        {
+            setup_camshift(buffer);
+        }
+
+    update_camshift(buffer);
 
     fp.loop();
 
@@ -437,10 +454,10 @@ void Vision::handle_keys()
     auto key = 0;
     if(play && fps>0 && !ps4)
     {
-        LOG(DEBUG) << "Waitkey with FPS";
+        LOG(DEBUG) << "Waitkey with FPS" << endl;
         unsigned int wait_dur = 1000/fps-dur_ms;
         if(wait_dur<=0){wait_dur = 1;}
-        LOG(DEBUG) << "Waiting for " << wait_dur << " ms";
+        LOG(DEBUG) << "Waiting for " << wait_dur << " ms" << endl;
         key = waitKey(wait_dur) & 255;
     }
     else if(play)
@@ -450,11 +467,11 @@ void Vision::handle_keys()
     }
     else
     {
-        LOG(INFO) << "Waiting for key";
+        LOG(INFO) << "Waiting for key" << endl;
         key = waitKey(0) & 255;
     }
 
-    LOG(DEBUG) <<"Key:"<< key;
+    LOG(DEBUG) <<"Key:"<< key << endl;
     switch(key)
     {
         case 113://q
@@ -469,4 +486,118 @@ void Vision::handle_keys()
         default:
             return;
     }
+}
+
+void Vision::stop()
+{
+    quit.store(true);
+}
+
+
+Mat frame,hsv,mask,roi,hsv_roi,back_project,roi_hist_h,roi_hist_s,roi_hist_v, roi_hist;
+int cc,cr,cch,cw = 0;
+Rect rect;
+const int channels[]{0};
+const int histSize[]{180};
+const float hrange[]{20,50};
+const float srange[]{150,200};
+const float vrange[]{100,200};
+const float* ranges[]{hrange};
+const float* sranges[]{srange};
+const float* vranges[]{vrange};
+
+void setup_camshift(Mat frame)
+{
+    camshift_init = true;
+    cvtColor(frame,hsv,COLOR_BGR2HSV);
+
+    rect = Rect{0,0,frame.cols,frame.rows};
+    roi = hsv(rect);
+    roi = hsv;
+    Mat h_chan(roi.rows,roi.cols,CV_8UC1);
+    Mat s_chan(roi.rows,roi.cols,CV_8UC1);
+    Mat v_chan(roi.rows,roi.cols,CV_8UC1);
+
+    cc = 0,cr=0,cw=frame.cols,cch=frame.rows;
+
+    Mat out[] = {h_chan,s_chan,v_chan};
+    int from_to[] = {0,0,1,1,2,2};
+    //mixChannels( &roi, 1, out, 3, from_to, 3);
+    split(roi,out);
+
+    imshow("h_chan", h_chan);
+    imshow("s_chan", s_chan);
+    imshow("v_chan", v_chan);
+
+    calcHist(&h_chan,1,channels,Mat(),roi_hist_h,1,histSize,ranges);
+
+    const int svhistSize[]{180};
+    const float* sranges[]{srange};
+    calcHist(&s_chan,1,channels,Mat(),roi_hist_s,1,svhistSize,sranges);
+    calcHist(&v_chan,1,channels,Mat(),roi_hist_v,1,svhistSize,vranges);
+
+    normalize(roi_hist_h,roi_hist_h,0,255,cv::NORM_MINMAX);
+    normalize(roi_hist_s,roi_hist_s,0,255,cv::NORM_MINMAX);
+    normalize(roi_hist_v,roi_hist_v,0,255,cv::NORM_MINMAX);
+
+    int hist_w = 512; int hist_h = 400;
+    int bin_w = cvRound( (double) hist_w/256 );
+
+    Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
+
+    /// Draw for each channel
+    for( int i = 1; i < 256; i++ )
+    {
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(roi_hist_h.at<float>(i-1)) ) ,
+                Point( bin_w*(i), hist_h - cvRound(roi_hist_h.at<float>(i)) ),
+                Scalar( 255, 0, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(roi_hist_s.at<float>(i-1)) ) ,
+                Point( bin_w*(i), hist_h - cvRound(roi_hist_s.at<float>(i)) ),
+                Scalar( 0, 255, 0), 2, 8, 0  );
+        line( histImage, Point( bin_w*(i-1), hist_h - cvRound(roi_hist_v.at<float>(i-1)) ) ,
+                Point( bin_w*(i), hist_h - cvRound(roi_hist_v.at<float>(i)) ),
+                Scalar( 0, 0, 255), 2, 8, 0  );
+    }
+
+    imshow("hist", histImage);
+
+    roi_hist = Mat{roi_hist_h.size(), CV_32FC3};
+    Mat hists[] = {roi_hist_h, roi_hist_s,roi_hist_v};
+    int ft[] = {0,0,1,0,2,0};
+    mixChannels(hists,3,&roi_hist,1,ft,3);
+
+}
+
+void update_camshift(Mat frame)
+{
+        //inRange(hsv_roi,Mat{1,3,CV_8U,low},Mat{1,3,CV_8U,high},mask);
+
+        TermCriteria crit = TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT,20,1);
+
+        RotatedRect camshift_rect;
+
+        cvtColor(frame,hsv,COLOR_BGR2HSV);
+        //cout << "calcback" << endl;
+        int ch[] = {0,1,2};
+        calcBackProject(&hsv,1,ch,roi_hist,back_project,ranges,1.0);
+
+        imshow("win3",back_project);
+
+        try{
+            camshift_rect = CamShift(back_project,rect,crit);
+        }catch(Exception)
+        {
+            rect = Rect{cc,cr,cw,cch};
+        }
+
+        Point2f vertices[4];
+        camshift_rect.points(vertices);
+        for(int i=0;i<4;i++)
+        {
+            line(frame, vertices[i], vertices[(i+1)%4], Scalar(0,255,0));
+        }
+
+        imshow("win",frame);
+        //imshow("win2",roi);
+        waitKey(1);
 }

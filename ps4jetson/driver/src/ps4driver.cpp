@@ -1,4 +1,5 @@
 #include "ps4driver.hpp"
+#include <csignal>
 
 using namespace std;
 using namespace std::chrono;
@@ -42,7 +43,7 @@ void ps4driver::setup()
         //mode 2: 240,120,60,30 fps 320x192
         if(!(eye->init(2, 240)))
         {
-            LOG(DEBUG) << "PS4Camera init failed";
+            LOG(DEBUG) << "PS4Camera init failed" << endl;
             //don't use when you are debugging is fine.
             //eye->stop();
            // exit(0);
@@ -68,11 +69,15 @@ void ps4driver::setup()
 
 void ps4driver::update()
 {
+    //cout << "update devices" << endl;
     bool res = ps4eye::PS4EYECam::updateDevices();
+    //cout << "update devices done" << endl;
 }
 
 Mat ps4driver::getFrame()
 {
+    //cout << "getframe" << endl;
+
     eyeframe *frame;
     bool isNewFrame = false;
 

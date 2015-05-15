@@ -278,6 +278,7 @@ namespace ps4eye {
 
     bool USBMgr::handleEvents()
     {
+        //cout << "handlevents" << endl;
         return (libusb_handle_events(instance()->usb_context) == 0);
     }
 
@@ -414,6 +415,7 @@ namespace ps4eye {
             int i;
             struct libusb_transfer *xfr0;
 
+            cout << "start transfer" << endl;
 
             for(i=0;i<8;i++)
             {
@@ -431,11 +433,12 @@ namespace ps4eye {
                  xfr[i]->length = 49152*8; // max size in transfer 49152*8
                  xfr[i]->callback = cb_xfr;
                  xfr[i]->num_iso_packets = 8; //num isoc*/
-                libusb_fill_iso_transfer(xfr[i],handle, 0x81, frame_buffer_end+49152*8*i,  49152*8, 8, cb_xfr, reinterpret_cast<void*>(this), 1000);
+                libusb_fill_iso_transfer(xfr[i],handle, 0x81, frame_buffer_end+49152*8*i,  49152*8, 8, cb_xfr, reinterpret_cast<void*>(this), 2000);
                 libusb_set_iso_packet_lengths(xfr[i], 49152);
 
 
             }
+            cout << "loop done" << endl;
 
             int res=0;
             for(i=0;i<8;i++)
@@ -444,6 +447,7 @@ namespace ps4eye {
 
 
             }
+            cout << "submit done " << endl;
             num_transfers = 8;
             frame_complete_ind = 0;
             frame_work_ind = 0;
