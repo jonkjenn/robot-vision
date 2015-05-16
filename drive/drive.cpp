@@ -13,18 +13,19 @@ Drive::Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigne
 
     encoderRight.setup(encoder_right_a,encoder_right_b);
     encoderLeft.setup(encoder_left_a,encoder_left_b);
-    thread encoder_thread(&Drive::update_encoder,this, &encoderRight,&encoderLeft);
-    encoder_thread.detach();
+    encoder_thread = thread(&Drive::update_encoder,this, &encoderRight,&encoderLeft);
 
     csv.open("drive.csv");
 
     serial->drive(90,90);
+    quit.store(false);
 }
 
 void Drive::update_encoder(Encoder *encoderR, Encoder *encoderL)
 {
     while(true)
     {
+        if(quit.load()){cout << "encoder stopping" << endl;return;}
         //uint64_t start = micros();
         encoderR->update();
         encoderL->update();
@@ -194,8 +195,8 @@ bool Drive::drive(unsigned int left, unsigned int right)
         LOG(DEBUG) << "Driving " << (int)left << " " << (int)right << endl;
 
         prevLeftSpeed = left;
-        prevRightSpeed = right;
-        serial->drive(left,right);
+        prevRightSpeed = (right<180-4?right+4:right);
+        serial->drive(left,prevRightSpeed);
         return true;
     }
     return false;
@@ -525,6 +526,13 @@ uint32_t Drive::getDistance()
 void Drive::set_distance_sensor_stop(bool value)
 {
     enable_ping_stop = value;
+}
+
+void Drive::stop_driver()
+{
+    quit.store(true);
+    encoder_thread.join();
+    cout << " encoder thread joined" << endl;
 }
 
 Drive::~Drive()

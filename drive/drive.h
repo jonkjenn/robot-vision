@@ -11,10 +11,13 @@
 #include <iostream>
 #include "utility.hpp"
 #include <fstream>
+#include <atomic>
 
 enum Rotation_Direction{ LEFT,RIGHT};
 class Drive{
     private:
+        std::thread encoder_thread;
+        std::atomic<bool> quit;
         unsigned int stopPower = 90;//stand still
         unsigned long _startTime = 0;
         unsigned long _duration = 0;
@@ -60,8 +63,6 @@ class Drive{
         std::function<void()> driveCompletedCallback = nullptr;
         std::function<void()> stopConfirmedCallback = nullptr;
 
-        void encoder_thread();
-
         bool check_bounds();
 
         void do_drive();
@@ -90,5 +91,6 @@ class Drive{
         void drive_straight();
         void modify_power_by_speed(int target_speed);
         void modify_power_by_speed_rotate(int target_speed);
+        void stop_driver();
 };
 #endif

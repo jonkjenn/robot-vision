@@ -13,9 +13,9 @@ static uint8_t check_power(const uint8_t min_power, const uint8_t max_power, uin
 {
     uint8_t power_out = power;
 
-    if(power_out<90 && power_out >70){power_out = 70;}
-    else if(power_out < min_power) { power_out = min_power; }
-    else if(power_out > max_power) { power_out = max_power; }
+    //if(power_out<90 && power_out >70){power_out = 70;}
+    if(power_out < min_power) { std::cout << "less" << std::endl; power_out = min_power; }
+    else if(power_out > max_power) { std::cout << "more" << std::endl; power_out = max_power; }
 
     return power_out;
 }
@@ -47,19 +47,19 @@ static bool check_line_not_found(unsigned int position, unsigned int &stopcount)
     }
 }
 
-static int getaverage(int16_t (&array)[20])
+static int getaverage(int16_t (&array)[5])
 {
     int avg = 0;
-    for(int i=0;i<20;i++)
+    for(int i=0;i<5;i++)
     {
         avg += array[i];
     }
-    return avg/20;
+    return avg/5.0;
 }
 
 static int16_t GetMedian(int16_t *daArray, int size) {
     // Allocate an array of the same size and sort it.
-    int16_t* dpSorted = new int16_t[4];
+    int16_t* dpSorted = new int16_t[20];
     for (int i = 0; i < size; ++i) {
         dpSorted[i] = daArray[i];
     }
@@ -136,7 +136,7 @@ class LineFollower{
         std::unique_ptr<PID> outerPID = nullptr;
         std::unique_ptr<PID> innerPID = nullptr;
 
-        uint8_t max_power = 110;
+        uint8_t max_power = 130;
         uint8_t min_power = 70;
         const uint8_t stopPower = 90;//stand still
         uint8_t power_range = max_power - min_power;
@@ -162,13 +162,16 @@ class LineFollower{
                 std::cout << "Direction: " << direction << std::endl;
             }
 
-            if(direction < 0)
+            if(direction > 255) {direction = 255;}
+            if(direction < -255) {direction = -255;}
+
+            if(direction > 0)
             {
                 turn_right(abs(direction));
             }
             else
             {
-                turn_left(direction);
+                turn_left(abs(direction));
             }
         }
 
@@ -220,20 +223,20 @@ class LineFollower{
 
         int leftright = 0;
 
-        int16_t prev_dist[20] = {0};
-        int16_t prev_delta[20] = {0};
+        int16_t prev_dist[10] = {0};
+        int16_t prev_delta[5] = {0};
         int16_t part_tmp[5] = {0};
         bool _enabled = false;
 
         // We drive left wheel slower(power1), turning to the left
         void turn_left(uint8_t power)
         {
-            unsigned int power_left = check_power(min_power,max_power,scale_power(min_power,max_power,power));
-            unsigned int power_right = check_power(min_power,max_power,max_power);
+            uint8_t power_left = check_power(min_power,max_power,scale_power(min_power,max_power,power));
+            uint8_t power_right = check_power(min_power,max_power,max_power);
 
             if(debug && dtest%dtest_mod == 0)
             {
-                std::cout << "Turn Left: " << power_left << std::endl;
+                std::cout << "Turn Left: " << (int)power_left << std::endl;
             }
 
             prevLeftPower = power_left;
@@ -254,7 +257,7 @@ class LineFollower{
 
             if(debug && dtest%dtest_mod == 0)
             {
-                std::cout << "Turn Right: " << power_right << std::endl;
+                std::cout << "Turn Right: " << (int)power_right << std::endl;
             }
 
             prevLeftPower = power_left;
@@ -273,10 +276,10 @@ class LineFollower{
             prev_dist_center = position - ir_center;
             dist_center = position - ir_center;
             delta_dist_center = 0;
-            /*for(int i=0;i<20;i++)
+            /*for(int i=0;i<10;i++)
               {
               prev_delta[i] = delta_dist_center;
-              prev_dist[i] = dist_center;
+              //prev_dist[i] = dist_center;
               }*/
         }
 
@@ -317,7 +320,16 @@ class LineFollower{
 
             dist_center = position - ir_center;
 
+            for(int i=4;i>0;i--)
+              {
+                  prev_delta[i-1] = prev_delta[i];
+              }
+
             delta_dist_center = dist_center - prev_dist_center;
+
+            prev_delta[4] = delta_dist_center;
+
+            delta_dist_center = getaverage(prev_delta);//,20);
 
             if(debug && dtest%dtest_mod == 0){
                 /*std::cout << "Position: " << position << std::endl;
@@ -327,18 +339,22 @@ class LineFollower{
                   std::cout << "Distance : " << distance << std::endl;*/
             }
 
-            out_pid_Input = dist_center;
+
+            out_pid_Input = (abs(dist_center)<2000?0:dist_center);
 
             outerPID->Compute();
 
+            std::cout << "outer pid: " << out_pid_Output << std::endl;
+
             inn_pid_SetPoint = out_pid_Output;
-            inn_pid_Input = delta_dist_center;
+            inn_pid_Input = ((abs(delta_dist_center) < 100) && (abs(dist_center)<2000))?0:delta_dist_center;
 
             if(innerPID->Compute())
             {
                 if(debug && dtest%dtest_mod == 0)
                 {
-                    //std::cout << "inner pid: " << inn_pid_Output << std::endl;
+                    std::cout << "inner pid input: " << inn_pid_Input << std::endl;
+                    std::cout << "inner pid: " << inn_pid_Output << std::endl;
                 }
                 do_turn(inn_pid_Output);
                 //if(debug){Serial.println("PID output: " + String(pid_Output));}
@@ -357,7 +373,7 @@ class LineFollower{
             outerPID = std::unique_ptr<PID>(new PID(&out_pid_Input, &out_pid_Output, &out_pid_SetPoint,0.014,0,0,DIRECT,-50,50));
             out_pid_SetPoint = 0.0;
             outerPID->SetMode(AUTOMATIC);
-            innerPID = std::unique_ptr<PID>(new PID(&inn_pid_Input, &inn_pid_Output, &inn_pid_SetPoint,3.0,0,0,DIRECT,-256,255));
+            innerPID = std::unique_ptr<PID>(new PID(&inn_pid_Input, &inn_pid_Output, &inn_pid_SetPoint,5.0,0,0.0,DIRECT,-255,255));
             inn_pid_SetPoint = 0.0;
             innerPID->SetMode(AUTOMATIC);
 

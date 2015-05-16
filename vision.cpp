@@ -5,11 +5,12 @@ using namespace cv;
 using namespace cv::gpu;
 
 void update_camshift(Mat frame);
-void setup_camshift(Mat frame);
+void setup_camshift(bool show_video);
 bool camshift_init = false;
 
 Vision::Vision(vector<string> &args)
 {
+
     string file;
     for(size_t i=0;i<args.size();i++)
     {
@@ -56,8 +57,6 @@ Vision::Vision(vector<string> &args)
             no_wait = true;
             continue;
         }
-
-        quit.store(false);
     }
 
     LOG(DEBUG) << "Cuda: " << cuda << endl;
@@ -134,20 +133,18 @@ void Vision::setup()
     if(input_type == Type::CAMERA)
     {
         LOG(DEBUG) << "Starting camera thread" << endl;
-        thread capture_thread(&Vision::capture_frames,this, ref(frame));
-        capture_thread.detach();
+        capture_thread = thread(&Vision::capture_frames,this, ref(frame));
     }
     else if(input_type == Type::PS4)
     {
         LOG(DEBUG) << "Starting PS4 thread" << endl;
-        thread capture_thread(&Vision::capture_ps4,this, ref(frame));
-        capture_thread.detach();
+        capture_thread = thread(&Vision::capture_ps4,this, ref(frame));
+        setup_camshift(show_video);
     }
     else if(input_type == Type::FILE)
     {
         LOG(DEBUG) << "Starting file thread" << endl;
-        thread capture_thread(&Vision::capture_frames_file,this, ref(frame));
-        capture_thread.detach();
+        capture_thread = thread(&Vision::capture_frames_file,this, ref(frame));
     }
     previous_micros = micros();
 }
@@ -203,7 +200,7 @@ void Vision::capture_ps4(Mat &frame)
     {
         do{
             //cout << "preloop" << endl;
-            if(quit.load()){return;}
+            if(quit.load()){cout << "vision thread quit" << endl;return;}
             //cout << "loop" << endl;
             ps4cam->update();
             buffer = ps4cam->getFrame();
@@ -256,11 +253,6 @@ void Vision::update()
         //process_frame(buffer);
     }
 
-    if(!camshift_init)
-        {
-            setup_camshift(buffer);
-        }
-
     update_camshift(buffer);
 
     fp.loop();
@@ -278,7 +270,7 @@ void Vision::update()
     }
 
     auto dur = micros()-previous_micros;
-    LOG(DEBUG) << "Loop duration: " << dur << " fps: " << (float)1000000/dur;
+    LOG(DEBUG) << "Loop duration: " << dur << " fps: " << (float)1000000/(float)dur;
     printf("fps: %f\n", (float)1000000/dur);
     index++;
     previous_micros = micros();
@@ -490,7 +482,11 @@ void Vision::handle_keys()
 
 void Vision::stop()
 {
+    LOG(DEBUG) << "Vision stop true " << endl;
     quit.store(true);
+    capture_thread.join();
+    ps4cam->stop();
+    cout << "capture thread joined" << endl;
 }
 
 
@@ -500,14 +496,20 @@ Rect rect;
 const int channels[]{0};
 const int histSize[]{180};
 const float hrange[]{20,50};
-const float srange[]{150,200};
-const float vrange[]{100,200};
+const float srange[]{150,255};
+const float vrange[]{100,255};
 const float* ranges[]{hrange};
 const float* sranges[]{srange};
 const float* vranges[]{vrange};
+bool do_show_video = false;
 
-void setup_camshift(Mat frame)
+void setup_camshift(bool show_video)
 {
+    do_show_video = show_video;
+    //imwrite("bildet.png",frame);
+    //
+    Mat frame = imread("bildet.png");
+
     camshift_init = true;
     cvtColor(frame,hsv,COLOR_BGR2HSV);
 
@@ -525,9 +527,9 @@ void setup_camshift(Mat frame)
     //mixChannels( &roi, 1, out, 3, from_to, 3);
     split(roi,out);
 
-    imshow("h_chan", h_chan);
+    if(do_show_video){imshow("h_chan", h_chan);
     imshow("s_chan", s_chan);
-    imshow("v_chan", v_chan);
+    imshow("v_chan", v_chan);}
 
     calcHist(&h_chan,1,channels,Mat(),roi_hist_h,1,histSize,ranges);
 
@@ -559,7 +561,7 @@ void setup_camshift(Mat frame)
                 Scalar( 0, 0, 255), 2, 8, 0  );
     }
 
-    imshow("hist", histImage);
+    if(do_show_video){imshow("hist", histImage);}
 
     roi_hist = Mat{roi_hist_h.size(), CV_32FC3};
     Mat hists[] = {roi_hist_h, roi_hist_s,roi_hist_v};
@@ -581,7 +583,7 @@ void update_camshift(Mat frame)
         int ch[] = {0,1,2};
         calcBackProject(&hsv,1,ch,roi_hist,back_project,ranges,1.0);
 
-        imshow("win3",back_project);
+        if(do_show_video){imshow("win3",back_project);}
 
         try{
             camshift_rect = CamShift(back_project,rect,crit);
@@ -597,7 +599,7 @@ void update_camshift(Mat frame)
             line(frame, vertices[i], vertices[(i+1)%4], Scalar(0,255,0));
         }
 
-        imshow("win",frame);
+        if(do_show_video){imshow("win",frame);}
         //imshow("win2",roi);
         waitKey(1);
 }

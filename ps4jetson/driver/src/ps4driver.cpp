@@ -74,6 +74,11 @@ void ps4driver::update()
     //cout << "update devices done" << endl;
 }
 
+void ps4driver::stop()
+{
+    eye->shutdown();
+}
+
 Mat ps4driver::getFrame()
 {
     //cout << "getframe" << endl;
@@ -99,5 +104,4 @@ Mat ps4driver::getFrame()
 
 ps4driver::~ps4driver(void)
 {
-    eye->shutdown();
 }

@@ -14,6 +14,7 @@ class ps4driver{
         ps4driver();
         ~ps4driver();
         void update();
+        void stop();
         cv::Mat getFrame();
     private:
         void setup();

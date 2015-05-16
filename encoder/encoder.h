@@ -24,7 +24,7 @@ class Encoder{
         uint32_t fDist = 0;
         uint32_t bDist = 0;
 
-        std::atomic<uint64_t> distance;
+        std::atomic<uint64_t> distance{0};
 
         int counter = 0;
 

@@ -19,7 +19,8 @@
 
 class Vision{
     private:
-        std::atomic<bool> quit;
+        std::thread capture_thread;
+        std::atomic<bool> quit{false};
         unsigned long previous_micros = 0;
         std::mutex camera_mutex;
         cv::Mat frame;

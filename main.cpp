@@ -28,6 +28,7 @@ uint64_t start_time = 0;
 
 void loop()
 {
+    //cout << "main loop " << endl;
     if(micros() - start_time < 100000){return;}
     if(stop)
     {
@@ -48,7 +49,10 @@ void loop()
            
             driver->set_distance_sensor_stop(false);//Skrur av ultralyd sensor stop
             //driver->set_distance_sensor_stop(true);//Skrur på ultralyd sensor stop
-            driver->driveDistance(speed,400,[]{drive_complete();});//Kjører fremover
+            lineFollower->enable();//Linjefølging
+            //driver->driveManual();
+            //driver->drive(110,110);
+            //driver->driveDistance(speed,400,[]{drive_complete();});//Kjører fremover
             //driver->driveDistance(speed,args_dist,[]{drive_complete();},true);//Kjører bakover
             if(angle < 0)
             {

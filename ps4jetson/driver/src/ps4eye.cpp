@@ -276,10 +276,12 @@ namespace ps4eye {
         return sInstance;
     }
 
+    struct timeval tmval;
     bool USBMgr::handleEvents()
     {
         //cout << "handlevents" << endl;
-        return (libusb_handle_events(instance()->usb_context) == 0);
+        //return (libusb_handle_events(instance()->usb_context) == 0);
+        return libusb_handle_events_timeout_completed(instance()->usb_context,&tmval,NULL) == 0;
     }
 
     int USBMgr::listDevices( std::vector<PS4EYECam::PS4EYERef>& list )
@@ -465,8 +467,6 @@ namespace ps4eye {
             for(i=0;i<num_transfers;i++)
             {
                 libusb_cancel_transfer(xfr[i]);
-
-
             }
             while(num_transfers)
             {
@@ -742,9 +742,9 @@ namespace ps4eye {
 
     PS4EYECam::~PS4EYECam()
     {
-        debug2("PS4EYECAM destructor\n");
+        /*cout << "PS4EYECAM destructor" << endl;
         stop();
-        release();
+        release();*/
     }
 
     void PS4EYECam::release()
@@ -753,12 +753,12 @@ namespace ps4eye {
 
         if(handle_ != NULL)
             close_usb();
-        if(control_transfer_buffer) free(control_transfer_buffer);
+        /*if(control_transfer_buffer) free(control_transfer_buffer);
         if(myframe.unknown1)free(myframe.unknown1);
         if(myframe.unknown2)free(myframe.unknown2);
         if(myframe.videoLeftFrame)free(myframe.videoLeftFrame);
         if(myframe.videoRightFrame)free(myframe.videoRightFrame);
-        if(myframe.unknown3)free(myframe.unknown3);
+        if(myframe.unknown3)free(myframe.unknown3);*/
 
     }
 
@@ -1698,7 +1698,7 @@ namespace ps4eye {
     }
     void PS4EYECam::stop()
     {
-        debug2("stop is called is_streaming is: %d\n",is_streaming);
+        cout << "stop is called is_streaming is: " << is_streaming << endl;
         if(!is_streaming) return;
         //set led off
 
@@ -1721,10 +1721,11 @@ namespace ps4eye {
     void PS4EYECam::shutdown()
     {
         debug2("PS4EYECAM shutdown called wait...\n");
+        cout << "PS4eyeCAM shutdown " << endl;
         stop();
-        sleep(2);
+        //sleep(2);
         urb->num_transfers=0;
-       // release();
+        release();
     }
     void PS4EYECam::check_ff71()
     {
@@ -2708,14 +2709,14 @@ namespace ps4eye {
 
     void PS4EYECam::close_usb()
     {
-        debug2("closing device\n");
+        cout << "closing device" << endl;
         libusb_release_interface(handle_, 1);
        libusb_close(handle_);
     libusb_unref_device(device_);
 
          handle_ = NULL;
          device_ = NULL;
-        debug2("device closed\n");
+        cout << "device closed" << endl;
 
     }
 
@@ -2803,7 +2804,7 @@ namespace ps4eye {
             if (handle_ == NULL)
             {
                 cout <<"ov580 Camera boot mode not found..." << endl;
-                exit(0);
+                //exit(0);
             }
             //cout <<"ov580 Camera boot mode found..." << endl;
 

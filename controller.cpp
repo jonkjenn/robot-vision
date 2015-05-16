@@ -89,7 +89,7 @@ Controller::Controller(vector<string> &args, function<void()> callback)
     {
         arduino = new Arduinocomm("/dev/ttyTHS0",115200);
         driver = std::make_shared<Drive>(161,160,163,164,arduino);
-        line_follower = std::make_shared<LineFollower<Drive>>();
+        line_follower = std::make_shared<LineFollower<Drive>>(125,55);
         line_follower->setup(driver);
 
         delayMicroseconds(1e2);//Let serial connections start up
@@ -145,7 +145,7 @@ void Controller::parsepacket()
                 {
                     //LOG(DEBUG) << "Packet: " << (int)arduino->packet_buffer[0] << " "<< (int)arduino->packet_buffer[1] << " " << (int)arduino->packet_buffer[2] << endl;
                     unsigned int pos = arduino->read_uint16(1);
-                    //LOG(DEBUG) << "Position: " << pos << endl;
+                    LOG(DEBUG) << "Position: " << pos << endl;
                     //LOG(DEBUG) << "Duration:"  << nanos() - prevpos << endl;
                     //LOG(DEBUG) << "Line packet: enabled: " << line_follower->enabled() << endl;
                     if(line_follower->enabled())
@@ -194,17 +194,21 @@ void Controller::loop()
 
         while(true)
         {
+            ////cout << "cont loop " << endl;
             //reset_micros();
             if(quit_robot){
                 vision->stop();
-                return;}
+                driver->stop_driver();
+                cout << "main loop stop" << endl;
+                return;
+            }
             //clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
 
             pt = nanos();
             if(use_serial)
             {
                 driver->update();
-                cout << "Driver: " << endl;
+                //cout << "Driver: " << endl;
             }
 
             //LOG(DEBUG) << "vision" << endl;
@@ -226,35 +230,6 @@ void Controller::loop()
             }
 
             if(callback){callback();}
-        }
-    }
-    else
-    {
-        while(true)
-        {
-            if(quit_robot){return;}
-
-            driver->update();
-
-            //LOG(DEBUG) << "vision";
-            if(cam)
-            {
-                vision->update();
-            }
-
-            //LOG(DEBUG) << "arduino";
-            arduino->update();
-            if(arduino->packet_ready)
-            {
-                parsepacket();
-            }
-            //LOG(DEBUG) << "arduino done";
-
-            //LOG(DEBUG) << "callback";
-            callback();
-            //LOG(DEBUG) << "callback done";
-
-            //&LOG(DEBUG) << "complete";
         }
     }
 }
