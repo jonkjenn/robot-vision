@@ -8,7 +8,7 @@ void loop();
 void drive_complete();
 void main_stop();
 
-int step = -1;
+int step = 0;
 bool stop = false;
 
 float angle = 0;
@@ -28,10 +28,11 @@ uint64_t start_time = 0;
 
 void loop()
 {
-    //cout << "main loop " << endl;
-    if(micros() - start_time < 100000){return;}
+    cout << "main loop " << endl;
+    if(micros() - start_time < 100000){cout << "time" << endl; return;}
     if(stop)
     {
+        cout << "stopping" << endl;
         if(what != NOTHING)
         {
             driver->stop();
@@ -40,7 +41,7 @@ void loop()
         return;
     }
 
-    if(what == NOTHING){return;}
+    if(what == NOTHING){cout << "nothing" << endl; return;}
 
     switch(step)
     {
@@ -49,10 +50,10 @@ void loop()
            
             driver->set_distance_sensor_stop(false);//Skrur av ultralyd sensor stop
             //driver->set_distance_sensor_stop(true);//Skrur på ultralyd sensor stop
-            lineFollower->enable();//Linjefølging
+            //lineFollower->enable();//Linjefølging
             //driver->driveManual();
             //driver->drive(110,110);
-            //driver->driveDistance(speed,400,[]{drive_complete();});//Kjører fremover
+            driver->driveDistance(speed,850,[]{drive_complete();});//Kjører fremover
             //driver->driveDistance(speed,args_dist,[]{drive_complete();},true);//Kjører bakover
             if(angle < 0)
             {
@@ -79,7 +80,7 @@ void loop()
             //driver->driveDistance(110,500,[]{drive_complete();});
             //driver->driveDistance(speed, args_dist,[]{drive_complete();});
 
-            driver->rotate(110,90,LEFT,[]{drive_complete();});
+            driver->rotate(110,45,RIGHT,[]{drive_complete();});
             step++;
             break;
         case 4:
@@ -87,13 +88,13 @@ void loop()
             //driver->driveDistance(speed, args_dist,[]{drive_complete();});
             //driver->rotate(110,-90,LEFT,[]{drive_complete();});
 
-            driver->driveDistance(speed,1350,[]{drive_complete();},true);//Kjører fremover
+            driver->driveDistance(speed,400,[]{drive_complete();});//Kjører fremover
             step++;
             break;
         case 6:
             LOG(DEBUG) << "Case 2";
             //driver->driveDistance(speed, args_dist,[]{drive_complete();});
-            driver->rotate(110,90,RIGHT,[]{drive_complete();});
+            driver->rotate(110,45,RIGHT,[]{drive_complete();});
 
             step++;
             break;
@@ -101,22 +102,22 @@ void loop()
             LOG(DEBUG) << "Case 2";
             //driver->driveDistance(speed, args_dist,[]{drive_complete();});
 
-            driver->driveDistance(speed,600,[]{drive_complete();},true);//Kjører fremover
+            driver->driveDistance(speed,960,[]{drive_complete();});//Kjører fremover
             step++;
             break;
         case 10:
             LOG(DEBUG) << "Case 2";
             //driver->driveDistance(speed, args_dist,[]{drive_complete();});
-            driver->driveDistance(speed,200,[]{drive_complete();});//Kjører fremover
-            //driver->rotate(110,90,LEFT,[]{drive_complete();});
+            //driver->driveDistance(speed,200,[]{drive_complete();});//Kjører fremover
+            driver->rotate(110,90,LEFT,[]{drive_complete();});
 
             step++;
             break;
         case 12:
             LOG(DEBUG) << "Case 2";
-            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            driver->driveDistance(speed, 800,[]{drive_complete();});
 
-            driver->rotate(110,90,RIGHT,[]{drive_complete();});
+            //driver->rotate(110,90,RIGHT,[]{drive_complete();});
 
             //driver->driveDistance(speed,args_dist,[]{drive_complete();});//Kjører fremover
             step++;
@@ -124,12 +125,61 @@ void loop()
         case 14:
             LOG(DEBUG) << "Case 2";
             //driver->driveDistance(speed, args_dist,[]{drive_complete();});
-            //driver->rotate(110,90,LEFT,[]{drive_complete();});
-            driver->driveDistance(140,2000,[]{drive_complete();},true);//Kjører fremover
+            driver->rotate(110,90,LEFT,[]{drive_complete();});
+            //driver->driveDistance(speed,2000,[]{drive_complete();});//Kjører fremover
 
             step++;
             break;
         case 16:
+            LOG(DEBUG) << "Case 2";
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            //driver->rotate(110,90,LEFT,[]{drive_complete();});
+            driver->driveDistance(speed,900,[]{drive_complete();});//Kjører fremover
+
+            step++;
+            break;
+        case 18:
+            LOG(DEBUG) << "Case 2";
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            driver->rotate(110,90,RIGHT,[]{drive_complete();});
+            //driver->driveDistance(speed,1100,[]{drive_complete();});//Kjører fremover
+
+            step++;
+            break;
+        case 20:
+            LOG(DEBUG) << "Case 2";
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            //driver->rotate(110,90,RIGHT,[]{drive_complete();});
+            driver->driveDistance(speed,400,[]{drive_complete();});//Kjører fremover
+
+            step++;
+            break;
+        case 22:
+            LOG(DEBUG) << "Case 2";
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            driver->rotate(110,90,RIGHT,[]{drive_complete();});
+            //driver->driveDistance(speed,1100,[]{drive_complete();});//Kjører fremover
+
+            step++;
+            break;
+        case 24:
+            LOG(DEBUG) << "Case 2";
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            //driver->rotate(110,90,RIGHT,[]{drive_complete();});
+            driver->driveDistance(speed,200,[]{drive_complete();});//Kjører fremover
+
+            step++;
+            break;
+        case 26:
+            LOG(DEBUG) << "Case 2";
+            lineFollower->enable();//Linjefølging
+            //driver->driveDistance(speed, args_dist,[]{drive_complete();});
+            //driver->rotate(110,90,RIGHT,[]{drive_complete();});
+            //driver->driveDistance(speed,200,[]{drive_complete();});//Kjører fremover
+
+            step++;
+            break;
+        case 28:
             c->quit_robot = true;
             LOG(DEBUG) << "Stopping" <<endl;
             break;
@@ -186,11 +236,16 @@ int main(int argc, char** argv)
         {
             what  = NOTHING;
         }
+        else if(args[i].compare("--step") == 0)
+        {
+            step = atoi(args[++i].c_str());
+        }
     }
 
-    if(what == FOLLOW_STEPS)
+    if(what != FOLLOW_STEPS)
     {
-        step = 0;
+        cout << "Step -1 " << endl;
+        step = -1;
     }
 
     c = unique_ptr<Controller>(new Controller(args, []{loop();}));

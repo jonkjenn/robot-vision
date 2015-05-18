@@ -19,6 +19,8 @@
 
 class Vision{
     private:
+        bool save_video = false;
+        cv::VideoWriter writer;
         std::thread capture_thread;
         std::atomic<bool> quit{false};
         unsigned long previous_micros = 0;

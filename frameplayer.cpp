@@ -31,7 +31,7 @@ void Frameplayer::create_windows(const int count, const Size &size)
 void Frameplayer::show_frame(const Mat &frame)
 {
     if(!is_enabled){return;}
-    LOG(DEBUG) << "Showing frame";
+    LOG(DEBUG) << "Showing frame " << counter << endl;
     imshow("nw" + to_string(counter), frame);
     counter++;
 }

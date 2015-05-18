@@ -57,6 +57,12 @@ Vision::Vision(vector<string> &args)
             no_wait = true;
             continue;
         }
+
+        if(args[i].compare("--savevideo") == 0)
+        {
+            save_video = true;
+            continue;
+        }
     }
 
     LOG(DEBUG) << "Cuda: " << cuda << endl;
@@ -89,6 +95,7 @@ Vision::Vision(vector<string> &args)
         frame_count = cap->get(CV_CAP_PROP_FRAME_COUNT);
         LOG(DEBUG) << "frame_count " << frame_count;
     }
+
     setup();
 }
 
@@ -126,7 +133,15 @@ void Vision::setup()
     size = Size(177,144);
     sub_rect = Rect(0,size.height-41,size.width,40);
 
-    fp = Frameplayer{show_video, 9, size};
+    if(save_video)
+    {
+        Size sz = Size(320,192);
+        //writer.open("out.avi",CV_FOURCC('M','J','P','G') ,200,sz);
+        //writer.open("out.avi",CV_FOURCC('H','2','6','4'),200,sz);
+        writer.open("out.avi",CV_FOURCC('M','P','4','V'),200,sz);
+    }
+
+    //fp = Frameplayer{show_video, 9, size};
 
     LOG(DEBUG) << "Frameplayer started" << endl;
 
@@ -241,6 +256,8 @@ void Vision::update()
         if(buffer.empty()){return;}*/
     }
 
+
+    LOG(DEBUG) << buffer.size() << endl;
     //LOG(INFO) << "Loaded frame: " << (micros() - loading_time) << " microseconds";
     //LOG(INFO) << "Resized frame";
 
@@ -253,9 +270,11 @@ void Vision::update()
         //process_frame(buffer);
     }
 
+    if(save_video){writer << buffer;}
+
     update_camshift(buffer);
 
-    fp.loop();
+    //fp.loop();
 
     if(!no_wait && (show_video || input_type == Type::FILE))
     {
@@ -271,7 +290,7 @@ void Vision::update()
 
     auto dur = micros()-previous_micros;
     LOG(DEBUG) << "Loop duration: " << dur << " fps: " << (float)1000000/(float)dur;
-    printf("fps: %f\n", (float)1000000/dur);
+    //printf("fps: %f\n", (float)1000000/dur);
     index++;
     previous_micros = micros();
 }
@@ -495,9 +514,9 @@ int cc,cr,cch,cw = 0;
 Rect rect;
 const int channels[]{0};
 const int histSize[]{180};
-const float hrange[]{20,50};
-const float srange[]{150,255};
-const float vrange[]{100,255};
+const float hrange[]{30,70};
+const float srange[]{127,175};
+const float vrange[]{127,200};
 const float* ranges[]{hrange};
 const float* sranges[]{srange};
 const float* vranges[]{vrange};
@@ -509,6 +528,8 @@ void setup_camshift(bool show_video)
     //imwrite("bildet.png",frame);
     //
     Mat frame = imread("bildet.png");
+
+    imshow("original_hist", frame);
 
     camshift_init = true;
     cvtColor(frame,hsv,COLOR_BGR2HSV);
@@ -527,9 +548,17 @@ void setup_camshift(bool show_video)
     //mixChannels( &roi, 1, out, 3, from_to, 3);
     split(roi,out);
 
-    if(do_show_video){imshow("h_chan", h_chan);
+    if(do_show_video){
+        /*imshow("h_chan", h_chan);
     imshow("s_chan", s_chan);
-    imshow("v_chan", v_chan);}
+    imshow("v_chan", v_chan);*/
+        imshow("h_chan", h_chan);
+        moveWindow("h_chan", frame.cols, 0);
+        imshow("s_chan", s_chan);
+        moveWindow("s_chan", frame.cols + h_chan.cols, 0);
+        imshow("v_chan", v_chan);
+        moveWindow("v_chan", frame.cols + 2*s_chan.cols, 0);
+    }
 
     calcHist(&h_chan,1,channels,Mat(),roi_hist_h,1,histSize,ranges);
 
@@ -561,7 +590,10 @@ void setup_camshift(bool show_video)
                 Scalar( 0, 0, 255), 2, 8, 0  );
     }
 
-    if(do_show_video){imshow("hist", histImage);}
+    if(do_show_video){
+        imshow("hist", histImage);
+        moveWindow("hist",frame.cols + 3*s_chan.cols, 0);
+    }
 
     roi_hist = Mat{roi_hist_h.size(), CV_32FC3};
     Mat hists[] = {roi_hist_h, roi_hist_s,roi_hist_v};
@@ -583,7 +615,11 @@ void update_camshift(Mat frame)
         int ch[] = {0,1,2};
         calcBackProject(&hsv,1,ch,roi_hist,back_project,ranges,1.0);
 
-        if(do_show_video){imshow("win3",back_project);}
+        if(do_show_video){
+            imshow("win3",back_project);
+            moveWindow("win3",0,300);
+            //fp.show_frame(back_project);
+        }
 
         try{
             camshift_rect = CamShift(back_project,rect,crit);
@@ -599,7 +635,11 @@ void update_camshift(Mat frame)
             line(frame, vertices[i], vertices[(i+1)%4], Scalar(0,255,0));
         }
 
-        if(do_show_video){imshow("win",frame);}
+        if(do_show_video){
+            imshow("win",frame);
+            moveWindow("win",back_project.cols,300);
+            //fp.show_frame(frame);
+        }
         //imshow("win2",roi);
-        waitKey(1);
+        //waitKey(1);
 }

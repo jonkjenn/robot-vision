@@ -304,6 +304,8 @@ class LineFollower{
             prev_time = time;
             dtest++;
 
+            std::cout << "Linefollower psoition: " << position << std::endl;
+
             if(!check_line_not_found(position,stopcount)){
                 auto stop_callback = std::bind(&LineFollower::drive_reverse,this);
                 _driver->stop(stop_callback);
@@ -340,14 +342,14 @@ class LineFollower{
             }
 
 
-            out_pid_Input = (abs(dist_center)<2000?0:dist_center);
+            out_pid_Input = (abs(dist_center)<1500?0:dist_center);
 
             outerPID->Compute();
 
             std::cout << "outer pid: " << out_pid_Output << std::endl;
 
             inn_pid_SetPoint = out_pid_Output;
-            inn_pid_Input = ((abs(delta_dist_center) < 100) && (abs(dist_center)<2000))?0:delta_dist_center;
+            inn_pid_Input = ((abs(delta_dist_center) < 100) && (abs(dist_center)<1500))?0:delta_dist_center;
 
             if(innerPID->Compute())
             {

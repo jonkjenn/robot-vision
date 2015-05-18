@@ -406,7 +406,7 @@ void Drive::update()
         }*/
 
         //if(abs(abs(gyro->total_rotation) - abs(gyro->goal_rotation)) < 0.0194)
-        if(gyro->get_distance_rotation() < 1.0)
+        if(gyro->get_distance_rotation() < 3.5)
         {
             LOG(DEBUG) << "Rotation complete\n";
             stop();
