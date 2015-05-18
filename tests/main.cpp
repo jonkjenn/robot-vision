@@ -50,55 +50,56 @@ namespace {
             }
 
             // Objects declared here can be used by all tests in the test case for Foo.
-            const uint8_t min_power = 70;
-            const uint8_t max_power = 110;
+            const uint8_t min_power = 60;
+            const uint8_t max_power = 120;
             LineFollower<MockDrive> lf{max_power,min_power};
             std::shared_ptr<MockDrive> drive = std::make_shared<MockDrive>();
     };
 
     // Tests that the Foo::Bar() method does Abc
     TEST_F(LineFollowerTest, CheckPower) {
-        EXPECT_EQ((uint8_t)70, check_power(min_power,max_power,80));
-        EXPECT_EQ(min_power, check_power(min_power,max_power,60));
+        EXPECT_EQ((uint8_t)60, check_power(min_power,max_power,60));
+        EXPECT_EQ(min_power, check_power(min_power,max_power,min_power-1));
         EXPECT_EQ(min_power, check_power(min_power,max_power,0));
-        EXPECT_EQ(max_power, check_power(min_power,max_power,120));
+        EXPECT_EQ(max_power, check_power(min_power,max_power,max_power+1));
         EXPECT_EQ(max_power, check_power(min_power,max_power,255));
     }
 
     TEST_F(LineFollowerTest, ScalePower){
         EXPECT_EQ(max_power, scale_power(min_power,max_power,0));
-        EXPECT_EQ((uint8_t)93, scale_power(min_power,max_power,110));
-        EXPECT_EQ((uint8_t)107, scale_power(min_power,max_power,20));
-        EXPECT_EQ((uint8_t)70, scale_power(min_power,max_power,255));
-        EXPECT_EQ((uint8_t)82, scale_power(min_power,max_power,179));
+        EXPECT_EQ((uint8_t)94, scale_power(min_power,max_power,110));
+        EXPECT_EQ((uint8_t)115, scale_power(min_power,max_power,20));
+        EXPECT_EQ((uint8_t)60, scale_power(min_power,max_power,255));
+        EXPECT_EQ((uint8_t)78, scale_power(min_power,max_power,179));
     }
 
-    TEST_F(LineFollowerTest, check_line_not_found)
+    TEST_F(LineFollowerTest, check_line_found)
     {
         unsigned int stopcount = 0;
-        ASSERT_TRUE(check_line_not_found(1000,stopcount)); 
-        ASSERT_TRUE(check_line_not_found(1,stopcount)); 
-        ASSERT_TRUE(check_line_not_found(6999,stopcount)); 
-        ASSERT_TRUE(check_line_not_found(5000,stopcount)); 
-        ASSERT_TRUE(check_line_not_found(0,stopcount)); 
-        ASSERT_TRUE(check_line_not_found(7000,stopcount)); 
-        ASSERT_TRUE(check_line_not_found(9000,stopcount)); 
-        ASSERT_TRUE(check_line_not_found(2500,stopcount)); 
+        ASSERT_TRUE(check_line_found(1000)); 
+        ASSERT_TRUE(check_line_found(1)); 
+        ASSERT_TRUE(check_line_found(6999)); 
+        ASSERT_TRUE(check_line_found(5000)); 
+        ASSERT_FALSE(check_line_found(0)); 
+        ASSERT_FALSE(check_line_found(7000)); 
+        ASSERT_FALSE(check_line_found(9000)); 
+        ASSERT_TRUE(check_line_found(2500)); 
 
         for(int i=0;i<21;i++)
         {
-            check_line_not_found(0,stopcount);
+            check_if_stopcount_stop(false,stopcount);
         }
-        ASSERT_FALSE(check_line_not_found(0,stopcount));
-        ASSERT_FALSE(check_line_not_found(7000,stopcount));
-        ASSERT_TRUE(check_line_not_found(2500,stopcount));
+        ASSERT_TRUE(check_if_stopcount_stop(check_line_found(0),stopcount));
+        ASSERT_TRUE(check_if_stopcount_stop(check_line_found(7000),stopcount));
+        ASSERT_FALSE(check_if_stopcount_stop(check_line_found(2500),stopcount));
+
         for(int i=0;i<21;i++)
         {
-            check_line_not_found(7000,stopcount);
+            check_if_stopcount_stop(false,stopcount);
         }
-        ASSERT_FALSE(check_line_not_found(7000,stopcount));
-        ASSERT_FALSE(check_line_not_found(0,stopcount));
-        ASSERT_TRUE(check_line_not_found(3500,stopcount));
+        ASSERT_TRUE(check_if_stopcount_stop(check_line_found(7000),stopcount));
+        ASSERT_TRUE(check_if_stopcount_stop(check_line_found(0),stopcount));
+        ASSERT_FALSE(check_if_stopcount_stop(check_line_found(3500),stopcount));
     }
 
     TEST_F(LineFollowerTest, update_position_too_high)
@@ -144,8 +145,12 @@ namespace {
         EXPECT_CALL(*drive, drive(_,_))
             .WillRepeatedly(Return(true));
 
-        EXPECT_CALL(*drive, stop(An<function<void()>>()))
+        EXPECT_CALL(*drive, drive(max_power,max_power))
             .Times(1)
+            .WillRepeatedly(Return(true));
+
+        EXPECT_CALL(*drive, stop(An<function<void()>>()))
+            .Times(2)
             .WillOnce(StoreFunction<1>(&callback));
 
         EXPECT_CALL(*drive, driveDistance(110, 250, An<function<void()>>(), true, false,true))
@@ -159,6 +164,8 @@ namespace {
         }
 
         callback();
+
+        lf.update(2500);
     }
 
 
@@ -178,6 +185,19 @@ namespace {
             .Times(1);
 
         EXPECT_CALL(*drive, drive(Lt(max_power),_))
+            .Times(1);
+
+        lf.enable();
+        lf.update(2500);
+        lf.update(6000);
+    }
+
+    TEST_F(LineFollowerTest, update_change_position_right_turn)
+    { 
+        EXPECT_CALL(*drive, drive(max_power,max_power))
+            .Times(1);
+
+        EXPECT_CALL(*drive, drive(_,Lt(max_power)))
             .Times(1);
 
         lf.enable();

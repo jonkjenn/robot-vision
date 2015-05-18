@@ -28,22 +28,27 @@ static uint8_t scale_power(const uint8_t min_power,const uint8_t max_power, uint
     return max_power - round(power_scaling*(max_power-min_power));
 }
 
-static bool check_line_not_found(unsigned int position, unsigned int &stopcount)
+static bool check_line_found(unsigned int position)
 {
-    if(position >= 7000 || position == 0)
+    return position < 7000 && position > 0;
+}
+
+static bool check_if_stopcount_stop(bool on_line, unsigned int &stopcount)
+{
+    if(!on_line)
     {
         if(stopcount>20)
         {
-            return false;
+            return true;
         }
 
         stopcount++;
-        return true;
+        return false;
     }
     else
     {
         stopcount = 0;
-        return true;
+        return false;
     }
 }
 
@@ -228,6 +233,8 @@ class LineFollower{
         int16_t part_tmp[5] = {0};
         bool _enabled = false;
 
+        bool _wait_for_line = false;
+
         // We drive left wheel slower(power1), turning to the left
         void turn_left(uint8_t power)
         {
@@ -306,10 +313,16 @@ class LineFollower{
 
             std::cout << "Linefollower psoition: " << position << std::endl;
 
-            if(!check_line_not_found(position,stopcount)){
+            if(!_wait_for_line && check_if_stopcount_stop(check_line_found(position),stopcount)){
                 auto stop_callback = std::bind(&LineFollower::drive_reverse,this);
                 _driver->stop(stop_callback);
+                _wait_for_line = true;
                 return;
+            }
+            else if(_wait_for_line && check_line_found(position))
+            {
+                _driver->stop([]{});
+                stopcount = 0;                
             }
 
             if(!collected_startpos){
