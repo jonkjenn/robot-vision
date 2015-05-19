@@ -28,7 +28,6 @@ uint64_t start_time = 0;
 
 void loop()
 {
-    cout << "main loop " << endl;
     if(micros() - start_time < 100000){cout << "time" << endl; return;}
     if(stop)
     {
@@ -41,7 +40,7 @@ void loop()
         return;
     }
 
-    if(what == NOTHING){cout << "nothing" << endl; return;}
+    if(what == NOTHING){return;}
 
     switch(step)
     {
@@ -53,7 +52,8 @@ void loop()
             //lineFollower->enable();//Linjefølging
             //driver->driveManual();
             //driver->drive(110,110);
-            driver->driveDistance(speed,850,[]{drive_complete();});//Kjører fremover
+            driver->driveDistance(speed,args_dist,[]{drive_complete();});//Kjører fremover
+            //driver->driveDistance(speed,850,[]{drive_complete();});//Kjører fremover
             //driver->driveDistance(speed,args_dist,[]{drive_complete();},true);//Kjører bakover
             if(angle < 0)
             {
@@ -73,6 +73,7 @@ void loop()
 
 
             step++;
+            step = 27;
             break;
         case 2:
             LOG(DEBUG) << "Case 2";
@@ -256,6 +257,7 @@ int main(int argc, char** argv)
 
     if(what == DRIVE_DISTANCE)
     {
+        cout << "args_dist: " << args_dist << endl;
         bool reverse = false;
         if(args_dist < 0)
         {

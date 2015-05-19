@@ -40,8 +40,10 @@ class Drive{
 
         float encoder_pid_SetPoint = 0,encoder_pid_Input = 0,encoder_pid_Output = 0;
         float encoder_pid_SetPoint_2 = 0,encoder_pid_Input_2 = 0,encoder_pid_Output_2 = 0;
+        float encoder_speed_pid_SetPoint = 0,encoder_speed_pid_Input = 0,encoder_speed_pid_Output = 0;
         float encoder_consKp=1, encoder_consKi=0, encoder_consKd=0;
         float enc_rot_kp=3, enc_rot_ki=5, enc_rot_kd=0;
+        std::unique_ptr<PID> encoder_speedPID = nullptr;
         std::unique_ptr<PID> encoderPID = nullptr;
         std::unique_ptr<PID> encoderPID_2 = nullptr;
 
@@ -91,6 +93,7 @@ class Drive{
         void drive_straight();
         void modify_power_by_speed(int target_speed);
         void modify_power_by_speed_rotate(int target_speed);
+        void modify_power_by_distance();
         void stop_driver();
 };
 #endif
