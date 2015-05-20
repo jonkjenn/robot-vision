@@ -145,7 +145,7 @@ void Controller::parsepacket()
                 {
                     //LOG(DEBUG) << "Packet: " << (int)arduino->packet_buffer[0] << " "<< (int)arduino->packet_buffer[1] << " " << (int)arduino->packet_buffer[2] << endl;
                     unsigned int pos = arduino->read_uint16(1);
-                    LOG(DEBUG) << "Position: " << pos << endl;
+                    //LOG(DEBUG) << "Position: " << pos << endl;
                     //LOG(DEBUG) << "Duration:"  << nanos() - prevpos << endl;
                     //LOG(DEBUG) << "Line packet: enabled: " << line_follower->enabled() << endl;
                     if(line_follower->enabled())

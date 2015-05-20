@@ -56,10 +56,10 @@ void gyroscope::update()
                     mavlink_highres_imu_t sensors;
                     mavlink_msg_highres_imu_decode(&msg, &sensors);
 
-                    cout << "gyro: " << sensors.zgyro << endl;
+                    //cout << "gyro: " << sensors.zgyro << endl;
 
                     if(prevtime == 0){prevtime = sensors.time_usec;break;}
-                    if(abs(sensors.zgyro) < 0.01){
+                    if(abs(sensors.zgyro) < 0.0015){
                         //cout << "gyro:" << sensors.zgyro << endl;
                         return;
                     }

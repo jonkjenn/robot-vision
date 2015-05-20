@@ -27,15 +27,10 @@ uint64_t enccount = 1;
 uint64_t avg_count = 1;
 void Encoder::update() {
 
-    //LOG(DEBUG) << "Nanos: " << nanos() - nano_time << endl;
-    //nano_time = nanos();
-    //
-    if(nanos() - prevTime < 100000){return;}
+    if(nanos() - prevTime < 100){return;}
 
-    if(gpio_get_value(&encAout,fd1) < 0){cout << "return"<<endl;return;}
+    if(gpio_get_value(&encAout,fd1) < 0){return;}
     if(gpio_get_value(&encBout,fd2) < 0){return;}
-
-//    lock_guard<mutex> lock(encodermutex);
 
     if((encAout == encAoutprev && encBout != encBoutprev && encBout == encAout)
             || (encAoutprev == encBoutprev && encAout != encAoutprev))
@@ -43,8 +38,6 @@ void Encoder::update() {
         direction = 1;
         fDist++;
         updateSpeeds();
-        //LOG(DEBUG) << (int)_pinA << " fDist: " << fDist;
-               //LOG(DEBUG) << (int)_pinB << " Forward" <<endl;
     }
     else if((encBout == encBoutprev && encAout != encAoutprev && encAout == encBout)
             || (encBoutprev == encAoutprev && encBout != encBoutprev))
@@ -53,7 +46,6 @@ void Encoder::update() {
         bDist++;
         updateSpeeds();
         //Serial.println("Backward");
-               //LOG(DEBUG) << (int)_pinA << " Backward" << endl;
     }
     else
     {
@@ -110,10 +102,12 @@ void Encoder::updateSpeeds()
         speeds[i-1] = speeds[i];
         sumspeed+= speeds[i];
     }
-    sumspeed+= speeds[9];
     speeds[9] = encoder_tick_distance/(time-prevTime) * 1000 * 1000;
+    sumspeed+= speeds[9];
 
     speed.store(sumspeed/10);
+    //cout << "last speed: " << speeds[9] << endl;
+    //cout << "avg speed: " << sumspeed/10 << endl;
 
     if(fDist>=bDist)
     {
