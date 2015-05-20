@@ -1,6 +1,7 @@
 #include "encoder.h"
 using namespace std;
 
+uint64_t avg_prev  =0;
 void Encoder::setup(unsigned char pinA, unsigned char pinB) {
 
     _pinA = pinA;
@@ -20,6 +21,7 @@ void Encoder::setup(unsigned char pinA, unsigned char pinB) {
     prevTime = nanos();
     //nano_time = nanos();
     start_time = prevTime;
+    avg_prev = micros();
 }
 
 uint64_t avg_dur  =0;
@@ -27,7 +29,13 @@ uint64_t enccount = 1;
 uint64_t avg_count = 1;
 void Encoder::update() {
 
-    if(nanos() - prevTime < 100){return;}
+    avg_count++;
+    avg_dur += micros()-avg_prev;
+
+    if(avg_count % 10000 == 0){
+        cout << "average duration: " << (float)avg_dur/(float)avg_count << endl;
+    }
+    //if(nanos() - prevTime < 10000){return;}
 
     if(gpio_get_value(&encAout,fd1) < 0){return;}
     if(gpio_get_value(&encBout,fd2) < 0){return;}
@@ -52,11 +60,13 @@ void Encoder::update() {
         if(!(encAout == encAoutprev && encBout == encBoutprev))
         {
             //printf("duration: %" PRIu64 "\n", nanos() - prevTime);
-            //LOG(DEBUG) << (int)_pinA << " WTF unknown encoder value, you're to slow?" <<endl;
+            LOG(DEBUG) << (int)_pinA << " WTF unknown encoder value, you're to slow?" <<endl;
 
         }
         //Serial.println("Not moving");
     }
+
+    //cout << (int)_pinA << " " << (int)_pinB  << " - " << (int)encAout <<","<< (int)encBout << endl;
 
     //if(encAout != encAoutprev){LOG(DEBUG) << (int)_pinA << " " << (int)encAout << "," << (int)encBout << endl;}
     //if(encBout != encBoutprev){LOG(DEBUG) << (int)_pinA << " " << (int)encAout << "," << (int)encBout << endl;}
@@ -86,6 +96,7 @@ void Encoder::update() {
           {  //Serial.print("Direction : " + String(dir) + " Val: " +String((res[0] <<2)|res[1]) + " A: " + String(encAout) + " B: " + String(encBout)+ "\n");
           Serial.print("Distance forward: " + String(fDist/64.0/18.75 * PI * 0.124) + " backward: " + String(bDist/64.0/18.75 * PI * 0.124) + "\n");
           }*/
+    avg_prev = micros();
 }
 
 void Encoder::updateSpeeds()

@@ -22,6 +22,8 @@ class Drive{
         unsigned long _startTime = 0;
         unsigned long _duration = 0;
         uint64_t _distance = 0;
+        uint64_t _current_left_encoder_distance = 0;
+        uint64_t _current_right_encoder_distance = 0;
         Encoder encoderRight;
         Encoder encoderLeft;
         uint8_t maxLeftSpeed = 90;

@@ -49,7 +49,7 @@ void loop()
            
             driver->set_distance_sensor_stop(false);//Skrur av ultralyd sensor stop
             //driver->set_distance_sensor_stop(true);//Skrur på ultralyd sensor stop
-            //lineFollower->enable();//Linjefølging
+            lineFollower->enable();//Linjefølging
             //driver->driveManual();
             //driver->drive(110,110);
             driver->driveDistance(speed,args_dist,[]{drive_complete();});//Kjører fremover
@@ -263,11 +263,20 @@ int main(int argc, char** argv)
         {
             reverse = true;
         }
+        driver->set_distance_sensor_stop(false);//Skrur av ultralyd sensor stop
         driver->driveDistance(speed,abs(args_dist),[]{main_stop();},reverse,true);
     }
     else if(what == ROTATE)
     {
-        driver->rotate(110,angle,LEFT,[]{main_stop();});
+        driver->set_distance_sensor_stop(false);//Skrur av ultralyd sensor stop
+        if(angle>0)
+        {
+            driver->rotate(110,angle,RIGHT,[]{main_stop();});
+        }
+        else
+        {
+            driver->rotate(110,angle,LEFT,[]{main_stop();});
+        }
     }
 
     c->start();

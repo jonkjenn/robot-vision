@@ -376,7 +376,7 @@ class LineFollower{
             }
 
             //  1 time,         2 position,         3 dist_center,          4 avg dist center,    5 delta_dist_center,      6 median_delta_dist_center, 7 outer pid output, 8 inner pid output,         9 left power,  10 right power,                  11 distance                
-            csv << time << ";" << position << ";" << prev_dist[0] << ";" << dist_center << ";" << prev_delta[0] << ";" << delta_dist_center << ";" << out_pid_Output << ";" << inn_pid_Output << ";" << prevLeftPower << ";" << prevRightPower << ";"  << distance << std::endl;
+            //csv << time << ";" << position << ";" << prev_dist[0] << ";" << dist_center << ";" << prev_delta[0] << ";" << delta_dist_center << ";" << out_pid_Output << ";" << inn_pid_Output << ";" << prevLeftPower << ";" << prevRightPower << ";"  << distance << std::endl;
 
             prev_dist_center = dist_center;
         }
@@ -394,7 +394,7 @@ class LineFollower{
 
             if(debug)
             {
-                csv.open("data.csv");
+                //csv.open("data.csv");
             }
         }
         bool enabled()

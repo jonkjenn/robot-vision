@@ -15,7 +15,7 @@ Drive::Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigne
     encoderLeft.setup(encoder_left_a,encoder_left_b);
     encoder_thread = thread(&Drive::update_encoder,this, &encoderRight,&encoderLeft);
 
-    csv.open("drive.csv");
+    //csv.open("drive.csv");
 
     serial->drive(90,90);
     quit.store(false);
@@ -119,13 +119,13 @@ void Drive::setup_and_start_drive_straight(unsigned int speed)
 
 void Drive::modify_power_by_speed_rotate(int target_speed)//mm /s
 {
-    encoder_pid_Input = (int)encoderLeft.getDistance() - (int)encoderRight.getDistance();//mm/s
+    encoder_pid_Input = (int)_current_left_encoder_distance - (int)_current_right_encoder_distance;//mm/s
     encoderPID->Compute();
-    LOG(DEBUG) << "PID1 " << encoder_pid_Output <<  " left distance: "  << (encoderLeft.getDistance()) << " input left: " << encoder_pid_Input << endl;//mm/sendl;
+    LOG(DEBUG) << "PID1 " << encoder_pid_Output <<  " left distance: "  << (_current_left_encoder_distance) << " input left: " << encoder_pid_Input << endl;//mm/sendl;
     currentLeftSpeed = leftSpeed + encoder_pid_Output;
-    encoder_pid_Input_2 = (int)encoderRight.getDistance() - (int)encoderLeft.getDistance();//mm/s
+    encoder_pid_Input_2 = (int)_current_right_encoder_distance - (int)_current_left_encoder_distance;//mm/s
     encoderPID_2->Compute();
-    LOG(DEBUG) << "PID2 " << encoder_pid_Output_2 <<  " right distance: "  << (encoderRight.getDistance())  << "input right: " << encoder_pid_Input_2 << endl;//mm/sendl;
+    LOG(DEBUG) << "PID2 " << encoder_pid_Output_2 <<  " right distance: "  << (_current_right_encoder_distance)  << "input right: " << encoder_pid_Input_2 << endl;//mm/sendl;
     currentRightSpeed =  rightSpeed + encoder_pid_Output_2;
     if(currentLeftSpeed < 90) { currentLeftSpeed = 90;}
     if(currentRightSpeed < 90) { currentRightSpeed = 90;}
@@ -143,13 +143,13 @@ void Drive::modify_power_by_speed(int target_speed)//mm /s
 
 void Drive::modify_power_by_distance()
 {
-    encoder_pid_Input = (int)encoderLeft.getDistance() - (int)encoderRight.getDistance();//mm/s
+    encoder_pid_Input = (int)_current_left_encoder_distance - (int)_current_right_encoder_distance;//mm/s
     encoderPID->Compute();
-    LOG(DEBUG) << "PID1 " << encoder_pid_Output <<  " left distance: "  << (encoderLeft.getDistance()) << " input left: " << encoder_pid_Input << endl;//mm/sendl;
+    LOG(DEBUG) << "PID1 " << encoder_pid_Output <<  " left distance: "  << (_current_left_encoder_distance) << " input left: " << encoder_pid_Input << endl;//mm/sendl;
     currentLeftSpeed = currentLeftSpeed + encoder_pid_Output;
-    encoder_pid_Input_2 = (int)encoderRight.getDistance() - (int)encoderLeft.getDistance();//mm/s
+    encoder_pid_Input_2 = (int)_current_right_encoder_distance - (int)_current_left_encoder_distance;//mm/s
     encoderPID_2->Compute();
-    LOG(DEBUG) << "PID2 " << encoder_pid_Output_2 <<  " right distance: "  << (encoderRight.getDistance())  << "input right: " << encoder_pid_Input_2 << endl;//mm/sendl;
+    LOG(DEBUG) << "PID2 " << encoder_pid_Output_2 <<  " right distance: "  << (_current_right_encoder_distance)  << "input right: " << encoder_pid_Input_2 << endl;//mm/sendl;
     currentRightSpeed =  currentRightSpeed + encoder_pid_Output_2;
 }
 
@@ -209,6 +209,7 @@ void Drive::driveDistance(unsigned int speed, unsigned long distance, function<v
     encoderLeft.reset();
 
     state = DRIVING_DISTANCE;
+    //Static distance reduction
     _distance = (distance-15)*1000;
 
     setup_and_start_drive_straight(speed);
@@ -251,19 +252,19 @@ void Drive::rotate(unsigned int speed, float degrees, Rotation_Direction directi
 
     speed = 110;
 
-    uint8_t max_extra_speed = 20;
+    uint8_t max_extra_speed = 30;
 
-    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, rotationPIDKp, rotationPIDKi, rotationPIDKd, DIRECT, -20,max_extra_speed));
+    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, 0.25, rotationPIDKi, rotationPIDKd, DIRECT, -max_extra_speed,max_extra_speed));
     rotationPID_setpoint = 0.0;
     rotationPID->SetMode(AUTOMATIC);
 
     rot_dir = direction;
 
-    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,0.03,0.0,0,DIRECT,-10,10));
+    encoderPID = unique_ptr<PID>(new PID(&encoder_pid_Input, &encoder_pid_Output, &encoder_pid_SetPoint,0.00375,0.0,0.0,DIRECT,-30,30));
     encoder_pid_SetPoint = 0.0;
     encoderPID->SetMode(AUTOMATIC);
 
-    encoderPID_2 = unique_ptr<PID>(new PID(&encoder_pid_Input_2, &encoder_pid_Output_2, &encoder_pid_SetPoint_2,0.03,0.0,0,DIRECT,-10,10));
+    encoderPID_2 = unique_ptr<PID>(new PID(&encoder_pid_Input_2, &encoder_pid_Output_2, &encoder_pid_SetPoint_2,0.00375,0,0.0,DIRECT,-30,30));
     encoder_pid_SetPoint_2 = 0.0;
     encoderPID_2->SetMode(AUTOMATIC);
 
@@ -296,6 +297,9 @@ void Drive::update()
         return;
     }
 
+    _current_left_encoder_distance = encoderLeft.getDistance();
+    _current_right_encoder_distance = encoderRight.getDistance();
+
     //ptime = nanos();
 //    encoderRight.update();
 //  encoderLeft.update();
@@ -305,6 +309,7 @@ void Drive::update()
 
     //ptime = nanos();
     ping->update();
+
 
     //LOG(DEBUG) << "Speed: " << encoderLeft.getSpeed() << endl;
 
@@ -323,6 +328,10 @@ void Drive::update()
         stop();
         return;
     }
+
+    if(micros() - ptime < 250){return;}
+    ptime = micros();
+
     if(state == DRIVING_DURATION)
     {
         if(_duration > 0 && ((micros()-_startTime) > _duration))
@@ -336,13 +345,17 @@ void Drive::update()
     {
         LOG(DEBUG) << "Distance: " << encoder_distance << endl;
         LOG(DEBUG) << "_distance: " << _distance << endl;
+            LOG(DEBUG) << "Left distance" << endl;
+            LOG(DEBUG) << _current_left_encoder_distance << endl;
+            LOG(DEBUG) << "Right distance" << endl;
+            LOG(DEBUG) << _current_right_encoder_distance << endl;
         if(encoder_distance >= _distance)
         {
             LOG(DEBUG) << "Drive stopping" << endl;
             LOG(DEBUG) << "Left distance" << endl;
-            LOG(DEBUG) << encoderLeft.getDistance();
+            LOG(DEBUG) << _current_left_encoder_distance << endl;
             LOG(DEBUG) << "Right distance" << endl;
-            LOG(DEBUG) << encoderRight.getDistance();
+            LOG(DEBUG) << _current_right_encoder_distance << endl;
             stop();
             _distance = 0;
 
@@ -379,6 +392,9 @@ void Drive::update()
         LOG(DEBUG) << "Distance rotation: " << gyro->get_distance_rotation() << endl;
         LOG(DEBUG) << "Current rotation: " << gyro->get_current_rotation() << endl;
 
+        LOG(DEBUG) << "current left: " << (int)leftSpeed << endl;
+        LOG(DEBUG) << "current right: " << (int)rightSpeed << endl;
+
         modify_power_by_speed_rotate(40);
 
         if(gyro->get_distance_rotation() < 15.0)
@@ -391,7 +407,7 @@ void Drive::update()
         }
         else
         {
-            target_speed = 0.3;
+            target_speed = 0.5;
         }
 
         rotationPID_input = (abs(gyro->get_current_rotation())  - target_speed)* 100;
@@ -401,16 +417,19 @@ void Drive::update()
         //currentLeftSpeed = leftSpeed + rotationPID_output;
         //currentRightSpeed = rightSpeed + rotationPID_output;
 
+        LOG(DEBUG) << "current left: " << (int)currentLeftSpeed << endl;
+        LOG(DEBUG) << "current right: " << (int)currentRightSpeed << endl;
+
         currentLeftSpeed = currentLeftSpeed + rotationPID_output;
         currentRightSpeed = currentRightSpeed + rotationPID_output;
 
         if(currentLeftSpeed < 90) {currentLeftSpeed = 90;}
         if(currentRightSpeed < 90) {currentRightSpeed = 90;}
 
-        //LOG(DEBUG) << "pidout: " << rotationPID_output << endl;
+        LOG(DEBUG) << "pidout: " << rotationPID_output << endl;
 
-        //LOG(DEBUG) << "current left: " << (int)currentLeftSpeed << endl;
-        //LOG(DEBUG) << "current right: " << (int)currentRightSpeed << endl;
+        LOG(DEBUG) << "current left: " << (int)currentLeftSpeed << endl;
+        LOG(DEBUG) << "current right: " << (int)currentRightSpeed << endl;
         //LOG(DEBUG) << "target speed: " << target_speed << endl;
         //LOG(DEBUG) << "current speed: " << gyro->get_current_rotation() << endl;
 
@@ -446,14 +465,14 @@ void Drive::update()
         }*/
 
         //if(abs(abs(gyro->total_rotation) - abs(gyro->goal_rotation)) < 0.0194)
-        if(gyro->get_distance_rotation() < 2.5)
+        if(gyro->get_distance_rotation() < 0.1)
         {
             LOG(DEBUG) << "Rotation complete\n";
             stop();
         }
     }
         // 1: time ,2: ultrasound distance         3                                    4                                   5                                       6                                           7                               8                               9                           10                      11                              12                              13              
-    csv << micros() << ";" << dist << ";" << gyro->get_current_rotation() << ";" << gyro->get_total_rotation() << ";" << gyro->get_distance_rotation() << ";" << encoderLeft.getDistance() << ";" << encoderRight.getDistance() << ";" << rotationPID_input << ";" << rotationPID_output << ";" << encoder_pid_Input << ";" << encoder_pid_Output << ";" << (int)currentLeftSpeed << ";" << (int)currentRightSpeed << endl;
+    //csv << micros() << ";" << dist << ";" << gyro->get_current_rotation() << ";" << gyro->get_total_rotation() << ";" << gyro->get_distance_rotation() << ";" << _current_left_encoder_distance << ";" << _current_right_encoder_distance << ";" << rotationPID_input << ";" << rotationPID_output << ";" << encoder_pid_Input << ";" << encoder_pid_Output << ";" << (int)currentLeftSpeed << ";" << (int)currentRightSpeed << endl;
 }
 
 
@@ -489,13 +508,13 @@ void Drive::do_rotate()
 
     if(!check_bounds()){return;}
 
-    LOG(DEBUG) << "left: " << (int)currentLeftSpeed <<  " right: " <<  (int)currentRightSpeed << endl;
+    //LOG(DEBUG) << "left: " << (int)currentLeftSpeed <<  " right: " <<  (int)currentRightSpeed << endl;
 
     if(rot_dir == LEFT)
     {
         //serial->drive(180 - currentLeftSpeed-6, currentRightSpeed);
         serial->drive(180 - currentLeftSpeed, currentRightSpeed);
-        //cout << "Rotating: " << (int)(180 - currentLeftSpeed-6) << " , " << (int)currentRightSpeed << endl;
+        cout << "Rotating: " << (int)(180 - currentLeftSpeed) << " , " << (int)currentRightSpeed << endl;
     }
     else if(rot_dir == RIGHT)
     {
@@ -520,8 +539,6 @@ bool Drive::check_bounds()
     }
     else if(currentLeftSpeed > maxLeftSpeed || currentRightSpeed > maxRightSpeed)
     {
-        leftSpeed = maxLeftSpeed;
-        rightSpeed = maxRightSpeed;
         currentLeftSpeed = maxLeftSpeed;
         currentRightSpeed = maxRightSpeed;
     }
@@ -560,7 +577,7 @@ void Drive::confirm_stop()
 uint32_t Drive::getDistance()
 {
     //LOG(DEBUG) << "encR: " << encoderRight.getDistance() << " encL: " << encoderLeft.getDistance() << endl;
-    return (float)(encoderRight.getDistance() + encoderLeft.getDistance())/2.0;
+    return (float)(_current_right_encoder_distance + _current_left_encoder_distance)/2.0;
 }
 
 void Drive::set_distance_sensor_stop(bool value)
