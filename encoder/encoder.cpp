@@ -18,10 +18,12 @@ void Encoder::setup(unsigned char pinA, unsigned char pinB) {
     fd2 = gpio_start_read(_pinB);
     gpio_get_value(&encBoutprev, fd2);
 
-    prevTime = nanos();
+    prevTime = micros();
     //nano_time = nanos();
     start_time = prevTime;
     avg_prev = micros();
+    previous_distance = 0;
+    previous_time = start_time;
 }
 
 uint64_t avg_dur  =0;
@@ -33,8 +35,10 @@ void Encoder::update() {
     avg_dur += micros()-avg_prev;
 
     if(avg_count % 10000 == 0){
-        cout << "average duration: " << (float)avg_dur/(float)avg_count << endl;
+        //cout << "average duration: " << (float)avg_dur/(float)avg_count << endl;
     }
+
+    //cout << micros() << endl;
     //if(nanos() - prevTime < 10000){return;}
 
     if(gpio_get_value(&encAout,fd1) < 0){return;}
@@ -68,8 +72,8 @@ void Encoder::update() {
 
     //cout << (int)_pinA << " " << (int)_pinB  << " - " << (int)encAout <<","<< (int)encBout << endl;
 
-    //if(encAout != encAoutprev){LOG(DEBUG) << (int)_pinA << " " << (int)encAout << "," << (int)encBout << endl;}
-    //if(encBout != encBoutprev){LOG(DEBUG) << (int)_pinA << " " << (int)encAout << "," << (int)encBout << endl;}
+    //if(encAout != encAoutprev){LOG(DEBUG) << micros() << " " << (int)_pinA << " " << (int)encAout << "," << (int)encBout << endl;}
+    //if(encBout != encBoutprev){LOG(DEBUG) << micros() << " " << (int)_pinA << " " << (int)encAout << "," << (int)encBout << endl;}
 
     /*if(_pinA == 161)
     {
@@ -101,35 +105,53 @@ void Encoder::update() {
 
 void Encoder::updateSpeeds()
 {
-    time = nanos();
+    time = micros();
+    //time = nanos();
     //prevprevspeed = prevspeed;
     //prevspeed = speed;
-    if(time == prevTime){return;}
+    //if(time == prevTime){return;}
+    //
 
-    int sumspeed = 0;
+    uint64_t dist;
 
-    for(int i=9;i>0;i--)
+    if(fDist>=bDist)
+    {
+        //val = fDist/64.0/18.75 * PI * WHEEL_SIZE;
+        dist = fDist*encoder_tick_distance;
+        distance.store(dist);
+    }
+    else
+    {
+        //val = -bDist/64.0/18.75 * PI * WHEEL_SIZE;
+        dist = bDist*encoder_tick_distance;
+        distance.store(dist);
+    }
+
+    if(time - previous_time > 10000)
+    {
+        int s = (int)(((dist-previous_distance)/((double)time-previous_time))*1000);
+        //cout << "dist traveld: " << (int)(dist - previous_distance) << endl;
+        //cout << "time travel: " << (int) (time-previous_time) << endl;
+        //cout << "speed : " << s << endl;
+        speed.store(s);
+        previous_time = time;
+        previous_distance = dist;
+    }
+
+    //int sumspeed = 0;
+
+    /*for(int i=9;i>0;i--)
     {
         speeds[i-1] = speeds[i];
         sumspeed+= speeds[i];
     }
     speeds[9] = encoder_tick_distance/(time-prevTime) * 1000 * 1000;
-    sumspeed+= speeds[9];
+    sumspeed+= speeds[9];*/
 
-    speed.store(sumspeed/10);
+    //speed.store(sumspeed/10);
     //cout << "last speed: " << speeds[9] << endl;
     //cout << "avg speed: " << sumspeed/10 << endl;
 
-    if(fDist>=bDist)
-    {
-        //val = fDist/64.0/18.75 * PI * WHEEL_SIZE;
-        distance.store(fDist*encoder_tick_distance);
-    }
-    else
-    {
-        //val = -bDist/64.0/18.75 * PI * WHEEL_SIZE;
-        distance.store(bDist*encoder_tick_distance);
-    }
     prevTime = time;
 }
 

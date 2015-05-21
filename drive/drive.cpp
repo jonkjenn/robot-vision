@@ -17,7 +17,10 @@ Drive::Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigne
 
     //csv.open("drive.csv");
 
-    serial->drive(90,90);
+    if(enable_drive)
+    {
+        serial->drive(90,90);
+    }
     quit.store(false);
 }
 
@@ -59,7 +62,7 @@ void Drive::driveDuration(unsigned int speed, unsigned long duration, function<v
 
     LOG(DEBUG) << "Sending serial drive signal\n";
 
-    serial->drive(speed,speed);
+    //serial->drive(speed,speed);
 
     leftSpeed = speed;
     rightSpeed = speed;
@@ -67,8 +70,6 @@ void Drive::driveDuration(unsigned int speed, unsigned long duration, function<v
 
 void Drive::setup_and_start_drive_straight(unsigned int speed)
 {
-    maxLeftSpeed = speed;
-    maxRightSpeed = speed;
 
     float direction = _reverse?REVERSE:DIRECT;
 
@@ -87,13 +88,14 @@ void Drive::setup_and_start_drive_straight(unsigned int speed)
     //p 400, k 0, (1.75v,1.0h)
     //p 400, k 0, (1.75v,1.25h)
 
-    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, 400, 0, 100, DIRECT, 90.0-speed,0));
+    rotationPID = unique_ptr<PID>(new PID(&rotationPID_input, &rotationPID_output, &rotationPID_setpoint, 500, 0, 0, DIRECT, 90.0-speed,0));
     rotationPID_setpoint = 0;
     rotationPID->SetMode(AUTOMATIC);
 
     gyro->start(0);
 
-    encoder_speedPID = unique_ptr<PID>(new PID(&encoder_speed_pid_Input, &encoder_speed_pid_Output, &encoder_speed_pid_SetPoint,0.3,0,0,DIRECT,-20,speed-100.0));
+    int maximum_extra_power = 20;
+    encoder_speedPID = unique_ptr<PID>(new PID(&encoder_speed_pid_Input, &encoder_speed_pid_Output, &encoder_speed_pid_SetPoint,0.1,0,0,DIRECT,-20,maximum_extra_power));
     encoder_speed_pid_SetPoint = 0;
     encoder_speedPID->SetMode(AUTOMATIC);
 
@@ -106,15 +108,18 @@ void Drive::setup_and_start_drive_straight(unsigned int speed)
     encoder_pid_SetPoint_2 = 0.0;
     encoderPID_2->SetMode(AUTOMATIC);*/
 
+    maxLeftSpeed = speed + maximum_extra_power;
+    maxRightSpeed = speed + maximum_extra_power;
+
     prevRightSpeed = 90;
     prevLeftSpeed = 90;
 
-    leftSpeed = 100;
-    rightSpeed = 100;
+    leftSpeed = speed;
+    rightSpeed = speed;
     currentLeftSpeed = leftSpeed;
     currentRightSpeed = rightSpeed;
 
-    serial->drive(speed,speed);
+    //serial->drive(speed,speed);
 }
 
 void Drive::modify_power_by_speed_rotate(int target_speed)//mm /s
@@ -133,7 +138,9 @@ void Drive::modify_power_by_speed_rotate(int target_speed)//mm /s
 
 void Drive::modify_power_by_speed(int target_speed)//mm /s
 {
-    encoder_speed_pid_Input = ((encoderLeft.getSpeed()+encoderRight.getSpeed())/2.0 - target_speed);//mm/s
+    float speed = (encoderLeft.getSpeed()+encoderRight.getSpeed())/2.0 ;
+    encoder_speed_pid_Input = (speed - target_speed);//mm/s
+    cout << "target speed: " << target_speed << " speed " << speed << endl;
     cout << "encoder speed pid input: " << encoder_speed_pid_Input << endl;
     encoder_speedPID->Compute();
     cout << "encoder speed pid output: " << encoder_speed_pid_Output << endl;
@@ -182,11 +189,11 @@ void Drive::drive_straight()
     //if(currentLeftSpeed < 90){currentLeftSpeed = 90;}
     //if(currentRightSpeed < 90){currentRightSpeed = 90;}
 
-    //LOG(DEBUG) << "Total rotation: " << rot << endl;
-    //LOG(DEBUG) << "Rotation pid input: " << rotationPID_input << endl;
-    //LOG(DEBUG) << "Rotation pid output: " << rotationPID_output << endl;
-    LOG(DEBUG) << "Encoder pid input: " << encoder_pid_Input << endl;
-    LOG(DEBUG) << "Encoder pid output: " << encoder_pid_Output << endl;
+    LOG(DEBUG) << "Total rotation: " << rot << endl;
+    LOG(DEBUG) << "Rotation pid input: " << rotationPID_input << endl;
+    LOG(DEBUG) << "Rotation pid output: " << rotationPID_output << endl;
+    //LOG(DEBUG) << "Encoder pid input: " << encoder_pid_Input << endl;
+    //LOG(DEBUG) << "Encoder pid output: " << encoder_pid_Output << endl;
     LOG(DEBUG) << "Left speed: " << (int)currentLeftSpeed << " Right speed: " << (int)currentRightSpeed << endl;
 
     if(currentLeftSpeed < 90){currentLeftSpeed = 90;}
@@ -210,7 +217,7 @@ void Drive::driveDistance(unsigned int speed, unsigned long distance, function<v
 
     state = DRIVING_DISTANCE;
     //Static distance reduction
-    _distance = (distance-15)*1000;
+    _distance = distance*1000;
 
     setup_and_start_drive_straight(speed);
 }
@@ -291,6 +298,11 @@ uint64_t ptime = 0;
 float prevdist = 0.0;
 void Drive::update()
 {
+    /*for(int i=0;i<500;i++)
+    {
+        serial->sendcustombyte(240);
+    }*/
+
     if(state == WAITING_FOR_STOP)
     {
         stop();
@@ -329,8 +341,8 @@ void Drive::update()
         return;
     }
 
-    if(micros() - ptime < 250){return;}
-    ptime = micros();
+    //if(micros() - ptime < 500000){return;}
+    //ptime = micros();
 
     if(state == DRIVING_DURATION)
     {
@@ -349,9 +361,9 @@ void Drive::update()
             LOG(DEBUG) << _current_left_encoder_distance << endl;
             LOG(DEBUG) << "Right distance" << endl;
             LOG(DEBUG) << _current_right_encoder_distance << endl;
-        if(encoder_distance >= _distance)
+        if(getDistance() >= _distance)
         {
-            LOG(DEBUG) << "Drive stopping " << micros() << endl;
+            LOG(DEBUG) << "Drive stopping from distance " << micros() << endl;
             LOG(DEBUG) << "Left distance" << endl;
             LOG(DEBUG) << _current_left_encoder_distance << endl;
             LOG(DEBUG) << "Right distance" << endl;
@@ -365,7 +377,7 @@ void Drive::update()
         {
             float target_speed = 150;
             int ramp_distance = (_reverse?250000:50000);
-            if(_use_ramping && abs(encoder_distance) < ramp_distance)//5 cm
+            /*if(_use_ramping && abs(encoder_distance) < ramp_distance)//5 cm
             {
                 LOG(DEBUG) << "RAMP UP" << endl;
                 target_speed = 100 + encoder_distance/50000.0 * 200;
@@ -377,11 +389,11 @@ void Drive::update()
                 modify_power_by_speed(150);
             }
             else
-            {
+            {*/
                 LOG(DEBUG) << "Regular" << endl;
                 //This should not be hardcoded, should vary with set engine speed
-                modify_power_by_speed(1500);
-            }
+                modify_power_by_speed(200);
+            //}
             drive_straight();
         }
     }
@@ -475,9 +487,11 @@ void Drive::update()
     //csv << micros() << ";" << dist << ";" << gyro->get_current_rotation() << ";" << gyro->get_total_rotation() << ";" << gyro->get_distance_rotation() << ";" << _current_left_encoder_distance << ";" << _current_right_encoder_distance << ";" << rotationPID_input << ";" << rotationPID_output << ";" << encoder_pid_Input << ";" << encoder_pid_Output << ";" << (int)currentLeftSpeed << ";" << (int)currentRightSpeed << endl;
 }
 
-
+int docount = 0;
 void Drive::do_drive()
 {
+    //currentRightSpeed = 110;
+    //currentLeftSpeed = 110;
     if(currentRightSpeed == prevRightSpeed && currentLeftSpeed == prevLeftSpeed){return;}
     prevRightSpeed = currentRightSpeed;
     prevLeftSpeed = currentLeftSpeed;
@@ -489,11 +503,17 @@ void Drive::do_drive()
 
     if(_reverse)
     {
-        serial->drive(180 - currentLeftSpeed,180-currentRightSpeed);
+        if(enable_drive)
+        {
+            serial->drive(180 - currentLeftSpeed,180-currentRightSpeed);
+        }
     }
     else
     {
-        serial->drive(currentLeftSpeed, currentRightSpeed);
+        if(enable_drive)
+        {
+            serial->drive(currentLeftSpeed, currentRightSpeed);
+        }
     }
 }
 
@@ -557,7 +577,10 @@ void Drive::stop(function<void()> callback)
         stop_timer = micros();
         _reverse = false;
 
-        serial->drive(stopPower,stopPower);
+        if(enable_drive)
+        {
+            serial->drive(stopPower,stopPower);
+        }
     }
 }
 

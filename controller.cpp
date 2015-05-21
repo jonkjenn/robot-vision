@@ -89,7 +89,7 @@ Controller::Controller(vector<string> &args, function<void()> callback)
     {
         arduino = new Arduinocomm("/dev/ttyTHS0",115200);
         driver = std::make_shared<Drive>(161,160,163,164,arduino);
-        line_follower = std::make_shared<LineFollower<Drive>>(120,60);
+        line_follower = std::make_shared<LineFollower<Drive>>(115,65);
         line_follower->setup(driver);
 
         delayMicroseconds(1e2);//Let serial connections start up

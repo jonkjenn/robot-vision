@@ -19,6 +19,11 @@ class Encoder{
         uint8_t encAoutprev = 0;
         uint8_t encBoutprev = 0;
 
+        uint64_t previous_distance = 0;
+        uint64_t previous_time = 0;
+        uint64_t total_average_distance = 0;
+        uint64_t prev_average_time = 0;
+
         char direction = 0;
 
         uint32_t fDist = 0;

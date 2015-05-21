@@ -292,7 +292,7 @@ class LineFollower{
 
         void drive_reverse()
         {
-            _driver->driveDistance(110, 250, nullptr, true, false,true);
+            //_driver->driveDistance(110, 250, nullptr, true, false,true);
         }
 
     public:
@@ -324,6 +324,7 @@ class LineFollower{
                 _driver->stop([]{});
                 stopcount = 0;                
             }
+            stopcount = 0;
 
             if(!collected_startpos){
                 setup_startposition(position);
@@ -388,7 +389,7 @@ class LineFollower{
             outerPID = std::unique_ptr<PID>(new PID(&out_pid_Input, &out_pid_Output, &out_pid_SetPoint,0.014,0,0,DIRECT,-50,50));
             out_pid_SetPoint = 0.0;
             outerPID->SetMode(AUTOMATIC);
-            innerPID = std::unique_ptr<PID>(new PID(&inn_pid_Input, &inn_pid_Output, &inn_pid_SetPoint,5.0,0,0.0,DIRECT,-255,255));
+            innerPID = std::unique_ptr<PID>(new PID(&inn_pid_Input, &inn_pid_Output, &inn_pid_SetPoint,4.0,0,0.0,DIRECT,-255,255));
             inn_pid_SetPoint = 0.0;
             innerPID->SetMode(AUTOMATIC);
 

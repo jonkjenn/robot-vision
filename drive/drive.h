@@ -80,10 +80,11 @@ class Drive{
 
     public:
         ~Drive();
+        bool enable_drive = true;
         Drive(unsigned char encoder_left_a, unsigned char encoder_left_b, unsigned char encoder_right_a, unsigned char encoder_right_b, Arduinocomm *serial);
         void driveDuration(unsigned int speed, unsigned long duration, std::function<void()> callback = nullptr);
         void driveDistance(unsigned int speed, unsigned long distance, std::function<void()> callback = nullptr, bool reverse = false, bool use_ramping = true,bool ignore_stop = false);
-        void rotate(unsigned int speed, float degrees,Rotation_Direction direction, std::function<void()> callback);
+        void rotate(unsigned int speed, float degrees,Rotation_Direction direction, std::function<void()> callback = nullptr);
         bool drive(unsigned int power1, unsigned int power2);
         void set_distance_sensor_stop(bool value);
         bool driveManual();
