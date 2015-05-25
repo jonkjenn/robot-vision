@@ -565,11 +565,25 @@ bool Drive::check_bounds()
     return true;
 }
 
+void Drive::reset_state()
+{
+    wait_stop = false;
+    _reverse = false;
+    encoderRight.reset();
+    encoderLeft.reset();
+    state = STOPPED;
+}
+
+void Drive::abort()
+{
+    reset_state();
+}
+
 void Drive::stop(function<void()> callback)
 {
     if(callback != nullptr){driveCompletedCallback = callback;}
 
-    if(state != WAITING_FOR_STOP || micros() - stop_timer > 5000)
+    if(state != WAITING_FOR_STOP || (state == WAITING_FOR_STOP && micros() - stop_timer > 5000))
     {
         state = WAITING_FOR_STOP;
         LOG(DEBUG) << "STOP" << endl;

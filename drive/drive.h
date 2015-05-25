@@ -77,6 +77,7 @@ class Drive{
         bool _reverse = false;
         bool _use_ramping = false;
         std::ofstream csv;
+        void reset_state();
 
     public:
         ~Drive();
@@ -98,5 +99,6 @@ class Drive{
         void modify_power_by_speed_rotate(int target_speed);
         void modify_power_by_distance();
         void stop_driver();
+        void abort();
 };
 #endif

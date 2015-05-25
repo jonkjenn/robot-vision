@@ -33,16 +33,16 @@ static bool check_line_found(unsigned int position)
     return position < 7000 && position > 0;
 }
 
-static bool check_if_stopcount_stop(bool on_line, unsigned int &stopcount)
+static bool check_if_stopcount_stop(bool on_line, unsigned int &stopcount, unsigned int maximum_stopcount)
 {
     if(!on_line)
     {
-        if(stopcount>20)
+        stopcount++;
+        if(stopcount>maximum_stopcount)
         {
             return true;
         }
 
-        stopcount++;
         return false;
     }
     else
@@ -148,6 +148,8 @@ class LineFollower{
 
         unsigned int prevLeftPower = 90;
         unsigned int prevRightPower = 90;
+
+        const unsigned int MAXIMUM_STOPCOUNT = 20;
 
         int dtest = 0;
         int dtest_mod = 1;
@@ -292,7 +294,7 @@ class LineFollower{
 
         void drive_reverse()
         {
-            //_driver->driveDistance(110, 250, nullptr, true, false,true);
+            _driver->driveDistance(110, 250, nullptr, true, false,true);
         }
 
     public:
@@ -311,20 +313,25 @@ class LineFollower{
             prev_time = time;
             dtest++;
 
-            std::cout << "Linefollower psoition: " << position << std::endl;
+            std::cout << "Linefollower position: " << position << std::endl;
+            std::cout << "stopcount : " << stopcount << std::endl;
 
-            if(!_wait_for_line && check_if_stopcount_stop(check_line_found(position),stopcount)){
-                auto stop_callback = std::bind(&LineFollower::drive_reverse,this);
-                _driver->stop(stop_callback);
+            //If we dont find the line
+            if(!_wait_for_line && check_if_stopcount_stop(check_line_found(position),stopcount,MAXIMUM_STOPCOUNT)){
+                _driver->abort();
+                _driver->driveDistance(110, 250, nullptr, true, false,true);
+                //_driver->stop(stop_callback);
+                //auto stop_callback = std::bind(&LineFollower::drive_reverse,this);
                 _wait_for_line = true;
                 return;
             }
+            //We lost the line, but then we found it again
             else if(_wait_for_line && check_line_found(position))
             {
-                _driver->stop([]{});
-                stopcount = 0;                
+                _driver->abort();
+                stopcount = 0;
+                _wait_for_line = false;
             }
-            stopcount = 0;
 
             if(!collected_startpos){
                 setup_startposition(position);
@@ -332,6 +339,12 @@ class LineFollower{
                 return;
             }
 
+            calculate_power_from_position(position);
+
+        }
+
+        void calculate_power_from_position(int position)
+        {
             distance = _driver->getDistance() - prev_distance;
 
             dist_center = position - ir_center;
@@ -345,7 +358,7 @@ class LineFollower{
 
             prev_delta[4] = delta_dist_center;
 
-            delta_dist_center = getaverage(prev_delta);//,20);
+            delta_dist_center = getaverage(prev_delta);
 
             if(debug && dtest%dtest_mod == 0){
                 /*std::cout << "Position: " << position << std::endl;
