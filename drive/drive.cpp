@@ -309,8 +309,8 @@ void Drive::update()
         return;
     }
 
-    _current_left_encoder_distance = encoderLeft.getDistance();
-    _current_right_encoder_distance = encoderRight.getDistance();
+    _current_left_encoder_distance = 0;//encoderLeft.getDistance();
+    _current_right_encoder_distance = 0;//encoderRight.getDistance();
 
     //ptime = nanos();
 //    encoderRight.update();

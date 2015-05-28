@@ -1,6 +1,7 @@
 #include "controller.hpp"
 
 using namespace std;
+using namespace cv;
 
 unsigned int serial_delay = 0;
 
@@ -45,7 +46,7 @@ void readPin(int pin)
     }
 }
 
-Controller::Controller(vector<string> &args, function<void()> callback)
+Controller::Controller(vector<string> &args, function<void(Mat)> callback)
 {
     this->callback = callback;
     bool show_debug = false;
@@ -212,9 +213,10 @@ void Controller::loop()
             }
 
             //LOG(DEBUG) << "vision" << endl;
+            Mat frame;
             if(cam)
             {
-                vision->update();
+                frame = vision->update();
             }
 
             pt = nanos();
@@ -229,7 +231,7 @@ void Controller::loop()
                 }
             }
 
-            if(callback){callback();}
+            if(callback){callback(frame);}
         }
     }
 }

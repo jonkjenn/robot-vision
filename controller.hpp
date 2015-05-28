@@ -15,6 +15,7 @@
 #include "bachelor-line.h"
 #include <functional>
 #include <unistd.h>
+#include "opencv2/core/core.hpp"
 
 #define MY_PRIORITY (49)
 #define MAX_SAFE_STACK (8*1024)
@@ -35,7 +36,7 @@ class Controller{
         void setup_vision(std::string &file, const bool show_video);
         void parsepacket();
 
-        std::function<void()> callback;
+        std::function<void(cv::Mat)> callback;
 
         bool use_serial = true;
         bool waiting_ok = false;
@@ -44,7 +45,7 @@ class Controller{
         void start();
         std::shared_ptr<Drive> driver;
         std::shared_ptr<LineFollower<Drive>> line_follower;
-        Controller(std::vector<std::string> &args, std::function<void()> callback = nullptr);
+        Controller(std::vector<std::string> &args, std::function<void(cv::Mat)> callback = nullptr);
         bool quit_robot = false;
 };
 

@@ -20,6 +20,7 @@
 class Vision{
     private:
         bool save_video = false;
+        uint64_t previous_frame_saved = 0;
         cv::VideoWriter writer;
         std::thread capture_thread;
         std::atomic<bool> quit{false};
@@ -31,15 +32,17 @@ class Vision{
         bool show_video = false, play = false, cuda = false, no_wait = false, camera = false, ps4 = false;
         int camera_id = 0;
         int frame_count;
+        int frame_counter = 0;
+
         int index = 0;
         std::unique_ptr<cv::VideoCapture> cap;
         cv::Size size;
         Frameplayer fp;
         void hough(cv::Mat &frame);
-        void hough_gpu(cv::gpu::GpuMat &gpu_frame, cv::Mat &frame);
+        //void hough_gpu(cv::gpu::GpuMat &gpu_frame, cv::Mat &frame);
         bool configure_videocapture(cv::VideoCapture &cap, int &fps, int &frame_count);
         void configure_cuda();
-        void draw_hough(cv::gpu::GpuMat &d_lines, cv::Mat &frame);
+        //void draw_hough(cv::gpu::GpuMat &d_lines, cv::Mat &frame);
         void process_frame(cv::Mat &frame);
         void process_frame_cuda(cv::Mat &frame);
         void setup();
@@ -71,7 +74,7 @@ class Vision{
         double fps;
         Vision(std::vector<std::string> &args);
         void previous_frame();
-        void update();
+        cv::Mat update();
         void stop();
 };
 

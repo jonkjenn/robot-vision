@@ -1,10 +1,14 @@
 #include "controller.hpp"
 #include "drive.h"
 #include <csignal>
+#include "opencv2/core/core.hpp"
+#include "camshift.h"
+#include "find_lines.hpp"
 
 using namespace std;
+using namespace cv;
 
-void loop();
+void loop(Mat frame);
 void drive_complete();
 void main_stop();
 
@@ -15,6 +19,11 @@ uint8_t speed = 110;
 int args_dist = 500;
 Rotation_Direction dir = LEFT;
 
+bool do_camshift = false;
+
+camshift cshift;
+Find_lines flines;
+
 unique_ptr<Controller> c = nullptr;
 shared_ptr<Drive> driver = nullptr;
 shared_ptr<LineFollower<Drive>> lineFollower = nullptr;
@@ -24,7 +33,7 @@ do_what what = FOLLOW_STEPS;
 
 uint64_t start_time = 0;
 
-void loop()
+void loop(Mat frame)
 {
     if(micros() - start_time < 100000){return;}
     if(stop)
@@ -36,6 +45,13 @@ void loop()
         }
         c->quit_robot = true;
         return;
+    }
+
+    flines.find(frame);
+
+    if(do_camshift)
+    {
+        cshift.update_camshift(frame);
     }
 
     if(what == NOTHING){return;}
@@ -62,8 +78,8 @@ void loop()
             LOG(DEBUG) << "Stopping" <<endl;
             break;
     }
-}
 
+}
 
 //Triggers from CTRL C
 void my_handler(int s){
@@ -124,6 +140,10 @@ int main(int argc, char** argv)
         {
             step = atoi(args[++i].c_str());
         }
+        else if(args[i].compare("--camshift") == 0)
+        {
+            do_camshift = true;
+        }
     }
 
     //Disable execution of the command list
@@ -136,7 +156,7 @@ int main(int argc, char** argv)
     //We pass the loop function to the Controller
     //because this will make the controller execute
     //the loop function continously
-    c = unique_ptr<Controller>(new Controller(args, []{loop();}));
+    c = unique_ptr<Controller>(new Controller(args, [&](Mat frame){loop(frame);}));
     driver = c->driver;
     lineFollower = c->line_follower;
 
@@ -169,6 +189,11 @@ int main(int argc, char** argv)
         }
     }
 
+    if(do_camshift)
+    {
+        cshift.setup_camshift(true);
+    }
+
     c->start();
 
     return 0;
@@ -184,4 +209,3 @@ void drive_complete()
     LOG(DEBUG) << "Drive is completed";
     step++;
 }
-

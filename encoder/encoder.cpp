@@ -35,7 +35,7 @@ void Encoder::update() {
     avg_dur += micros()-avg_prev;
 
     if(avg_count % 10000 == 0){
-        //cout << "average duration: " << (float)avg_dur/(float)avg_count << endl;
+        cout << "average duration: " << (float)avg_dur/(float)avg_count << endl;
     }
 
     //cout << micros() << endl;
