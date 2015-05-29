@@ -309,8 +309,8 @@ void Drive::update()
         return;
     }
 
-    _current_left_encoder_distance = 0;//encoderLeft.getDistance();
-    _current_right_encoder_distance = 0;//encoderRight.getDistance();
+    _current_left_encoder_distance = encoderLeft.getDistance();
+    _current_right_encoder_distance = encoderRight.getDistance();
 
     //ptime = nanos();
 //    encoderRight.update();
@@ -490,8 +490,8 @@ void Drive::update()
 int docount = 0;
 void Drive::do_drive()
 {
-    //currentRightSpeed = 110;
-    //currentLeftSpeed = 110;
+    currentRightSpeed = rightSpeed;
+    currentLeftSpeed = leftSpeed;
     if(currentRightSpeed == prevRightSpeed && currentLeftSpeed == prevLeftSpeed){return;}
     prevRightSpeed = currentRightSpeed;
     prevLeftSpeed = currentLeftSpeed;

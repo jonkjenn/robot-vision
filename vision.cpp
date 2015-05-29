@@ -167,7 +167,6 @@ void Vision::configure_cuda()
     gpu::setDevice(0);
     LOG(DEBUG) << "Cuda? " << cuda;
 
-    blur_filter = gpu::createGaussianFilter_GPU(CV_8U,Size(3,3),-1);
 }
 
 void Vision::capture_frames_file(Mat &frame)
@@ -293,10 +292,10 @@ void Vision::process_frame_cuda(Mat &frame)
 {
     LOG(DEBUG) << "Processing frame on GPU";
 
-    gpu_frame.upload(frame);//Uploads the frame to the GPU
+    //gpu_frame.upload(frame);//Uploads the frame to the GPU
     LOG(DEBUG) << "Cuda frame uploaded ";
 
-    fp.show_frame(gpu_frame);
+    //fp.show_frame(gpu_frame);
 
     //hough_gpu(gpu_frame, frame);
 }

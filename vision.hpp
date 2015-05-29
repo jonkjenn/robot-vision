@@ -53,18 +53,6 @@ class Vision{
 
         std::unique_ptr<ps4driver> ps4cam;
 
-        cv::Ptr<cv::gpu::FilterEngine_GPU> blur_filter;
-
-        cv::gpu::GpuMat gpu_grayscale;
-        cv::gpu::GpuMat gpu_border;
-        cv::gpu::GpuMat gpu_blur;
-        cv::gpu::GpuMat gpu_canny;
-        cv::gpu::GpuMat gpu_subframe;
-        cv::gpu::GpuMat gpu_frame;
-
-        cv::gpu::GpuMat gpu_hough;
-        cv::gpu::GpuMat d_lines;
-        cv::gpu::HoughLinesBuf d_buf;
 
         cv::Rect sub_rect;
 
