@@ -377,23 +377,23 @@ void Drive::update()
         {
             float target_speed = 150;
             int ramp_distance = (_reverse?250000:50000);
-            /*if(_use_ramping && abs(encoder_distance) < ramp_distance)//5 cm
+            if(_use_ramping && abs(encoder_distance) < ramp_distance)//5 cm
             {
                 LOG(DEBUG) << "RAMP UP" << endl;
                 target_speed = 100 + encoder_distance/50000.0 * 200;
                 modify_power_by_speed(target_speed);
             }
-            else if(_distance - encoder_distance <= 200000) //10 cm
+            else if(_use_ramping && _distance - encoder_distance <= 100000) //10 cm
             {
                 LOG(DEBUG) << "RAMP DOWN" << endl;
-                modify_power_by_speed(150);
+                modify_power_by_speed(100);
             }
             else
-            {*/
+            {
                 LOG(DEBUG) << "Regular" << endl;
                 //This should not be hardcoded, should vary with set engine speed
                 modify_power_by_speed(200);
-            //}
+            }
             drive_straight();
         }
     }
@@ -490,8 +490,8 @@ void Drive::update()
 int docount = 0;
 void Drive::do_drive()
 {
-    currentRightSpeed = rightSpeed;
-    currentLeftSpeed = leftSpeed;
+    //currentRightSpeed = rightSpeed;
+    //currentLeftSpeed = leftSpeed;
     if(currentRightSpeed == prevRightSpeed && currentLeftSpeed == prevLeftSpeed){return;}
     prevRightSpeed = currentRightSpeed;
     prevLeftSpeed = currentLeftSpeed;
@@ -602,12 +602,13 @@ void Drive::confirm_stop()
 {
     if(state == WAITING_FOR_STOP)
     {
+        wait_stop = false;
+        if(driveCompletedCallback){driveCompletedCallback();}
+
         LOG(DEBUG) << "Confirmed stop" << micros() << endl;
         encoderRight.reset();
         encoderLeft.reset();
-        wait_stop = false;
         state = STOPPED;
-        if(driveCompletedCallback){driveCompletedCallback();}
     }
 }
 

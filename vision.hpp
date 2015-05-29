@@ -23,7 +23,7 @@ class Vision{
         uint64_t previous_frame_saved = 0;
         cv::VideoWriter writer;
         std::thread capture_thread;
-        std::atomic<bool> quit{false};
+        std::atomic<bool> _quit{false};
         unsigned long previous_micros = 0;
         std::mutex camera_mutex;
         cv::Mat frame;

@@ -51,8 +51,12 @@ void loop(Mat frame)
 
     if(do_camshift)
     {
-        unsigned int pos =  (int)cshift.update_camshift(frame);
-        lineFollower->update(pos);
+        int pos =  cshift.update_camshift(frame);
+        cout << "pos: " << pos << endl;
+        if(pos >= 0)
+        {
+            lineFollower->update(pos);
+        }
     }
 
     if(what == NOTHING){return;}
@@ -198,7 +202,8 @@ int main(int argc, char** argv)
 
     if(do_camshift)
     {
-        cshift.setup_camshift(true);
+        cshift.setup_camshift(show_video);
+        lineFollower->enable();
     }
 
     c->start();

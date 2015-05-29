@@ -251,10 +251,7 @@ class LineFollower{
             prevLeftPower = power_left;
             prevRightPower = power_right;
 
-            if(!_driver->drive(power_left,power_right))
-            {
-                disable();
-            }
+            !_driver->drive(power_left,power_right);
         }
         //
         // We drive right wheel(power2) slower, turning to the right
@@ -272,10 +269,7 @@ class LineFollower{
             prevLeftPower = power_left;
             prevRightPower = power_right;
 
-            if(!_driver->drive(power_left,power_right))
-            {
-                disable();
-            }
+            !_driver->drive(power_left,power_right);
         }
         void setup_startposition(unsigned int position)
         {
@@ -318,8 +312,10 @@ class LineFollower{
 
             //If we dont find the line
             if(!_wait_for_line && check_if_stopcount_stop(check_line_found(position),stopcount,MAXIMUM_STOPCOUNT)){
+                //_driver->stop([]{});
                 _driver->abort();
                 _driver->driveDistance(110, 250, nullptr, true, false,true);
+                //
                 //_driver->stop(stop_callback);
                 //auto stop_callback = std::bind(&LineFollower::drive_reverse,this);
                 _wait_for_line = true;
@@ -329,6 +325,8 @@ class LineFollower{
             else if(_wait_for_line && check_line_found(position))
             {
                 _driver->abort();
+                _driver->driveManual();
+                _driver->set_distance_sensor_stop(false);
                 stopcount = 0;
                 _wait_for_line = false;
             }

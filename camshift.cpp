@@ -80,7 +80,7 @@ int camshift::update_camshift(Mat frame)
 
     Mat mask;
 
-    inRange(hsv,Scalar(22,89,150),Scalar(50,255,255),mask);
+    inRange(hsv,Scalar(35,89,100),Scalar(50,255,255),mask);
 
     erode(mask,mask,Mat(),Point{-1,-1},1);
     dilate(mask,mask,Mat(),Point{-1,-1},5);
@@ -88,7 +88,16 @@ int camshift::update_camshift(Mat frame)
     vector<vector<Point>> contours;
     findContours(mask,contours,CV_RETR_LIST,CV_CHAIN_APPROX_NONE);;
 
-    if(contours.size() == 0){return -1;}
+    if(contours.size() == 0){
+        if(previous_position < 3500)
+        {
+            return 0;
+        }
+        else
+        {
+            return 7000;
+        }
+    }
 
     int largest_index = 0;
     float largest_area = 0;
@@ -97,6 +106,8 @@ int camshift::update_camshift(Mat frame)
         float a = contourArea(contours[i]);
         if(a>largest_area){largest_area = a; largest_index = i;}
     }
+
+    cout << "Area: " << largest_area << endl;
 
     Mat only_mask = Mat::zeros(mask.size(),mask.depth());
     drawContours(only_mask,contours,largest_index,Scalar(255),CV_FILLED);
@@ -146,7 +157,7 @@ int camshift::update_camshift(Mat frame)
         //fp.show_frame(frame);
     }
     
-    cout << "s_rect size: " << s_rect.size() << endl;
+    //cout << "s_rect size: " << s_rect.size() << endl;
 
     return calculate_position(centroid, frame);
 }
@@ -159,5 +170,5 @@ unsigned int camshift::calculate_position(Point2f centroid, Mat frame)
 
    cout << "calculating" << endl;
 
-   return ((-atan2(centroid.y-my_y, centroid.x - my_x))/PI)*7000.0;
+   return 7000-((-atan2(centroid.y-my_y, centroid.x - my_x))/PI)*7000.0;
 }

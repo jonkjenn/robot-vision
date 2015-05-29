@@ -84,7 +84,10 @@ Controller::Controller(vector<string> &args, function<void(Mat)> callback)
 
     //VideoCapture cap("../out.mp4");
 
-    vision = std::unique_ptr<Vision>(new Vision{args});
+    if(cam)
+    {
+        vision = std::unique_ptr<Vision>(new Vision{args});
+    }
 
     if(use_serial)
     {
@@ -151,7 +154,7 @@ void Controller::parsepacket()
                     //LOG(DEBUG) << "Line packet: enabled: " << line_follower->enabled() << endl;
                     if(line_follower->enabled())
                     {
-                        line_follower->update(pos);
+                        //line_follower->update(pos);
                     }
                 }
                 break;
@@ -198,7 +201,11 @@ void Controller::loop()
             ////cout << "cont loop " << endl;
             //reset_micros();
             if(quit_robot){
-                vision->stop();
+                cout << "main loop stopping" << endl;
+                if(cam)
+                {
+                    vision->stop();
+                }
                 driver->stop_driver();
                 cout << "main loop stop" << endl;
                 return;

@@ -114,7 +114,7 @@ void Vision::setup()
 
     if(cuda)
     {
-        configure_cuda();
+        //configure_cuda();
     }
     //VideoWriter outputVideo;
 
@@ -126,11 +126,11 @@ void Vision::setup()
         outputVideo.open("../out.mp4",CV_FOURCC('m','4','s','2'),30,s,true);
     }*/
 
-    size = Size(177,144);
-    sub_rect = Rect(0,size.height-41,size.width,40);
 
     if(save_video)
     {
+        size = Size(177,144);
+        sub_rect = Rect(0,size.height-41,size.width,40);
         Size sz = Size(320,192);
         //writer.open("out.avi",CV_FOURCC('M','J','P','G') ,200,sz);
         //writer.open("out.avi",CV_FOURCC('H','2','6','4'),200,sz);
@@ -159,7 +159,7 @@ void Vision::setup()
     previous_micros = micros();
 }
 
-void Vision::configure_cuda()
+/*void Vision::configure_cuda()
 {
     cuda = gpu::getCudaEnabledDeviceCount()>0;
     LOG(INFO) <<"Setting CUDA device" << endl;
@@ -167,7 +167,7 @@ void Vision::configure_cuda()
     gpu::setDevice(0);
     LOG(DEBUG) << "Cuda? " << cuda;
 
-}
+}*/
 
 void Vision::capture_frames_file(Mat &frame)
 {
@@ -209,7 +209,7 @@ void Vision::capture_ps4(Mat &frame)
     {
         do{
             //cout << "preloop" << endl;
-            if(quit.load()){cout << "vision thread quit" << endl;return;}
+            if(_quit.load()){cout << "vision thread _quit" << endl;return;}
             //cout << "loop" << endl;
             ps4cam->update();
             buffer = ps4cam->getFrame();
@@ -395,9 +395,15 @@ void Vision::handle_keys()
 
 void Vision::stop()
 {
-    LOG(DEBUG) << "Vision stop true " << endl;
-    quit.store(true);
-    capture_thread.join();
-    ps4cam->stop();
-    cout << "capture thread joined" << endl;
+    _quit.store(true);
+    if(capture_thread.joinable())
+    {
+        capture_thread.join();
+    }
+    if(ps4cam)
+    {
+        cout << "stopping ps4" << endl;
+        ps4cam->stop();
+    }
+
 }

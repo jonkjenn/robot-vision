@@ -26,5 +26,7 @@ class camshift{
 
         bool do_show_video = false;
 
+        unsigned int previous_position = 0;
+
         unsigned int calculate_position(cv::Point2f, cv::Mat frame);
 };
