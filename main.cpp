@@ -22,7 +22,7 @@ Rotation_Direction dir = LEFT;
 bool do_camshift = false;
 
 camshift cshift;
-Find_lines flines;
+//Find_lines flines;
 
 unique_ptr<Controller> c = nullptr;
 shared_ptr<Drive> driver = nullptr;
@@ -47,11 +47,12 @@ void loop(Mat frame)
         return;
     }
 
-    flines.find(frame);
+    //flines.find(frame);
 
     if(do_camshift)
     {
-        cshift.update_camshift(frame);
+        unsigned int pos =  (int)cshift.update_camshift(frame);
+        lineFollower->update(pos);
     }
 
     if(what == NOTHING){return;}
@@ -64,7 +65,7 @@ void loop(Mat frame)
            
             driver->set_distance_sensor_stop(false);//Disable stopping when ultrasound sensor triggers
             //driver->driveDistance(speed,args_dist,[]{drive_complete();});//Drive forward
-            lineFollower->enable();//Enable linefollowing
+            //lineFollower->enable();//Enable linefollowing
 
             step++;
             break;
@@ -96,6 +97,8 @@ int main(int argc, char** argv)
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     bool enable_drive = true;
+
+    bool show_video = false;
 
     //Checks from commandline arguments
     vector<string> args(argv, argv+argc);
@@ -143,6 +146,10 @@ int main(int argc, char** argv)
         else if(args[i].compare("--camshift") == 0)
         {
             do_camshift = true;
+        }
+        else if(args[i].compare("--video") == 0)
+        {
+            show_video = true;
         }
     }
 
