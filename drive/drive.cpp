@@ -62,8 +62,6 @@ void Drive::driveDuration(unsigned int speed, unsigned long duration, function<v
 
     LOG(DEBUG) << "Sending serial drive signal\n";
 
-    //serial->drive(speed,speed);
-
     leftSpeed = speed;
     rightSpeed = speed;
 }
@@ -95,7 +93,7 @@ void Drive::setup_and_start_drive_straight(unsigned int speed)
     gyro->start(0);
 
     int maximum_extra_power = 20;
-    encoder_speedPID = unique_ptr<PID>(new PID(&encoder_speed_pid_Input, &encoder_speed_pid_Output, &encoder_speed_pid_SetPoint,0.1,0,0,DIRECT,-20,maximum_extra_power));
+    encoder_speedPID = unique_ptr<PID>(new PID(&encoder_speed_pid_Input, &encoder_speed_pid_Output, &encoder_speed_pid_SetPoint,0.05,0,0,DIRECT,-20,maximum_extra_power));
     encoder_speed_pid_SetPoint = 0;
     encoder_speedPID->SetMode(AUTOMATIC);
 
@@ -118,8 +116,6 @@ void Drive::setup_and_start_drive_straight(unsigned int speed)
     rightSpeed = speed;
     currentLeftSpeed = leftSpeed;
     currentRightSpeed = rightSpeed;
-
-    //serial->drive(speed,speed);
 }
 
 void Drive::modify_power_by_speed_rotate(int target_speed)//mm /s
@@ -244,7 +240,10 @@ bool Drive::drive(unsigned int left, unsigned int right)
 
         prevLeftSpeed = left;
         prevRightSpeed = (right<180-4?right+4:right);
-        serial->drive(left,prevRightSpeed);
+        if(enable_drive)
+        {
+            serial->drive(left,prevRightSpeed);
+        }
         return true;
     }
     return false;
@@ -376,17 +375,17 @@ void Drive::update()
         else
         {
             float target_speed = 150;
-            int ramp_distance = (_reverse?250000:50000);
+            int ramp_distance = 50000;//(_reverse?250000:50000);
             if(_use_ramping && abs(encoder_distance) < ramp_distance)//5 cm
             {
                 LOG(DEBUG) << "RAMP UP" << endl;
-                target_speed = 100 + encoder_distance/50000.0 * 200;
+                //target_speed = 100 + encoder_distance/50000.0 * 200;
                 modify_power_by_speed(target_speed);
             }
             else if(_use_ramping && _distance - encoder_distance <= 100000) //10 cm
             {
                 LOG(DEBUG) << "RAMP DOWN" << endl;
-                modify_power_by_speed(100);
+                modify_power_by_speed(150);
             }
             else
             {
@@ -532,13 +531,18 @@ void Drive::do_rotate()
 
     if(rot_dir == LEFT)
     {
-        //serial->drive(180 - currentLeftSpeed-6, currentRightSpeed);
-        serial->drive(180 - currentLeftSpeed, currentRightSpeed);
+        if(enable_drive)
+        {
+            serial->drive(180 - currentLeftSpeed, currentRightSpeed);
+        }
         cout << "Rotating: " << (int)(180 - currentLeftSpeed) << " , " << (int)currentRightSpeed << endl;
     }
     else if(rot_dir == RIGHT)
     {
-        serial->drive(currentLeftSpeed, 180 - currentRightSpeed);
+        if(enable_drive)
+        {
+            serial->drive(currentLeftSpeed, 180 - currentRightSpeed);
+        }
     }
 }
 
@@ -603,12 +607,12 @@ void Drive::confirm_stop()
     if(state == WAITING_FOR_STOP)
     {
         wait_stop = false;
-        if(driveCompletedCallback){driveCompletedCallback();}
 
         LOG(DEBUG) << "Confirmed stop" << micros() << endl;
         encoderRight.reset();
         encoderLeft.reset();
         state = STOPPED;
+        if(driveCompletedCallback){driveCompletedCallback();}
     }
 }
 

@@ -12,7 +12,48 @@ void loop(Mat frame);
 void drive_complete();
 void main_stop();
 
-int step = 0;
+static const char *usage = 
+    "Usage: main [ options ]\n"
+    "For several of the operations the program has to be run as root.\n"
+    "   --stop                          Stop the motors\n"
+    "   --r                             Rotate the vehicle\n"
+    "                                    use --angle to set rotation angle\n"
+    "   --angle ANGLE                   Which angle to rotate\n" 
+    "                                    ANGLE > 0 rotate right\n"
+    "                                    ANGLE < 0 rotate left\n"
+    "   --d                             Drive straight forward or backward\n"
+    "                                    use --speed and --distance to set parameters\n"
+    "   --speed SPEED                   Set desired motor speed\n"
+    "                                    0 = full speed backwards\n"
+    "                                    90 = stop\n"
+    "                                    180 = full speed forwards\n"
+    "   --distance DISTANCE             How far to drive in millimeter\n"
+    "                                    DISTANCE < 0: drive backwards\n"
+    "   --do_not_drive                  Lets you use commands without actually driving\n"
+    "                                    the motors\n"
+    "   --follow_steps                  Follow the step-wise program in main.cpp\n"
+    "   --step STEP                     Which step to start at in --follow_steps\n"
+    "   --follow_ball                   Follow colored ball\n"
+    "   --follow_line                   Follow line\n"
+    "   --video                         Display video\n"
+    "   --nocam                         Do not use a camera\n"
+    "   --noserial                      Do not use serial\n"
+    "   --camera CAMERA                 Use camera number CAMERA\n"
+    "   --ps4                           Use ps4 camera\n"
+    "   --savevideo                     Writes video to out.avi\n"
+    "                                    and one uncompressed image to out.png\n"
+    "\n"
+    "Examples:\n"
+    "   Drive forward for 1000 mm at a moderate speed\n"
+    "       sudo bin/main --d --distance 1000 --speed 110 --nocam \n"
+    "   Drive backwards for 2000 mm at a moderate speed\n"
+    "       sudo bin/main --d --distance 1000 --speed 110 --nocam \n"
+    "   Rotate 180 degrees to the right\n"
+    "       bin/main --r --angle 180 --nocam\n"
+    "   Rotate 90 degrees to the left\n"
+    "       bin/main --r --angle -90 --nocam\n";
+
+int step = -1;
 bool stop = false;
 float angle = 0;
 uint8_t speed = 110;
@@ -28,8 +69,8 @@ unique_ptr<Controller> c = nullptr;
 shared_ptr<Drive> driver = nullptr;
 shared_ptr<LineFollower<Drive>> lineFollower = nullptr;
 
-enum do_what {FOLLOW_STEPS,DRIVE_DISTANCE,ROTATE,NOTHING};
-do_what what = FOLLOW_STEPS;
+enum do_what {FOLLOW_STEPS,DRIVE_DISTANCE,ROTATE,NOTHING,TRACK_BALL,FOLLOW_LINE};
+do_what what = NOTHING;
 
 uint64_t start_time = 0;
 
@@ -49,39 +90,51 @@ void loop(Mat frame)
 
     //flines.find(frame);
 
-    if(do_camshift)
+
+    if(what == NOTHING){
+        return;
+    }
+    else if(what == TRACK_BALL)
     {
         int pos =  cshift.update_camshift(frame);
-        cout << "pos: " << pos << endl;
+        frame.release();
+        //cout << "pos: " << pos << endl;
         if(pos >= 0)
         {
             lineFollower->update(pos);
         }
     }
-
-    if(what == NOTHING){return;}
-
-    //Example for how you can chain several different driving operations
-    switch(step)
+    else if(what == FOLLOW_STEPS)
     {
-        case 0:
-            cout << "case 0" << endl;
-           
-            driver->set_distance_sensor_stop(false);//Disable stopping when ultrasound sensor triggers
-            //driver->driveDistance(speed,args_dist,[]{drive_complete();});//Drive forward
-            //lineFollower->enable();//Enable linefollowing
+        //Example for how you can chain several different driving operations
+        switch(step)
+        {
+            case 0:
+                cout << "case 0" << endl;
+               
+                driver->set_distance_sensor_stop(false);//Disable stopping when ultrasound sensor triggers
+                //driver->driveDistance(speed,args_dist,[]{drive_complete();});//Drive forward
+                //lineFollower->enable();//Enable linefollowing
 
-            step++;
-            break;
-        case 2:
-            LOG(DEBUG) << "Case 2";
-            //driver->rotate(110,45,RIGHT,[]{drive_complete();});//Rotate 45 degrees
-            step++;
-            break;
-        case 4:
-            c->quit_robot = true;
-            LOG(DEBUG) << "Stopping" <<endl;
-            break;
+                step++;
+                break;
+            case 2:
+                LOG(DEBUG) << "Case 2";
+                //driver->rotate(110,45,RIGHT,[]{drive_complete();});//Rotate 45 degrees
+                step++;
+                break;
+            case 4:
+                c->quit_robot = true;
+                LOG(DEBUG) << "Stopping" <<endl;
+                break;
+        }
+    }
+    else if(what == FOLLOW_LINE)
+    {
+        if(c->line_position >= 0)
+        {
+            lineFollower->update(c->line_position);
+        }
     }
 
 }
@@ -89,6 +142,11 @@ void loop(Mat frame)
 //Triggers from CTRL C
 void my_handler(int s){
     stop = true;
+}
+
+void print_menu()
+{
+    cout << usage << endl;
 }
 
 int main(int argc, char** argv)
@@ -101,12 +159,18 @@ int main(int argc, char** argv)
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     bool enable_drive = true;
-
     bool show_video = false;
+    bool save_video = false;
 
     //Checks from commandline arguments
     vector<string> args(argv, argv+argc);
     string file;
+    if(args.size() == 1)
+    {
+        print_menu();
+        return 0;
+    }
+
     for(size_t i=0;i<args.size();i++)
     {
         if(args[i].compare("--stop") == 0)
@@ -147,21 +211,26 @@ int main(int argc, char** argv)
         {
             step = atoi(args[++i].c_str());
         }
-        else if(args[i].compare("--camshift") == 0)
+        else if(args[i].compare("--follow_ball") == 0)
         {
-            do_camshift = true;
+            what = TRACK_BALL;
+        }
+        else if(args[i].compare("--follow_line") == 0)
+        {
+            what = FOLLOW_LINE;
         }
         else if(args[i].compare("--video") == 0)
         {
             show_video = true;
         }
-    }
-
-    //Disable execution of the command list
-    if(what != FOLLOW_STEPS)
-    {
-        cout << "Step -1 " << endl;
-        step = -1;
+        else if(args[i].compare("--savevideo") == 0)
+        {
+            save_video = true;
+        }
+        else if(args[i].compare("--follow_steps") == 0)
+        {
+            what = FOLLOW_STEPS;
+        }
     }
 
     //We pass the loop function to the Controller
@@ -169,6 +238,7 @@ int main(int argc, char** argv)
     //the loop function continously
     c = unique_ptr<Controller>(new Controller(args, [&](Mat frame){loop(frame);}));
     driver = c->driver;
+    driver->enable_drive = enable_drive;
     lineFollower = c->line_follower;
 
     start_time = micros();
@@ -182,7 +252,6 @@ int main(int argc, char** argv)
         {
             reverse = true;
         }
-        driver->enable_drive = enable_drive;
         driver->set_distance_sensor_stop(false);//Disable ultrasound
         driver->driveDistance(speed,abs(args_dist),[]{main_stop();},reverse,true);
     }
@@ -199,11 +268,18 @@ int main(int argc, char** argv)
             driver->rotate(110,angle,LEFT,[]{main_stop();});
         }
     }
-
-    if(do_camshift)
+    else if(what == TRACK_BALL)
     {
-        cshift.setup_camshift(show_video);
+        cshift.setup_camshift(show_video,save_video);
         lineFollower->enable();
+    }
+    else if(what == FOLLOW_LINE)
+    {
+        lineFollower->enable();
+    }
+    else if(what == FOLLOW_STEPS)
+    {
+        step = 0;
     }
 
     c->start();

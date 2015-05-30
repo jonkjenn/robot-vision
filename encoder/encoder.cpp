@@ -31,12 +31,12 @@ uint64_t enccount = 1;
 uint64_t avg_count = 1;
 void Encoder::update() {
 
-    avg_count++;
+    /*avg_count++;
     avg_dur += micros()-avg_prev;
 
     if(avg_count % 10000 == 0){
-        cout << "average duration: " << (float)avg_dur/(float)avg_count << endl;
-    }
+        //cout << "average duration: " << (float)avg_dur/(float)avg_count << endl;
+    }*/
 
     //cout << micros() << endl;
     //if(nanos() - prevTime < 10000){return;}

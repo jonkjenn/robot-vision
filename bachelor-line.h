@@ -288,7 +288,13 @@ class LineFollower{
 
         void drive_reverse()
         {
-            _driver->driveDistance(110, 250, nullptr, true, false,true);
+            _driver->driveDistance(100, 500, nullptr, true, false,true);
+        }
+
+        void rotate()
+        {
+            std::cout << "Rotating from linefollower" << std::endl;
+            _driver->rotate(100,360,LEFT,nullptr);
         }
 
     public:
@@ -313,11 +319,12 @@ class LineFollower{
             //If we dont find the line
             if(!_wait_for_line && check_if_stopcount_stop(check_line_found(position),stopcount,MAXIMUM_STOPCOUNT)){
                 //_driver->stop([]{});
+                std::cout << "abort and reverse" << std::endl;
                 _driver->abort();
-                _driver->driveDistance(110, 250, nullptr, true, false,true);
+                auto rotate_callback = std::bind(&LineFollower::rotate,this);
+                _driver->driveDistance(110, 250, rotate_callback, true, false,true);
                 //
                 //_driver->stop(stop_callback);
-                //auto stop_callback = std::bind(&LineFollower::drive_reverse,this);
                 _wait_for_line = true;
                 return;
             }
@@ -329,6 +336,10 @@ class LineFollower{
                 _driver->set_distance_sensor_stop(false);
                 stopcount = 0;
                 _wait_for_line = false;
+            }
+            else if(_wait_for_line)
+            {
+                return;
             }
 
             if(!collected_startpos){

@@ -41,6 +41,7 @@ void ps4driver::setup()
         //mode 0: 60,30,15,8 fps 1280x800
         //mode 1: 120,60,30,15,8 fps 640x400
         //mode 2: 240,120,60,30 fps 320x192
+        //if(!(eye->init(2, 240)))
         if(!(eye->init(2, 240)))
         {
             LOG(DEBUG) << "PS4Camera init failed" << endl;

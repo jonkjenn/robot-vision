@@ -47,6 +47,7 @@ class Controller{
         std::shared_ptr<LineFollower<Drive>> line_follower;
         Controller(std::vector<std::string> &args, std::function<void(cv::Mat)> callback = nullptr);
         bool quit_robot = false;
+        int line_position = -1;
 };
 
 #endif

@@ -127,7 +127,7 @@ void Vision::setup()
     }*/
 
 
-    if(save_video)
+    if(false && save_video)
     {
         size = Size(177,144);
         sub_rect = Rect(0,size.height-41,size.width,40);
@@ -274,7 +274,7 @@ Mat Vision::update()
     auto dur = micros()-previous_micros;
     LOG(DEBUG) << "Loop duration: " << dur << " fps: " << (float)1000000/(float)dur << endl;
     //printf("fps: %f\n", (float)1000000/dur);
-    if(save_video && micros()-previous_frame_saved > 66000){writer << buffer;previous_frame_saved = micros();}
+    if(false && save_video && micros()-previous_frame_saved > 66000){writer << buffer;previous_frame_saved = micros(); imwrite("out.png",buffer); }
     index++;
     previous_micros = micros();
     return buffer;

@@ -15,6 +15,7 @@ namespace {
     class MockDrive {
         public:
             MOCK_METHOD2(drive, bool(unsigned int power1, unsigned int power2));
+            MOCK_METHOD4(rotate, void(unsigned int speed, float degrees, Rotation_Direction direction, std::function<void()> callback));
             MOCK_METHOD0(getDistance,uint32_t());
             MOCK_METHOD6(driveDistance,void(unsigned int speed, unsigned long distance, std::function<void()> callback, bool reverse , bool use_ramping ,bool ignore_stop));
             MOCK_METHOD1(stop,void(std::function<void()> callback));
