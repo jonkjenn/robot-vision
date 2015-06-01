@@ -85,11 +85,12 @@ Vision::Vision(vector<string> &args)
     }
     else
     {
-        LOG(DEBUG) << "Loading file" << endl;
+        /*LOG(DEBUG) << "Loading file" << endl;
         input_type = Type::FILE;
         cap = unique_ptr<VideoCapture>(new VideoCapture(file));
         frame_count = cap->get(CV_CAP_PROP_FRAME_COUNT);
-        LOG(DEBUG) << "frame_count " << frame_count;
+        LOG(DEBUG) << "frame_count " << frame_count;*/
+        return;
     }
 
     setup();
@@ -272,7 +273,7 @@ Mat Vision::update()
     }
 
     auto dur = micros()-previous_micros;
-    LOG(DEBUG) << "Loop duration: " << dur << " fps: " << (float)1000000/(float)dur << endl;
+    //LOG(DEBUG) << "Loop duration: " << dur << " fps: " << (float)1000000/(float)dur << endl;
     //printf("fps: %f\n", (float)1000000/dur);
     if(false && save_video && micros()-previous_frame_saved > 66000){writer << buffer;previous_frame_saved = micros(); imwrite("out.png",buffer); }
     index++;

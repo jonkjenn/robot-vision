@@ -135,7 +135,7 @@ void Controller::parsepacket()
         {
             case Arduinocomm::OK:
                 //LOG(DEGBU) << "Got OK" << endl;
-                driver->confirm_stop();
+                //driver->confirm_stop();
                 /*if(waiting_ok)
                 {
                     waiting_ok = false;
@@ -162,6 +162,10 @@ void Controller::parsepacket()
                 break;
             case Arduinocomm::DEBUG:
                 LOG(DEBUG) << "From Arduino : " << (int)arduino->packet_buffer[1] << endl;
+                break;
+            case Arduinocomm::CONFIRM_STOP:
+                LOG(DEBUG) << "Got confirm stop " << endl;
+                driver->confirm_stop();
                 break;
             break;
         }

@@ -30,4 +30,13 @@ T middle_of_3(T a, T b, T c)
     }
     return middle;
 }
+
+struct PID_config{
+    float kp = 0;
+    float ki = 0;
+    float kd = 0;
+    float setpoint = 0;
+    float maximum = 0;
+    float minimum = 0;
+};
 #endif

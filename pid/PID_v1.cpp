@@ -19,6 +19,8 @@ PID::PID(float* Input, float* Output, float* Setpoint,
 {
     //cout << "low: " << limitLow << endl;
     //cout << "high: " << limitHigh << endl;
+    //
+    cout << "starting pid, lastinput: " << lastInput  << endl;
 	
     myOutput = Output;
     myInput = Input;
@@ -57,10 +59,10 @@ bool PID::Compute()
       /*Compute all the working error variables*/
       input = *myInput;
       error = *mySetpoint - input;
-      /*cout << "error: " << error << endl;
+      cout << "error: " << error << endl;
       cout << "kp: " << kp << endl;
       cout << "ki: " << ki << endl;
-      cout << "kd: " << kd << endl;*/
+      cout << "kd: " << kd << endl;
       ITerm+= (ki * error);
       //cout << "iterm: " << ITerm << endl;
       if(ITerm > outMax) ITerm= outMax;

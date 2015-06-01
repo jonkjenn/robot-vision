@@ -1,9 +1,12 @@
+#include "boost/property_tree/ptree.hpp"
+#include "boost/property_tree/json_parser.hpp"
 #include "controller.hpp"
 #include "drive.h"
 #include <csignal>
 #include "opencv2/core/core.hpp"
 #include "camshift.h"
 #include "find_lines.hpp"
+#include "utility.hpp"
 
 using namespace std;
 using namespace cv;
@@ -16,19 +19,17 @@ static const char *usage =
     "Usage: main [ options ]\n"
     "For several of the operations the program has to be run as root.\n"
     "   --stop                          Stop the motors\n"
-    "   --r                             Rotate the vehicle\n"
-    "                                    use --angle to set rotation angle\n"
-    "   --angle ANGLE                   Which angle to rotate\n" 
-    "                                    ANGLE > 0 rotate right\n"
-    "                                    ANGLE < 0 rotate left\n"
-    "   --d                             Drive straight forward or backward\n"
-    "                                    use --speed and --distance to set parameters\n"
-    "   --speed SPEED                   Set desired motor speed\n"
-    "                                    0 = full speed backwards\n"
-    "                                    90 = stop\n"
-    "                                    180 = full speed forwards\n"
-    "   --distance DISTANCE             How far to drive in millimeter\n"
-    "                                    DISTANCE < 0: drive backwards\n"
+    "   --r ANGLE                       Rotate the vehicle\n"
+    "                                    ANGLE which angle to rotate\n" 
+    "                                       ANGLE > 0 rotate right\n"
+    "                                       ANGLE < 0 rotate left\n"
+    "   --d DISTANCE SPEED            Drive straight forward or backward\n"
+    "                                    SPEED Set desired motor speed\n"
+    "                                       0 = full speed backwards\n"
+    "                                       90 = stop\n"
+    "                                       180 = full speed forwards\n"
+    "                                    DISTANCE how far to drive in millimeter\n"
+    "                                       DISTANCE < 0: drive backwards\n"
     "   --do_not_drive                  Lets you use commands without actually driving\n"
     "                                    the motors\n"
     "   --follow_steps                  Follow the step-wise program in main.cpp\n"
@@ -73,6 +74,32 @@ enum do_what {FOLLOW_STEPS,DRIVE_DISTANCE,ROTATE,NOTHING,TRACK_BALL,FOLLOW_LINE}
 do_what what = NOTHING;
 
 uint64_t start_time = 0;
+
+void load_config()
+{
+    using boost::property_tree::ptree;
+    ptree pt;
+
+    map<string,PID_config> pids;
+
+    read_json("config.json",pt);
+
+    for(auto& p:pt.get_child("pids"))
+    {
+        auto& pid = p.second;
+        //cout << "pids: "<<  pid.second.get<float>("kp") << endl;
+        //cout << "KP " << pid.second.get<float>("kp") << endl;
+        //
+        PID_config pc;
+        pc.kp  = pid.get<float>("kp");
+        pc.kd = pid.get<float>("kd");
+        pc.ki = pid.get<float>("ki");
+        pc.setpoint = pid.get<float>("setpoint");
+        pc.minimum = pid.get<float>("minimum");
+        pc.maximum = pid.get<float>("maximum");
+        pids.insert(pair<string,PID_config>(pid.get("name","unknown"),pc));
+    }
+}
 
 void loop(Mat frame)
 {
@@ -178,26 +205,17 @@ int main(int argc, char** argv)
             stop = true;
             break;
         }
-        else if(args[i].compare("--angle") == 0)
-        {
-            angle = atof(args[++i].c_str());
-            dir = (angle>0?RIGHT:LEFT);
-        }
-        else if(args[i].compare("--speed") == 0)
-        {
-            speed = atoi(args[++i].c_str());
-        }
-        else if(args[i].compare("--distance") == 0)
-        {
-            args_dist = atoi(args[++i].c_str());
-        }
         else if(args[i].compare("--r") == 0)
         {
             what = ROTATE;
+            angle = atof(args[++i].c_str());
+            dir = (angle>0?RIGHT:LEFT);
         }
         else if(args[i].compare("--d") == 0)
         {
             what = DRIVE_DISTANCE;
+            args_dist = atoi(args[++i].c_str());
+            speed = atoi(args[++i].c_str());
         }
         else if(args[i].compare("--donothing") == 0)
         {
@@ -232,6 +250,8 @@ int main(int argc, char** argv)
             what = FOLLOW_STEPS;
         }
     }
+
+    load_config();
 
     //We pass the loop function to the Controller
     //because this will make the controller execute

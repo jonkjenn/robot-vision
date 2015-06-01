@@ -7,6 +7,7 @@ class camshift{
         void setup_camshift(bool show_video,bool save_video);
     private:
         cv::VideoWriter writer;
+        cv::VideoWriter writer2;
         unsigned int did_not_find_target();
         bool camshift_init = false;
         cv::Mat hist,hsv,mask,roi,hsv_roi,back_project,roi_hist_h,roi_hist_s,roi_hist_v, roi_hist;

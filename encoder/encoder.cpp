@@ -175,6 +175,7 @@ void Encoder::reset()
     prevTime = micros();
     fDist = 0;
     bDist = 0;
+    distance.store(0);
 }
 
 Encoder::~Encoder()

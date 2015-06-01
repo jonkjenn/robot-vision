@@ -27,7 +27,6 @@ void camshift::setup_camshift(bool show_video, bool save_video)
 
     cvtColor(frame,hsv,COLOR_BGR2HSV);
 
-
     int from_to[] = {0,0,1,1};
 
     //Mat targets[] = {hue,sat};
@@ -73,6 +72,22 @@ int camshift::update_camshift(Mat frame)
 {
 
     if(frame.empty()){return -1;}
+
+    if(do_save_video)
+    {
+        if(!writer2.isOpened())
+        {
+            //cout << "WRITER FRAME SIZE: " << frame.size() << endl;
+            Size sz = frame.size();
+            //writer.open("out.avi",CV_FOURCC('M','J','P','G') ,200,sz);
+            //writer.open("out.avi",CV_FOURCC('H','2','6','4'),200,sz);
+            writer2.open("out.avi",CV_FOURCC('M','P','4','V'),15,sz);
+        }
+
+        writer2 << frame;
+
+        //if(micros()-previous_frame_saved > 33333){cout << "writing frame" << endl;writer2 << frame;previous_frame_saved = micros();} //imwrite("ball.png",frame); }
+    }
 
     Rect roi = s_rect;
 
@@ -305,5 +320,5 @@ unsigned int camshift::calculate_position(Point2f centroid, Mat frame)
 
    cout << "calculating" << endl;
 
-   return 7000-((-atan2(centroid.y-my_y, centroid.x - my_x))/PI)*7000.0;
+   return ((-atan2(centroid.y-my_y, centroid.x - my_x))/PI)*7000.0;
 }

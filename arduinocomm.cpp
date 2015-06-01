@@ -179,8 +179,8 @@ void Arduinocomm::drive(uint8_t left, uint8_t right)
     //LOG(DEBUG) << "Driving: " << (int)left << " " << (int)right << endl;
     writecommand(START_DATA);
     writebyte(DRIVE);
-    writebyte(left);
     writebyte(right);
+    writebyte(left);
     writebyte(CRC8(bytes,bytes.size(),1));
     writecommand(END_DATA);
     mSerial->write(bytes.data(),bytes.size());

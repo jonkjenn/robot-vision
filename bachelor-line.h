@@ -5,6 +5,8 @@
 #include "utility.hpp"
 #include <memory>
 #include <iostream>
+#include <vector>
+#include <algorithm>
 
 /*
  * Limits the power so we avoid driving to fast and try to avoid stoppping while turning
@@ -52,7 +54,12 @@ static bool check_if_stopcount_stop(bool on_line, unsigned int &stopcount, unsig
     }
 }
 
-static int getaverage(int16_t (&array)[5])
+static float getaverage(const std::vector<int16_t> &arr)
+{
+    return accumulate(arr.begin(),arr.end(),0)/(float)arr.size();
+}
+
+/*static int getaverage(int16_t (&array)[5])
 {
     int avg = 0;
     for(int i=0;i<5;i++)
@@ -60,9 +67,33 @@ static int getaverage(int16_t (&array)[5])
         avg += array[i];
     }
     return avg/5.0;
+}*/
+
+static int16_t GetMedian(const std::vector<int16_t> &daArray) {
+    // Allocate an array of the same size and sort it.
+    std::vector<int16_t> dpSorted = daArray;
+    std::sort(dpSorted.begin(),dpSorted.end());
+    /*for (int i = size - 1; i > 0; --i) {
+        for (int j = 0; j < i; ++j) {
+            if (dpSorted[j] > dpSorted[j+1]) {
+                int16_t dTemp = dpSorted[j];
+                dpSorted[j] = dpSorted[j+1];
+                dpSorted[j+1] = dTemp;
+            }
+        }
+    }*/
+
+    // Middle or average of middle values in the sorted array.
+    int16_t dMedian = 0;
+    if ((daArray.size() % 2) == 0) {
+        dMedian = ((dpSorted[daArray.size()/2] + dpSorted[(daArray.size()/2) - 1])/2.0);
+    } else {
+        dMedian = dpSorted[daArray.size()/2];
+    }
+    return dMedian;
 }
 
-static int16_t GetMedian(int16_t *daArray, int size) {
+/*static int16_t GetMedian(int16_t *daArray, int size) {
     // Allocate an array of the same size and sort it.
     int16_t* dpSorted = new int16_t[20];
     for (int i = 0; i < size; ++i) {
@@ -87,7 +118,7 @@ static int16_t GetMedian(int16_t *daArray, int size) {
     }
     delete [] dpSorted;
     return dMedian;
-}
+}*/
 
 //Template for mocking
 template <class DriveClass>
@@ -199,6 +230,8 @@ class LineFollower{
         int prev_distance_dist_center = 0;
         float prev_angle = 0;
 
+        Rotation_Direction rot_dir = LEFT;
+
         int prev_direction = 0;
 
         uint8_t dist_count = 0;
@@ -231,7 +264,8 @@ class LineFollower{
         int leftright = 0;
 
         int16_t prev_dist[10] = {0};
-        int16_t prev_delta[5] = {0};
+        std::vector<int16_t> prev_delta = std::vector<int16_t>(5,0);
+        //int16_t prev_delta[5] = {0};
         int16_t part_tmp[5] = {0};
         bool _enabled = false;
 
@@ -288,13 +322,14 @@ class LineFollower{
 
         void drive_reverse()
         {
-            _driver->driveDistance(100, 500, nullptr, true, false,true);
+            _driver->driveDistance(100, 1000, nullptr, true, false,true);
         }
 
         void rotate()
         {
             std::cout << "Rotating from linefollower" << std::endl;
-            _driver->rotate(100,360,LEFT,nullptr);
+            _driver->abort();
+            _driver->rotate(110,360,rot_dir,nullptr);
         }
 
     public:
@@ -306,12 +341,15 @@ class LineFollower{
 
         void update(unsigned int position)
         {
+            position = 7000 - position;
             if(!_enabled){return;}
 
             time = micros();
             duration = time - prev_time;
             prev_time = time;
             dtest++;
+
+            rot_dir = position<3500?LEFT:RIGHT;
 
             std::cout << "Linefollower position: " << position << std::endl;
             std::cout << "stopcount : " << stopcount << std::endl;
@@ -357,17 +395,26 @@ class LineFollower{
             distance = _driver->getDistance() - prev_distance;
 
             dist_center = position - ir_center;
+            if(dist_center == prev_dist_center){return;}
 
-            for(int i=4;i>0;i--)
+            for(int i=0;i< prev_delta.size()-1;i++)
               {
-                  prev_delta[i-1] = prev_delta[i];
+                  prev_delta[i] = prev_delta[i+1];
               }
 
             delta_dist_center = dist_center - prev_dist_center;
 
-            prev_delta[4] = delta_dist_center;
+            prev_delta[prev_delta.size()-1] = delta_dist_center;
 
-            delta_dist_center = getaverage(prev_delta);
+            delta_dist_center = (int16_t)getaverage(prev_delta);
+
+            //std::cout << "pd size: " << prev_delta.size() << std::endl;
+
+           /* for(int i=0;i<prev_delta.size();i++)
+            {
+                std::cout << prev_delta[i] << " ";
+            }
+            std::cout << std::endl << "Median: " << delta_dist_center << std::endl;*/
 
             if(debug && dtest%dtest_mod == 0){
                 /*std::cout << "Position: " << position << std::endl;
@@ -378,14 +425,14 @@ class LineFollower{
             }
 
 
-            out_pid_Input = (abs(dist_center)<1500?0:dist_center);
+            out_pid_Input = (abs(dist_center)<2000?0:dist_center);
 
             outerPID->Compute();
 
             std::cout << "outer pid: " << out_pid_Output << std::endl;
 
             inn_pid_SetPoint = out_pid_Output;
-            inn_pid_Input = ((abs(delta_dist_center) < 100) && (abs(dist_center)<1500))?0:delta_dist_center;
+            inn_pid_Input = ((abs(delta_dist_center) < 100) && (abs(dist_center)<2000))?0:delta_dist_center;
 
             if(innerPID->Compute())
             {

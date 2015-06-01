@@ -6,7 +6,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY}/lib)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -o3 -std=c++11")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -pedantic -pg -pthread")#uncomment to use gdb debugging
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -o3 -Wall -Wextra -pedantic -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -o3 -Wall -Wextra -pthread")
 #SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")#uncomment to use gdb debugging
 #SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg")#uncomment to use gdb debugging
 
@@ -27,6 +27,8 @@ add_library( SimpleGPIO SimpleGPIO/SimpleGPIO.cpp )
 add_library( Controller controller.cpp )
 add_library( gyroscope gyroscope/gyroscope.cpp )
 add_library( encoder encoder/encoder.cpp )
+add_library( drive_rotate drive/drive_rotate.cpp )
+add_library( drive_straight drive/drive_straight.cpp )
 add_library( drive drive/drive.cpp )
 add_library( pid pid/PID_v1.cpp )
 add_library( camshift camshift.cpp )
@@ -35,7 +37,9 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/inc
 find_library( lusb NAMES usb-1.0 PATHS ps4jetson/libusb/libusb/.libs NO_DEFAULT_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH)
 
 target_link_libraries( main Controller encoder drive linefollower camshift find_lines )
-target_link_libraries( drive pid encoder ping gyroscope arduinocomm )
+target_link_libraries( drive_straight pid encoder ping gyroscope arduinocomm )
+target_link_libraries( drive_rotate pid encoder ping gyroscope arduinocomm )
+target_link_libraries( drive pid encoder ping gyroscope arduinocomm drive_rotate drive_straight)
 target_link_libraries( encoder SimpleGPIO )
 target_link_libraries( ps4eye ${lusb} utility )
 target_link_libraries( ps4driver ${lusb} ps4eye )

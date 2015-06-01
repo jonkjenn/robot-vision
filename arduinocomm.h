@@ -65,6 +65,7 @@ class Arduinocomm{
         static const uint8_t DRIVE_DISTANCE = 0x04;//Drive straight for duration
         static const uint8_t DRIVE_COMPLETED = 0x05;//Drive straight for duration
         static const uint8_t LINE_POSITION = 0x06;//Position of robot on line
+        static const uint8_t CONFIRM_STOP = 0x07;
 
 };
 
