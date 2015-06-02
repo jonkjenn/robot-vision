@@ -70,6 +70,8 @@ unique_ptr<Controller> c = nullptr;
 shared_ptr<Drive> driver = nullptr;
 shared_ptr<LineFollower<Drive>> lineFollower = nullptr;
 
+map<string,PID_config> pids;
+
 enum do_what {FOLLOW_STEPS,DRIVE_DISTANCE,ROTATE,NOTHING,TRACK_BALL,FOLLOW_LINE};
 do_what what = NOTHING;
 
@@ -80,7 +82,6 @@ void load_config()
     using boost::property_tree::ptree;
     ptree pt;
 
-    map<string,PID_config> pids;
 
     read_json("config.json",pt);
 
@@ -256,7 +257,7 @@ int main(int argc, char** argv)
     //We pass the loop function to the Controller
     //because this will make the controller execute
     //the loop function continously
-    c = unique_ptr<Controller>(new Controller(args, [&](Mat frame){loop(frame);}));
+    c = unique_ptr<Controller>(new Controller(args, pids, [&](Mat frame){loop(frame);}));
     driver = c->driver;
     driver->enable_drive = enable_drive;
     lineFollower = c->line_follower;

@@ -45,7 +45,7 @@ class Controller{
         void start();
         std::shared_ptr<Drive> driver;
         std::shared_ptr<LineFollower<Drive>> line_follower;
-        Controller(std::vector<std::string> &args, std::function<void(cv::Mat)> callback = nullptr);
+        Controller(std::vector<std::string> &args, std::map<std::string,PID_config> &pids,std::function<void(cv::Mat)> callback = nullptr);
         bool quit_robot = false;
         int line_position = -1;
 };

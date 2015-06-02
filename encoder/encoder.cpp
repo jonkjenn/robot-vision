@@ -129,7 +129,7 @@ void Encoder::updateSpeeds()
 
     if(time - previous_time > 10000)
     {
-        int s = (int)(((dist-previous_distance)/((double)time-previous_time))*1000);
+        int s = (int)(((dist-previous_distance)/((double)time-previous_time)));//*1000);micro/micromicro/micro
         //cout << "dist traveld: " << (int)(dist - previous_distance) << endl;
         //cout << "time travel: " << (int) (time-previous_time) << endl;
         //cout << "speed : " << s << endl;
@@ -162,11 +162,11 @@ int Encoder::getSpeed()
     return speed.load();//middle_of_3<atomic<int>>(speed,prevspeed,prevprevspeed);
 }
 
-//Returns distance in micrometer
-uint64_t Encoder::getDistance()
+//Returns distance in millimeter
+uint32_t Encoder::getDistance()
 {
     //lock_guard<mutex> lock(encodermutex);
-    return distance.load();
+    return distance.load()/1000;
 }
 
 void Encoder::reset()

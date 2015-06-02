@@ -322,7 +322,7 @@ class LineFollower{
 
         void drive_reverse()
         {
-            _driver->driveDistance(100, 1000, nullptr, true, false,true);
+            _driver->driveDistance(100, 1000, nullptr, true, false);
         }
 
         void rotate()
@@ -360,7 +360,7 @@ class LineFollower{
                 std::cout << "abort and reverse" << std::endl;
                 _driver->abort();
                 auto rotate_callback = std::bind(&LineFollower::rotate,this);
-                _driver->driveDistance(110, 250, rotate_callback, true, false,true);
+                _driver->driveDistance(110, 250, rotate_callback, true, false);
                 //
                 //_driver->stop(stop_callback);
                 _wait_for_line = true;

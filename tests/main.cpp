@@ -17,7 +17,7 @@ namespace {
             MOCK_METHOD2(drive, bool(unsigned int power1, unsigned int power2));
             MOCK_METHOD4(rotate, void(unsigned int speed, float degrees, Rotation_Direction direction, std::function<void()> callback));
             MOCK_METHOD0(getDistance,uint32_t());
-            MOCK_METHOD6(driveDistance,void(unsigned int speed, unsigned long distance, std::function<void()> callback, bool reverse , bool use_ramping ,bool ignore_stop));
+            MOCK_METHOD5(driveDistance,void(unsigned int speed, unsigned long distance, std::function<void()> callback, bool reverse , bool use_ramping));
             MOCK_METHOD1(stop,void(std::function<void()> callback));
             MOCK_METHOD1(set_distance_sensor_stop,void(bool value));
             MOCK_METHOD0(driveManual,void());
@@ -161,7 +161,7 @@ namespace {
         EXPECT_CALL(*drive, abort())
             .Times(1);
 
-        EXPECT_CALL(*drive, driveDistance(110, 250, An<function<void()>>(), true, false,true))
+        EXPECT_CALL(*drive, driveDistance(110, 250, An<function<void()>>(), true, false))
             .Times(1);
 
         EXPECT_CALL(*drive, abort())

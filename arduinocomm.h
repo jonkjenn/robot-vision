@@ -35,6 +35,7 @@ class Arduinocomm{
         //uint8_t CRC8(const uint8_t *data, uint8_t len, uint8_t start);
         uint8_t CRC8(std::vector<uint8_t> &data, uint8_t len, uint8_t start);
         uint8_t CRC8(const uint8_t *data, uint8_t len, uint8_t start);
+        uint8_t prevRight = 90, prevLeft = 90;
 
         std::vector<uint8_t> bytes;
 

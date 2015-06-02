@@ -62,7 +62,7 @@ class Encoder{
         ~Encoder();
         void setup(unsigned char pinA, unsigned char pinB);
         void update();
-        uint64_t getDistance();
+        uint32_t getDistance();
         int getSpeed();
         void reset();
 };

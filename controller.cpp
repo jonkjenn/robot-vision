@@ -46,7 +46,7 @@ void readPin(int pin)
     }
 }
 
-Controller::Controller(vector<string> &args, function<void(Mat)> callback)
+Controller::Controller(vector<string> &args, map<string,PID_config> &pids, function<void(Mat)> callback)
 {
     this->callback = callback;
     bool show_debug = false;
@@ -92,7 +92,7 @@ Controller::Controller(vector<string> &args, function<void(Mat)> callback)
     if(use_serial)
     {
         arduino = new Arduinocomm("/dev/ttyTHS0",115200);
-        driver = std::make_shared<Drive>(161,160,163,164,arduino);
+        driver = std::make_shared<Drive>(161,160,163,164,arduino, pids);
         line_follower = std::make_shared<LineFollower<Drive>>(115,65);
         line_follower->setup(driver);
 

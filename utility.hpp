@@ -11,6 +11,7 @@ const float  PI=3.14159265358979f;
 //void atomic_add_float(std::atomic<float> &atom, float bar);
 void reset_micros();
 
+enum Rotation_Direction{ LEFT,RIGHT};
 template<typename T>
 T middle_of_3(T a, T b, T c)
 {

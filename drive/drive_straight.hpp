@@ -6,16 +6,21 @@
 #include "arduinocomm.h"
 #include <memory>
 #include "utility.hpp"
+#include "ping.hpp"
+#include <iostream>
 
 class Drive_straight{
     private:
-        Encoder *encoderRight = nullptr;
-        Encoder *encoderLeft = nullptr;
+        Arduinocomm *serial = nullptr;
+        uint32_t *encoderRight;
+        uint32_t *encoderLeft;
+        int32_t *encoderRightSpeed;
+        int32_t *encoderLeftSpeed;
         gyroscope *gyro = nullptr;
         Ping *ping = nullptr;
         unsigned int speed;
-        unsigned long distance;
-        std::function<void()> callback = nullptr;
+        uint8_t leftSpeed = 90, rightSpeed = 90;
+        uint32_t distance;
         bool reverse = false;
         bool use_ramping = true;
         bool ignore_stop = false;
@@ -23,7 +28,20 @@ class Drive_straight{
         void drive_straight();
         void do_drive();
 
+        PID *rotationPID;
+        PID *encoderPID;
+        float rotationPID_output = 0, rotationPID_input = 0, rotationPID_setpoint = 0;
+        float encoder_pid_Output = 0, encoder_pid_Input = 0, encoder_pid_SetPoint = 0;
+
+        uint32_t get_distance();
+
+        void modify_power_by_speed(int target_speed, int *left_mod, int *right_mod);
+
+        void do_drive(int mod_left, int mod_right);
+
     public:
-        Drive_straight(Encoder *encoderRight, Encoder *encoderLeft, gyroscope *gyro,Ping *ping,unsigned int speed, unsigned long distance, std::function<void()> callback = nullptr, bool reverse = false, bool use_ramping = true,bool ignore_stop = false, PID_config pidconfig_encoder, PID_config pidconfig_gyro);
+        Drive_straight(Arduinocomm *serial, uint32_t *encoderLeft, uint32_t *encoderRight,int32_t *encoderLeftSpeed, int32_t *encoderRightSpeed, gyroscope *gyro,Ping *ping,unsigned int speed, uint32_t distance, PID_config pidconfig_encoder, PID_config pidconfig_gyro, std::function<void()> callback = nullptr, bool reverse = false , bool use_ramping = true);
+        bool update();
+        std::function<void()> callback = nullptr;
 };
 #endif//Guard

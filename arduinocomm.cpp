@@ -176,6 +176,7 @@ void Arduinocomm::writeok()
 //Speed from 0 to 180, 90 = stop,  180 max forward
 void Arduinocomm::drive(uint8_t left, uint8_t right)
 {
+    if(left == prevLeft && right == prevRight){return;}
     //LOG(DEBUG) << "Driving: " << (int)left << " " << (int)right << endl;
     writecommand(START_DATA);
     writebyte(DRIVE);
@@ -186,6 +187,9 @@ void Arduinocomm::drive(uint8_t left, uint8_t right)
     mSerial->write(bytes.data(),bytes.size());
     mSerial->flush();
     bytes.clear();
+
+    prevLeft = left;
+    prevRight = right;
 }
 
 ///CRC-8 - based on the CRC8 formulas by Dallas/Maxim
